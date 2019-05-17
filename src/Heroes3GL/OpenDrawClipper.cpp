@@ -28,6 +28,7 @@
 
 OpenDrawClipper::OpenDrawClipper(IDraw* lpDD)
 {
+	this->refCount = 1;
 	this->ddraw = lpDD;
 	this->last = lpDD->clipperEntries;
 	lpDD->clipperEntries = this;
@@ -35,8 +36,16 @@ OpenDrawClipper::OpenDrawClipper(IDraw* lpDD)
 	this->hWnd = NULL;
 }
 
+ULONG __stdcall OpenDrawClipper::AddRef()
+{
+	return ++this->refCount;
+}
+
 ULONG __stdcall OpenDrawClipper::Release()
 {
+	if (--this->refCount)
+		return this->refCount;
+
 	delete this;
 	return 0;
 }

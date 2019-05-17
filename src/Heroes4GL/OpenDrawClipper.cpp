@@ -28,6 +28,7 @@
 
 OpenDrawClipper::OpenDrawClipper(IDraw7* lpDD)
 {
+	this->refCount = 1;
 	this->ddraw = lpDD;
 	this->last = lpDD->clipperEntries;
 	lpDD->clipperEntries = this;
@@ -40,8 +41,16 @@ OpenDrawClipper::OpenDrawClipper(IDraw7* lpDD)
 	this->rgnData.rdh.nRgnSize = sizeof(RECT);
 }
 
+ULONG __stdcall OpenDrawClipper::AddRef()
+{
+	return ++this->refCount;
+}
+
 ULONG __stdcall OpenDrawClipper::Release()
 {
+	if (--this->refCount)
+		return this->refCount;
+
 	delete this;
 	return 0;
 }

@@ -33,6 +33,9 @@
 
 class OpenDrawSurface : public IDrawSurface
 {
+protected:
+	ULONG refCount;
+
 public:
 	DWORD index;
 	DisplayMode mode;
@@ -57,6 +60,7 @@ public:
 	VOID ReleaseBuffer();
 
 	// Inherited via IDrawSurface
+	ULONG __stdcall AddRef();
 	ULONG __stdcall Release();
 	HRESULT __stdcall Blt(LPRECT, LPDIRECTDRAWSURFACE, LPRECT, DWORD, LPDDBLTFX);
 	HRESULT __stdcall GetPixelFormat(LPDDPIXELFORMAT);

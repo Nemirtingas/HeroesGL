@@ -29,6 +29,7 @@
 
 OpenDrawSurface::OpenDrawSurface(IDraw* lpDD, DWORD index)
 {
+	this->refCount = 1;
 	this->ddraw = lpDD;
 	this->last = lpDD->surfaceEntries;
 	lpDD->surfaceEntries = this;
@@ -52,6 +53,12 @@ OpenDrawSurface::OpenDrawSurface(IDraw* lpDD, DWORD index)
 
 OpenDrawSurface::~OpenDrawSurface()
 {
+	if (((OpenDraw*)this->ddraw)->attachedSurface == this)
+		((OpenDraw*)this->ddraw)->attachedSurface = NULL;
+
+	if (this->attachedClipper)
+		this->attachedClipper->Release();
+
 	this->ReleaseBuffer();
 }
 
@@ -80,10 +87,15 @@ VOID OpenDrawSurface::CreateBuffer(DWORD width, DWORD height)
 	this->poinetrClip = this->currentClip = this->clipsList;
 }
 
+ULONG __stdcall OpenDrawSurface::AddRef()
+{
+	return ++this->refCount;
+}
+
 ULONG __stdcall OpenDrawSurface::Release()
 {
-	if (((OpenDraw*)this->ddraw)->attachedSurface == this)
-		((OpenDraw*)this->ddraw)->attachedSurface = NULL;
+	if (--this->refCount)
+		return this->refCount;
 
 	delete this;
 	return 0;
@@ -115,7 +127,22 @@ HRESULT __stdcall OpenDrawSurface::Lock(LPRECT lpDestRect, LPDDSURFACEDESC lpDDS
 
 HRESULT __stdcall OpenDrawSurface::SetClipper(LPDIRECTDRAWCLIPPER lpDDClipper)
 {
+	OpenDrawClipper* old = this->attachedClipper;
 	this->attachedClipper = (OpenDrawClipper*)lpDDClipper;
+
+	if (this->attachedClipper)
+	{
+		if (old != this->attachedClipper)
+		{
+			if (old)
+				old->Release();
+
+			this->attachedClipper->AddRef();
+		}
+	}
+	else if (old)
+		old->Release();
+
 	return DD_OK;
 }
 

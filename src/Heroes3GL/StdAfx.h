@@ -24,11 +24,12 @@
 
 #pragma once
 #define WIN32_LEAN_AND_MEAN
+//#define WINVER 0x0400
 
 #include "windows.h"
-#include "stdlib.h"
-#include "stdio.h"
 #include "mmreg.h"
+//#include "stdio.h"
+#include "math.h"
 #include "ddraw.h"
 #include "ExtraTypes.h"
 
@@ -53,53 +54,44 @@ extern RELEASEACTCTX ReleaseActCtxC;
 extern ACTIVATEACTCTX ActivateActCtxC;
 extern DEACTIVATEACTCTX DeactivateActCtxC;
 
-typedef VOID*(__cdecl *MALLOC)(size_t);
-typedef VOID(__cdecl *FREE)(VOID*);
-typedef VOID*(__cdecl *MEMSET)(VOID*, INT, size_t);
-typedef VOID*(__cdecl *MEMCPY)(VOID*, const VOID*, size_t);
-typedef double(__cdecl *CEIL)(double);
-typedef double(__cdecl *FLOOR)(double);
-typedef double(__cdecl *ROUND)(double);
-typedef INT(__cdecl *SPRINTF)(CHAR*, const CHAR*, ...);
-typedef INT(__cdecl *STRCMP)(const CHAR*, const CHAR*);
-typedef INT(__cdecl *STRICMP)(const CHAR*, const CHAR*);
-typedef CHAR*(__cdecl *STRCPY)(CHAR*, const CHAR*);
-typedef CHAR*(__cdecl *STRCAT)(CHAR*, const CHAR*);
-typedef CHAR*(__cdecl *STRCHR)(const CHAR*, INT);
-typedef CHAR*(__cdecl *STRRCHR)(const CHAR*, INT);
-typedef CHAR*(__cdecl *STRSTR)(const CHAR*, const CHAR*);
-typedef CHAR*(__cdecl *STRDUP)(const CHAR*);
-typedef size_t(__cdecl *WCSTOMBS)(CHAR*, const WCHAR*, size_t);
-typedef FILE*(__cdecl *FOPEN)(const CHAR*, const CHAR*);
-typedef INT(__cdecl *FCLOSE)(FILE*);
-typedef INT(__cdecl *RAND)();
-typedef VOID(__cdecl *SRAND)(DWORD);
-typedef VOID(__cdecl *EXIT)(INT);
+#ifndef _FILE_DEFINED
+#define _FILE_DEFINED
+typedef struct _iobuf {
+	void* _Placeholder;
+} FILE;
+#endif
 
-extern MALLOC MemoryAlloc;
-extern FREE MemoryFree;
-extern MEMSET MemorySet;
-extern MEMCPY MemoryCopy;
-extern CEIL MathCeil;
-extern FLOOR MathFloor;
-extern ROUND MathRound;
-extern SPRINTF StrPrint;
-extern STRCMP StrCompare;
-extern STRICMP StrCompareInsensitive;
-extern STRCPY StrCopy;
-extern STRCAT StrCat;
-extern STRCHR StrChar;
-extern STRRCHR StrLastChar;
-extern STRSTR StrStr;
-extern STRDUP StrDuplicate;
-extern WCSTOMBS StrToAnsi;
-extern FOPEN FileOpen;
-extern FCLOSE FileClose;
-extern RAND Random;
-extern SRAND SeedRandom;
-extern EXIT Exit;
+extern "C"
+{
+	_CRTIMP int __cdecl sprintf(char*, const char*, ...);
+	_CRTIMP FILE* __cdecl fopen(const char*, const char*);
+	_CRTIMP int __cdecl fclose(FILE*);
+}
 
-#define MemoryZero(Destination,Length) MemorySet((Destination),0,(Length))
+#define MemoryAlloc malloc
+#define MemoryFree free
+#define MemorySet memset
+#define MemoryZero(dst, size) memset(dst, 0, size)
+#define MemoryCopy memcpy
+#define MathCeil ceil
+#define MathFloor floor
+#define StrPrint sprintf
+#define StrCompare strcmp
+#define StrCompareInsensitive _stricmp
+#define StrCopy strcpy
+#define StrCat strcat
+#define StrChar strchr
+#define StrLastChar strrchr
+#define StrStr strstr
+#define StrDuplicate _strdup
+#define StrToAnsi wcstombs
+#define FileOpen fopen
+#define FileClose fclose
+#define Random rand
+#define SeedRandom srand
+#define Exit exit
+
+DOUBLE __fastcall MathRound(DOUBLE);
 
 extern HMODULE hDllModule;
 extern HANDLE hActCtx;
@@ -107,5 +99,4 @@ extern HANDLE hActCtx;
 extern DisplayMode displayMode;
 
 VOID LoadKernel32();
-VOID LoadMsvCRT();
 VOID LoadDDraw();

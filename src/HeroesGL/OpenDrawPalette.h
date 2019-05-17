@@ -28,6 +28,9 @@
 
 class OpenDrawPalette : public IDrawPalette
 {
+protected:
+	ULONG refCount;
+
 public:
 	PALETTEENTRY entries[256];
 	BOOL isChanged;
@@ -35,6 +38,7 @@ public:
 	OpenDrawPalette(IDraw*);
 
 	// Inherited via IDrawPalette
+	ULONG __stdcall AddRef();
 	ULONG __stdcall Release();
 	HRESULT __stdcall SetEntries(DWORD, DWORD, DWORD, LPPALETTEENTRY);
 };

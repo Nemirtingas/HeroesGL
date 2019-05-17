@@ -30,14 +30,23 @@
 
 OpenDrawPalette::OpenDrawPalette(IDraw* lpDD)
 {
+	this->refCount = 1;
 	this->ddraw = lpDD;
 	this->last = lpDD->paletteEntries;
 	lpDD->paletteEntries = this;
 	this->isChanged = FALSE;
 }
 
+ULONG __stdcall OpenDrawPalette::AddRef()
+{
+	return ++this->refCount;
+}
+
 ULONG __stdcall OpenDrawPalette::Release()
 {
+	if (--this->refCount)
+		return this->refCount;
+
 	delete this;
 	return 0;
 }
@@ -84,6 +93,7 @@ HRESULT __stdcall OpenDrawPalette::SetEntries(DWORD dwFlags, DWORD dwStartingEnt
 
 		this->isChanged = TRUE;
 		SetEvent(((OpenDraw*)this->ddraw)->hDrawEvent);
+		Sleep(0);
 	}
 
 	return DD_OK;

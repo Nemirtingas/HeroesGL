@@ -35,6 +35,7 @@ namespace Main
 
 	OpenDraw* __fastcall FindOpenDrawByWindow(HWND hWnd);
 
+	VOID __fastcall ShowError(UINT id, CHAR* file, DWORD line);
 	VOID __fastcall ShowError(CHAR* message, CHAR* file, DWORD line);
 
 #ifdef _DEBUG

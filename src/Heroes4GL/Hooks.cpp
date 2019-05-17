@@ -35,9 +35,7 @@
 #define STYLE_WIN_OLD (WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX)
 #define STYLE_WIN_NEW (WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SIZEBOX | WS_MAXIMIZEBOX)
 
-AddressSpace* hookSpace;
-
-AddressSpace addressArray[] = {
+const AddressSpace addressArray[] = {
 	// === RUS ======================================================================================================================================
 #pragma region RUS
 	0x00844A4D, 0x00844B35, 0x00401D18, 0x90909090, 0x0084497C, 0x006D59BB, 0x00843736, 0x00843F0E,
@@ -108,7 +106,7 @@ AddressSpace addressArray[] = {
 #pragma endregion 
 };
 
-UINT menuIds[] = { IDM_FILT_OFF, IDM_FILT_LINEAR, IDM_FILT_CUBIC, IDM_ASPECT_RATIO, IDM_VSYNC, IDM_HELP_WRAPPER,
+const UINT menuIds[] = { IDM_FILT_OFF, IDM_FILT_LINEAR, IDM_FILT_CUBIC, IDM_ASPECT_RATIO, IDM_VSYNC, IDM_HELP_WRAPPER,
 	IDM_FILT_XRBZ_LINEAR, IDM_FILT_XRBZ_CUBIC, IDM_FILT_XRBZ_2X, IDM_FILT_XRBZ_3X, IDM_FILT_XRBZ_4X, IDM_FILT_XRBZ_5X, IDM_FILT_XRBZ_6X,
 	IDM_FILT_SCALEHQ_LINEAR, IDM_FILT_SCALEHQ_CUBIC, IDM_FILT_SCALEHQ_2X, IDM_FILT_SCALEHQ_4X,
 	IDM_FILT_XSAL_LINEAR, IDM_FILT_XSAL_CUBIC, IDM_FILT_XSAL_2X,
@@ -119,6 +117,7 @@ UINT menuIds[] = { IDM_FILT_OFF, IDM_FILT_LINEAR, IDM_FILT_CUBIC, IDM_ASPECT_RAT
 
 namespace Hooks
 {
+	const AddressSpace* hookSpace;
 	HMODULE hModule;
 	INT baseOffset;
 
@@ -563,7 +562,7 @@ namespace Hooks
 	BOOL __stdcall EnableMenuItemHook(HMENU hMenu, UINT uIDEnableItem, UINT uEnable)
 	{
 		BOOL found = FALSE;
-		UINT* menu = menuIds;
+		const UINT* menu = menuIds;
 		DWORD count = sizeof(menuIds) / sizeof(UINT);
 		do
 		{
@@ -703,8 +702,8 @@ namespace Hooks
 		PIMAGE_NT_HEADERS headNT = (PIMAGE_NT_HEADERS)((BYTE*)hModule + ((PIMAGE_DOS_HEADER)hModule)->e_lfanew);
 		baseOffset = (INT)hModule - (INT)headNT->OptionalHeader.ImageBase;
 
-		AddressSpace* defaultSpace = NULL;
-		AddressSpace* equalSpace = NULL;
+		const AddressSpace* defaultSpace = NULL;
+		const AddressSpace* equalSpace = NULL;
 
 		DWORD hookCount = sizeof(addressArray) / sizeof(AddressSpace);
 		do
@@ -779,7 +778,7 @@ namespace Hooks
 				PatchNop(hookSpace->fullscr_nop[0], 20);
 				PatchNop(hookSpace->fullscr_nop[1], 4);
 
-				DWORD* lpNop = hookSpace->clientrect_nop;
+				const DWORD* lpNop = hookSpace->clientrect_nop;
 				DWORD count = sizeof(hookSpace->clientrect_nop) / sizeof(DWORD);
 				do
 					PatchNop(*lpNop++, 2);

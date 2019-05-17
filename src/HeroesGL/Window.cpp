@@ -699,6 +699,8 @@ namespace Window
 					POINT p = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
 					ddraw->ScaleMouse(&p);
 					lParam = MAKELONG(p.x, p.y);
+
+					SetEvent(ddraw->hDrawEvent);
 				}
 			}
 

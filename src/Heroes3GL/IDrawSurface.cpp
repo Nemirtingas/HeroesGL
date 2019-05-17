@@ -29,7 +29,7 @@
 IDrawSurface::~IDrawSurface()
 {
 	if (this->ddraw->surfaceEntries == this)
-		this->ddraw->surfaceEntries = NULL;
+		this->ddraw->surfaceEntries = this->ddraw->surfaceEntries->last;
 	else
 	{
 		IDrawSurface* entry = this->ddraw->surfaceEntries;

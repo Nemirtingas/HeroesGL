@@ -89,25 +89,22 @@ DWORD __stdcall RenderThread(LPVOID lpParameter)
 				INT glPixelFormat = GL::PreparePixelFormat(&pfd);
 				if (!glPixelFormat)
 				{
-					glPixelFormat = ChoosePixelFormat(ddraw->hDc, &pfd);
+					glPixelFormat = ::ChoosePixelFormat(ddraw->hDc, &pfd);
 					if (!glPixelFormat)
-						Main::ShowError("ChoosePixelFormat failed", __FILE__, __LINE__);
+						Main::ShowError(IDS_ERROR_CHOOSE_PF, __FILE__, __LINE__);
 					else if (pfd.dwFlags & PFD_NEED_PALETTE)
-						Main::ShowError("Needs palette", __FILE__, __LINE__);
+						Main::ShowError(IDS_ERROR_NEED_PALETTE, __FILE__, __LINE__);
 				}
 
-				if (!SetPixelFormat(ddraw->hDc, glPixelFormat, &pfd))
-					Main::ShowError("SetPixelFormat failed", __FILE__, __LINE__);
+				if (!::SetPixelFormat(ddraw->hDc, glPixelFormat, &pfd))
+					Main::ShowError(IDS_ERROR_SET_PF, __FILE__, __LINE__);
 
-				MemoryZero(&pfd, sizeof(PIXELFORMATDESCRIPTOR));
-				pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
-				pfd.nVersion = 1;
-				if (DescribePixelFormat(ddraw->hDc, glPixelFormat, sizeof(PIXELFORMATDESCRIPTOR), &pfd) == NULL)
-					Main::ShowError("DescribePixelFormat failed", __FILE__, __LINE__);
+				GL::ResetPixelFormatDescription(&pfd);
+				if (::DescribePixelFormat(ddraw->hDc, glPixelFormat, sizeof(PIXELFORMATDESCRIPTOR), &pfd) == NULL)
+					Main::ShowError(IDS_ERROR_DESCRIBE_PF, __FILE__, __LINE__);
 
-				if ((pfd.iPixelType != PFD_TYPE_RGBA) ||
-					(pfd.cRedBits < 5) || (pfd.cGreenBits < 5) || (pfd.cBlueBits < 5))
-					Main::ShowError("Bad pixel type", __FILE__, __LINE__);
+				if ((pfd.iPixelType != PFD_TYPE_RGBA) || (pfd.cRedBits < 5) || (pfd.cGreenBits < 6) || (pfd.cBlueBits < 5))
+					Main::ShowError(IDS_ERROR_BAD_PF, __FILE__, __LINE__);
 
 				HGLRC hRc = WGLCreateContext(ddraw->hDc);
 				if (hRc)
@@ -244,24 +241,10 @@ VOID OpenDraw::RenderOld()
 					OpenDrawSurface* surface = this->attachedSurface;
 					if (surface)
 					{
-						if (WGLSwapInterval && !config.singleThread)
+						if (isVSync != config.image.vSync && WGLSwapInterval && !config.singleThread)
 						{
-							if (!isVSync)
-							{
-								if (config.image.vSync)
-								{
-									isVSync = TRUE;
-									WGLSwapInterval(1);
-								}
-							}
-							else
-							{
-								if (!config.image.vSync)
-								{
-									isVSync = FALSE;
-									WGLSwapInterval(0);
-								}
-							}
+							isVSync = config.image.vSync;
+							WGLSwapInterval(isVSync);
 						}
 
 						if (fpsState)
@@ -523,11 +506,9 @@ VOID OpenDraw::RenderOld()
 
 										for (DWORD y = 0; y < FPS_HEIGHT; ++y)
 										{
-											WORD* idx = surface->indexBuffer + (FPS_Y + y) * this->mode->width +
-												FPS_X + FPS_WIDTH * (dcount - 1);
+											WORD* idx = surface->indexBuffer + (FPS_Y + y) * this->mode->width + FPS_X + FPS_WIDTH * (dcount - 1);
 
-											WORD* pix = (WORD*)frameBuffer + y * FPS_WIDTH * 4 +
-												FPS_WIDTH * (dcount - 1);
+											WORD* pix = (WORD*)frameBuffer + y * FPS_WIDTH * 4 + FPS_WIDTH * (dcount - 1);
 
 											WORD check = *lpDig++;
 											DWORD width = FPS_WIDTH;
@@ -547,11 +528,9 @@ VOID OpenDraw::RenderOld()
 									{
 										for (DWORD y = 0; y < FPS_HEIGHT; ++y)
 										{
-											WORD* idx = surface->indexBuffer + (FPS_Y + y) * this->mode->width +
-												FPS_X + FPS_WIDTH * (dcount - 1);
+											WORD* idx = surface->indexBuffer + (FPS_Y + y) * this->mode->width + FPS_X + FPS_WIDTH * (dcount - 1);
 
-											WORD* pix = (WORD*)frameBuffer + y * FPS_WIDTH * 4 +
-												FPS_WIDTH * (dcount - 1);
+											WORD* pix = (WORD*)frameBuffer + y * FPS_WIDTH * 4 + FPS_WIDTH * (dcount - 1);
 
 											DWORD width = FPS_WIDTH;
 											do
@@ -574,11 +553,9 @@ VOID OpenDraw::RenderOld()
 
 										for (DWORD y = 0; y < FPS_HEIGHT; ++y)
 										{
-											WORD* idx = surface->indexBuffer + (FPS_Y + y) * this->mode->width +
-												FPS_X + FPS_WIDTH * (dcount - 1);
+											WORD* idx = surface->indexBuffer + (FPS_Y + y) * this->mode->width + FPS_X + FPS_WIDTH * (dcount - 1);
 
-											DWORD* pix = (DWORD*)frameBuffer + y * FPS_WIDTH * 4 +
-												FPS_WIDTH * (dcount - 1);
+											DWORD* pix = (DWORD*)frameBuffer + y * FPS_WIDTH * 4 + FPS_WIDTH * (dcount - 1);
 
 											WORD check = *lpDig++;
 											DWORD width = FPS_WIDTH;
@@ -606,11 +583,9 @@ VOID OpenDraw::RenderOld()
 									{
 										for (DWORD y = 0; y < FPS_HEIGHT; ++y)
 										{
-											WORD* idx = surface->indexBuffer + (FPS_Y + y) * this->mode->width +
-												FPS_X + FPS_WIDTH * (dcount - 1);
+											WORD* idx = surface->indexBuffer + (FPS_Y + y) * this->mode->width + FPS_X + FPS_WIDTH * (dcount - 1);
 
-											DWORD* pix = (DWORD*)frameBuffer + y * FPS_WIDTH * 4 +
-												FPS_WIDTH * (dcount - 1);
+											DWORD* pix = (DWORD*)frameBuffer + y * FPS_WIDTH * 4 + FPS_WIDTH * (dcount - 1);
 
 											DWORD width = FPS_WIDTH;
 											do
@@ -640,7 +615,6 @@ VOID OpenDraw::RenderOld()
 
 								GLTexCoord2f(0.0f, frame->tSize.height);
 								GLVertex2s(frame->rect.x, frame->vSize.height);
-
 							}
 							GLEnd();
 							++frame;
@@ -718,7 +692,8 @@ VOID OpenDraw::RenderMid()
 
 	DWORD maxSize = this->mode->width > this->mode->height ? this->mode->width : this->mode->height;
 	DWORD maxTexSize = 1;
-	while (maxTexSize < maxSize) maxTexSize <<= 1;
+	while (maxTexSize < maxSize)
+		maxTexSize <<= 1;
 	FLOAT texWidth = this->mode->width == maxTexSize ? 1.0f : (FLOAT)this->mode->width / maxTexSize;
 	FLOAT texHeight = this->mode->height == maxTexSize ? 1.0f : (FLOAT)this->mode->height / maxTexSize;
 
@@ -796,24 +771,10 @@ VOID OpenDraw::RenderMid()
 								OpenDrawSurface* surface = this->attachedSurface;
 								if (surface)
 								{
-									if (WGLSwapInterval && !config.singleThread)
+									if (isVSync != config.image.vSync && WGLSwapInterval && !config.singleThread)
 									{
-										if (!isVSync)
-										{
-											if (config.image.vSync)
-											{
-												isVSync = TRUE;
-												WGLSwapInterval(1);
-											}
-										}
-										else
-										{
-											if (!config.image.vSync)
-											{
-												isVSync = FALSE;
-												WGLSwapInterval(0);
-											}
-										}
+										isVSync = config.image.vSync;
+										WGLSwapInterval(isVSync);
 									}
 
 									if (this->isStateChanged)
@@ -951,11 +912,9 @@ VOID OpenDraw::RenderMid()
 
 												for (DWORD y = 0; y < FPS_HEIGHT; ++y)
 												{
-													WORD* idx = surface->indexBuffer + (FPS_Y + y) * this->mode->width +
-														FPS_X + FPS_WIDTH * (dcount - 1);
+													WORD* idx = surface->indexBuffer + (FPS_Y + y) * this->mode->width + FPS_X + FPS_WIDTH * (dcount - 1);
 
-													WORD* pix = (WORD*)frameBuffer + y * FPS_WIDTH * 4 +
-														FPS_WIDTH * (dcount - 1);
+													WORD* pix = (WORD*)frameBuffer + y * FPS_WIDTH * 4 + FPS_WIDTH * (dcount - 1);
 
 													WORD check = *lpDig++;
 													DWORD width = FPS_WIDTH;
@@ -975,11 +934,9 @@ VOID OpenDraw::RenderMid()
 											{
 												for (DWORD y = 0; y < FPS_HEIGHT; ++y)
 												{
-													WORD* idx = surface->indexBuffer + (FPS_Y + y) * this->mode->width +
-														FPS_X + FPS_WIDTH * (dcount - 1);
+													WORD* idx = surface->indexBuffer + (FPS_Y + y) * this->mode->width + FPS_X + FPS_WIDTH * (dcount - 1);
 
-													WORD* pix = (WORD*)frameBuffer + y * FPS_WIDTH * 4 +
-														FPS_WIDTH * (dcount - 1);
+													WORD* pix = (WORD*)frameBuffer + y * FPS_WIDTH * 4 + FPS_WIDTH * (dcount - 1);
 
 													DWORD width = FPS_WIDTH;
 													do
@@ -1071,7 +1028,8 @@ VOID OpenDraw::RenderNew()
 {
 	DWORD maxSize = this->mode->width > this->mode->height ? this->mode->width : this->mode->height;
 	DWORD maxTexSize = 1;
-	while (maxTexSize < maxSize) maxTexSize <<= 1;
+	while (maxTexSize < maxSize)
+		maxTexSize <<= 1;
 	FLOAT texWidth = this->mode->width == maxTexSize ? 1.0f : (FLOAT)this->mode->width / maxTexSize;
 	FLOAT texHeight = this->mode->height == maxTexSize ? 1.0f : (FLOAT)this->mode->height / maxTexSize;
 
@@ -1191,24 +1149,10 @@ VOID OpenDraw::RenderNew()
 												OpenDrawSurface* surface = this->attachedSurface;
 												if (surface)
 												{
-													if (WGLSwapInterval && !config.singleThread)
+													if (isVSync != config.image.vSync && WGLSwapInterval && !config.singleThread)
 													{
-														if (!isVSync)
-														{
-															if (config.image.vSync)
-															{
-																isVSync = TRUE;
-																WGLSwapInterval(1);
-															}
-														}
-														else
-														{
-															if (!config.image.vSync)
-															{
-																isVSync = FALSE;
-																WGLSwapInterval(0);
-															}
-														}
+														isVSync = config.image.vSync;
+														WGLSwapInterval(isVSync);
 													}
 
 													if (this->isStateChanged)
@@ -1237,8 +1181,7 @@ VOID OpenDraw::RenderNew()
 													surface->poinetrClip = finClip;
 
 													ImageFilter frameFilter = config.image.filter;
-													if (frameFilter == FilterXRBZ || frameFilter == FilterScaleHQ ||
-														frameFilter == FilterXSal || frameFilter == FilterEagle || frameFilter == FilterScaleNx)
+													if (frameFilter == FilterXRBZ || frameFilter == FilterScaleHQ || frameFilter == FilterXSal || frameFilter == FilterEagle || frameFilter == FilterScaleNx)
 													{
 														GLBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboId);
 
@@ -1311,7 +1254,6 @@ VOID OpenDraw::RenderNew()
 																filterProgram = &shaders.eagle_2x;
 																filterProgram2 = config.image.eagle.type ? &shaders.cubic : &shaders.linear;
 																break;
-
 															}
 
 															UseShaderProgram(filterProgram, texSize);
@@ -1354,18 +1296,24 @@ VOID OpenDraw::RenderNew()
 																	{
 																		POINTFLOAT* point = stencil;
 
-																		point->x = (FLOAT)(FPS_X);  point->y = (FLOAT)(FPS_Y);
+																		point->x = (FLOAT)(FPS_X);
+																		point->y = (FLOAT)(FPS_Y);
 																		++point;
-																		point->x = (FLOAT)(FPS_X + FPS_WIDTH * 4);  point->y = (FLOAT)(FPS_Y);
+																		point->x = (FLOAT)(FPS_X + FPS_WIDTH * 4);
+																		point->y = (FLOAT)(FPS_Y);
 																		++point;
-																		point->x = (FLOAT)(FPS_X + FPS_WIDTH * 4);  point->y = (FLOAT)(FPS_Y + FPS_HEIGHT);
+																		point->x = (FLOAT)(FPS_X + FPS_WIDTH * 4);
+																		point->y = (FLOAT)(FPS_Y + FPS_HEIGHT);
 																		++point;
 
-																		point->x = (FLOAT)(FPS_X);  point->y = (FLOAT)(FPS_Y);
+																		point->x = (FLOAT)(FPS_X);
+																		point->y = (FLOAT)(FPS_Y);
 																		++point;
-																		point->x = (FLOAT)(FPS_X + FPS_WIDTH * 4);  point->y = (FLOAT)(FPS_Y + FPS_HEIGHT);
+																		point->x = (FLOAT)(FPS_X + FPS_WIDTH * 4);
+																		point->y = (FLOAT)(FPS_Y + FPS_HEIGHT);
 																		++point;
-																		point->x = (FLOAT)(FPS_X);  point->y = (FLOAT)(FPS_Y + FPS_HEIGHT);
+																		point->x = (FLOAT)(FPS_X);
+																		point->y = (FLOAT)(FPS_Y + FPS_HEIGHT);
 																	}
 
 																	UseShaderProgram(&shaders.stencil, 0);
@@ -1443,18 +1391,24 @@ VOID OpenDraw::RenderNew()
 																		{
 																			if (clip->isActive)
 																			{
-																				point->x = (FLOAT)clip->rect.left;  point->y = (FLOAT)clip->rect.top;
+																				point->x = (FLOAT)clip->rect.left;
+																				point->y = (FLOAT)clip->rect.top;
 																				++point;
-																				point->x = (FLOAT)clip->rect.right;  point->y = (FLOAT)clip->rect.top;
+																				point->x = (FLOAT)clip->rect.right;
+																				point->y = (FLOAT)clip->rect.top;
 																				++point;
-																				point->x = (FLOAT)clip->rect.right;  point->y = (FLOAT)clip->rect.bottom;
+																				point->x = (FLOAT)clip->rect.right;
+																				point->y = (FLOAT)clip->rect.bottom;
 																				++point;
 
-																				point->x = (FLOAT)clip->rect.left;  point->y = (FLOAT)clip->rect.top;
+																				point->x = (FLOAT)clip->rect.left;
+																				point->y = (FLOAT)clip->rect.top;
 																				++point;
-																				point->x = (FLOAT)clip->rect.right;  point->y = (FLOAT)clip->rect.bottom;
+																				point->x = (FLOAT)clip->rect.right;
+																				point->y = (FLOAT)clip->rect.bottom;
 																				++point;
-																				point->x = (FLOAT)clip->rect.left;  point->y = (FLOAT)clip->rect.bottom;
+																				point->x = (FLOAT)clip->rect.left;
+																				point->y = (FLOAT)clip->rect.bottom;
 																				++point;
 																			}
 
@@ -1604,11 +1558,9 @@ VOID OpenDraw::RenderNew()
 
 																for (DWORD y = 0; y < FPS_HEIGHT; ++y)
 																{
-																	WORD* idx = surface->indexBuffer + (FPS_Y + y) * this->mode->width +
-																		FPS_X + FPS_WIDTH * (dcount - 1);
+																	WORD* idx = surface->indexBuffer + (FPS_Y + y) * this->mode->width + FPS_X + FPS_WIDTH * (dcount - 1);
 
-																	WORD* pix = (WORD*)frameBuffer + y * FPS_WIDTH * 4 +
-																		FPS_WIDTH * (dcount - 1);
+																	WORD* pix = (WORD*)frameBuffer + y * FPS_WIDTH * 4 + FPS_WIDTH * (dcount - 1);
 
 																	WORD check = *lpDig++;
 																	DWORD width = FPS_WIDTH;
@@ -1628,11 +1580,9 @@ VOID OpenDraw::RenderNew()
 															{
 																for (DWORD y = 0; y < FPS_HEIGHT; ++y)
 																{
-																	WORD* idx = surface->indexBuffer + (FPS_Y + y) * this->mode->width +
-																		FPS_X + FPS_WIDTH * (dcount - 1);
+																	WORD* idx = surface->indexBuffer + (FPS_Y + y) * this->mode->width + FPS_X + FPS_WIDTH * (dcount - 1);
 
-																	WORD* pix = (WORD*)frameBuffer + y * FPS_WIDTH * 4 +
-																		FPS_WIDTH * (dcount - 1);
+																	WORD* pix = (WORD*)frameBuffer + y * FPS_WIDTH * 4 + FPS_WIDTH * (dcount - 1);
 
 																	DWORD width = FPS_WIDTH;
 																	do
@@ -1651,8 +1601,7 @@ VOID OpenDraw::RenderNew()
 													}
 
 													// Draw from FBO
-													if (frameFilter == FilterXRBZ || frameFilter == FilterScaleHQ ||
-														frameFilter == FilterXSal || frameFilter == FilterEagle || frameFilter == FilterScaleNx)
+													if (frameFilter == FilterXRBZ || frameFilter == FilterScaleHQ || frameFilter == FilterXSal || frameFilter == FilterEagle || frameFilter == FilterScaleNx)
 													{
 														GLDisable(GL_STENCIL_TEST);
 														//GLFinish();
@@ -1808,10 +1757,9 @@ VOID OpenDraw::RenderNew()
 VOID OpenDraw::ResetDisplayMode(DWORD width, DWORD height)
 {
 	OpenDrawSurface* surface = this->attachedSurface;
-	if (!this->mode || this->mode->width != width || this->mode->height != height ||
-		surface && (surface->width != width || surface->height != height))
+	if (!this->mode || this->mode->width != width || this->mode->height != height || surface && (surface->width != width || surface->height != height))
 	{
-		DisplayMode* mode = modesList;
+		const DisplayMode* mode = modesList;
 		DWORD count = sizeof(modesList) / sizeof(DisplayMode);
 		do
 		{
@@ -1984,12 +1932,16 @@ BOOL OpenDraw::CheckView()
 
 VOID OpenDraw::ScaleMouse(LPPOINT p)
 {
-	p->x = (LONG)((FLOAT)((p->x - this->viewport.rectangle.x) * this->mode->width) / this->viewport.rectangle.width);
-	p->y = (LONG)((FLOAT)((p->y - this->viewport.rectangle.y) * this->mode->height) / this->viewport.rectangle.height);
+	if (this->viewport.rectangle.width && this->viewport.rectangle.height)
+	{
+		p->x = (LONG)((FLOAT)((p->x - this->viewport.rectangle.x) * this->mode->width) / this->viewport.rectangle.width);
+		p->y = (LONG)((FLOAT)((p->y - this->viewport.rectangle.y) * this->mode->height) / this->viewport.rectangle.height);
+	}
 }
 
 OpenDraw::OpenDraw(IDraw7** last)
 {
+	this->refCount = 1;
 	this->last = *last;
 	*last = this;
 
@@ -2009,12 +1961,22 @@ OpenDraw::OpenDraw(IDraw7** last)
 	this->hDrawEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 }
 
-ULONG __stdcall OpenDraw::Release()
+OpenDraw::~OpenDraw()
 {
 	this->RenderStop();
-
 	CloseHandle(this->hDrawEvent);
 	ClipCursor(NULL);
+}
+
+ULONG __stdcall OpenDraw::AddRef()
+{
+	return ++this->refCount;
+}
+
+ULONG __stdcall OpenDraw::Release()
+{
+	if (--this->refCount)
+		return this->refCount;
 
 	delete this;
 	return 0;
@@ -2041,7 +2003,7 @@ HRESULT __stdcall OpenDraw::EnumDisplayModes(DWORD dwFlags, LPDDSURFACEDESC2 lpD
 	DDSURFACEDESC2 ddSurfaceDesc;
 	MemoryZero(&ddSurfaceDesc, sizeof(DDSURFACEDESC2));
 
-	DisplayMode* mode = modesList;
+	const DisplayMode* mode = modesList;
 	DWORD count = sizeof(modesList) / sizeof(DisplayMode);
 	do
 	{
@@ -2065,7 +2027,7 @@ HRESULT __stdcall OpenDraw::SetDisplayMode(DWORD dwWidth, DWORD dwHeight, DWORD 
 {
 	this->mode = NULL;
 
-	DisplayMode* mode = modesList;
+	const DisplayMode* mode = modesList;
 	DWORD count = sizeof(modesList) / sizeof(DisplayMode);
 	do
 	{

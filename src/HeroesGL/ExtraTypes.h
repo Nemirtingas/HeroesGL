@@ -146,6 +146,9 @@ struct AddressSpace
 
 	DWORD color_pointer;
 	DWORD color_pointer_nop;
+	DWORD icons_info;
+	DWORD masks_info;
+	DWORD colors_info;
 	DWORD icons_list;
 	DWORD masks_list;
 	DWORD colors_list;
@@ -180,6 +183,8 @@ struct ConfigItems
 	BOOL singleWindow;
 	BOOL coldCPU;
 	BOOL pointerFix;
+	BOOL pointerHidden;
+	DWORD pointerIndex;
 
 	struct {
 		BOOL aspect;
@@ -210,4 +215,11 @@ struct MappedFile
 	HANDLE hFile;
 	HANDLE hMap;
 	VOID* address;
+};
+
+struct Pointer {
+	BOOL isActive;
+	POINT pos;
+	SIZE size;
+	POINT offset;
 };

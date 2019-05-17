@@ -29,7 +29,7 @@ ConfigItems config;
 
 namespace Config
 {
-	VOID __fastcall Load(HMODULE hModule, AddressSpace* hookSpace)
+	VOID __fastcall Load(HMODULE hModule, const AddressSpace* hookSpace)
 	{
 		GetModuleFileName(hModule, config.file, MAX_PATH - 1);
 		CHAR* p = StrLastChar(config.file, '\\');

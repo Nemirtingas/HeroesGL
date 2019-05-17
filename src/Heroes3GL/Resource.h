@@ -89,6 +89,16 @@
 #define IDM_FILE_QUIT                   40140
 #define IDM_PATCH_CPU                   20070
 
+#define IDS_ERROR_CHOOSE_PF 300
+#define IDS_ERROR_SET_PF 301
+#define IDS_ERROR_DESCRIBE_PF 302
+#define IDS_ERROR_NEED_PALETTE 303
+#define IDS_ERROR_BAD_PF 304
+#define IDS_ERROR_ARB_VERSION 305
+#define IDS_ERROR_ARB_PROFILE 306
+#define IDS_ERROR_LOAD_RESOURCE 307
+#define IDS_ERROR_COMPILE_SHADER 308
+
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED

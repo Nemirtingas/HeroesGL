@@ -90,25 +90,22 @@ DWORD __stdcall RenderThread(LPVOID lpParameter)
 				INT glPixelFormat = GL::PreparePixelFormat(&pfd);
 				if (!glPixelFormat)
 				{
-					glPixelFormat = ChoosePixelFormat(ddraw->hDc, &pfd);
+					glPixelFormat = ::ChoosePixelFormat(ddraw->hDc, &pfd);
 					if (!glPixelFormat)
-						Main::ShowError("ChoosePixelFormat failed", __FILE__, __LINE__);
+						Main::ShowError(IDS_ERROR_CHOOSE_PF, __FILE__, __LINE__);
 					else if (pfd.dwFlags & PFD_NEED_PALETTE)
-						Main::ShowError("Needs palette", __FILE__, __LINE__);
+						Main::ShowError(IDS_ERROR_NEED_PALETTE, __FILE__, __LINE__);
 				}
 
-				if (!SetPixelFormat(ddraw->hDc, glPixelFormat, &pfd))
-					Main::ShowError("SetPixelFormat failed", __FILE__, __LINE__);
+				if (!::SetPixelFormat(ddraw->hDc, glPixelFormat, &pfd))
+					Main::ShowError(IDS_ERROR_SET_PF, __FILE__, __LINE__);
 
-				MemoryZero(&pfd, sizeof(PIXELFORMATDESCRIPTOR));
-				pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
-				pfd.nVersion = 1;
-				if (DescribePixelFormat(ddraw->hDc, glPixelFormat, sizeof(PIXELFORMATDESCRIPTOR), &pfd) == NULL)
-					Main::ShowError("DescribePixelFormat failed", __FILE__, __LINE__);
+				GL::ResetPixelFormatDescription(&pfd);
+				if (::DescribePixelFormat(ddraw->hDc, glPixelFormat, sizeof(PIXELFORMATDESCRIPTOR), &pfd) == NULL)
+					Main::ShowError(IDS_ERROR_DESCRIBE_PF, __FILE__, __LINE__);
 
-				if ((pfd.iPixelType != PFD_TYPE_RGBA) ||
-					(pfd.cRedBits < 5) || (pfd.cGreenBits < 5) || (pfd.cBlueBits < 5))
-					Main::ShowError("Bad pixel type", __FILE__, __LINE__);
+				if ((pfd.iPixelType != PFD_TYPE_RGBA) || (pfd.cRedBits < 5) || (pfd.cGreenBits < 6) || (pfd.cBlueBits < 5))
+					Main::ShowError(IDS_ERROR_BAD_PF, __FILE__, __LINE__);
 
 				HGLRC hRc = WGLCreateContext(ddraw->hDc);
 				if (hRc)
@@ -202,7 +199,6 @@ VOID OpenDraw::RenderOld()
 				frame->tSize.width = width == maxTexSize ? 1.0f : (FLOAT)width / maxTexSize;
 				frame->tSize.height = height == maxTexSize ? 1.0f : (FLOAT)height / maxTexSize;
 
-
 				GLGenTextures(1, &frame->id);
 				GLBindTexture(GL_TEXTURE_2D, frame->id);
 
@@ -237,6 +233,14 @@ VOID OpenDraw::RenderOld()
 				if (WGLSwapInterval && !config.singleThread)
 					WGLSwapInterval(0);
 
+				Pointer pointersList[2];
+				Pointer* pointer = pointersList;
+				MemoryZero(pointersList, sizeof(pointersList));
+
+				ICONINFO* iconInfo = NULL;
+				BITMAP* maskInfo = NULL;
+				BITMAP* colorInfo = NULL;
+
 				DWORD clear = TRUE;
 				do
 				{
@@ -246,24 +250,10 @@ VOID OpenDraw::RenderOld()
 						OpenDrawPalette* palette = surface->attachedPalette;
 						if (palette)
 						{
-							if (WGLSwapInterval && !config.singleThread)
+							if (isVSync != config.image.vSync && WGLSwapInterval && !config.singleThread)
 							{
-								if (!isVSync)
-								{
-									if (config.image.vSync)
-									{
-										isVSync = TRUE;
-										WGLSwapInterval(1);
-									}
-								}
-								else
-								{
-									if (!config.image.vSync)
-									{
-										isVSync = FALSE;
-										WGLSwapInterval(0);
-									}
-								}
+								isVSync = config.image.vSync;
+								WGLSwapInterval(isVSync);
 							}
 
 							if (fpsState)
@@ -300,6 +290,57 @@ VOID OpenDraw::RenderOld()
 							{
 								palette->isChanged = FALSE;
 								clear = TRUE;
+							}
+
+							pointer = &pointersList[pointer == pointersList];
+							if (config.pointerIndex && !config.pointerHidden)
+							{
+								DWORD ptrIndex = config.pointerIndex - 1;
+
+								iconInfo = &((ICONINFO*)Hooks::hookSpace->icons_info)[ptrIndex];
+								maskInfo = &((BITMAP*)Hooks::hookSpace->masks_info)[ptrIndex];
+								colorInfo = Hooks::hookSpace->colors_info && maskInfo->bmHeight == maskInfo->bmWidth
+									? &((BITMAP*)Hooks::hookSpace->colors_info)[ptrIndex]
+									: NULL;
+
+								GetCursorPos(&pointer->pos);
+								ScreenToClient(this->hWnd, &pointer->pos);
+
+								pointer->pos.x = (LONG)((FLOAT)((pointer->pos.x - this->viewport.rectangle.x) * this->width) / this->viewport.rectangle.width) - iconInfo->xHotspot;
+								pointer->pos.y = (LONG)((FLOAT)((pointer->pos.y - this->viewport.rectangle.y) * this->height) / this->viewport.rectangle.height) - iconInfo->yHotspot;
+
+								pointer->size.cx = 32;
+								pointer->size.cy = 32;
+
+								if (pointer->pos.x < 0)
+								{
+									pointer->offset.x = -pointer->pos.x;
+									pointer->size.cx += pointer->pos.x;
+									pointer->pos.x = 0;
+								}
+								else
+									pointer->offset.x = 0;
+
+								if (pointer->pos.y < 0)
+								{
+									pointer->offset.y = -pointer->pos.y;
+									pointer->size.cy += pointer->pos.y;
+									pointer->pos.y = 0;
+								}
+								else
+									pointer->offset.y = 0;
+
+								if (pointer->size.cx > 0 && pointer->size.cy > 0)
+								{
+									if (pointer->pos.x + pointer->size.cx >= *(INT*)&this->width)
+										pointer->size.cx = this->width - pointer->pos.x;
+
+									if (pointer->pos.y + pointer->size.cy >= *(INT*)&this->height)
+										pointer->size.cy = this->height - pointer->pos.y;
+
+									if (pointer->size.cx > 0 && pointer->size.cy > 0)
+										pointer->isActive = TRUE;
+								}
 							}
 
 							UpdateRect* updateClip = surface->poinetrClip;
@@ -369,6 +410,176 @@ VOID OpenDraw::RenderOld()
 										if (++updateClip == surface->endClip)
 											updateClip = surface->clipsList;
 									}
+
+									// Clear prev pointer
+									Pointer* prevPointer = &pointersList[pointer == pointersList];
+									if (prevPointer->isActive)
+									{
+										DWORD* source = surface->pixelBuffer + prevPointer->pos.y * this->width + prevPointer->pos.x;
+										DWORD* dest = (DWORD*)frameBuffer;
+
+										LONG copyHeight = prevPointer->size.cy;
+										do
+										{
+											MemoryCopy(dest, source, prevPointer->size.cx << 2);
+											source += this->width;
+											dest += prevPointer->size.cx;
+										} while (--copyHeight);
+
+										GLTexSubImage2D(GL_TEXTURE_2D, 0, prevPointer->pos.x, prevPointer->pos.y, prevPointer->size.cx, prevPointer->size.cy, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
+									}
+
+									// Update pointer
+									if (pointer->isActive)
+									{
+										DWORD* source = surface->pixelBuffer + pointer->pos.y * this->width + pointer->pos.x;
+										DWORD* dst = (DWORD*)frameBuffer;
+
+										DWORD initMask = 8 - (pointer->offset.x % 8);
+										DWORD initOffset = pointer->offset.x & (8 - 1);
+
+										INT shadowIdx = pointer->offset.y - SHADOW_OFFSET;
+										LONG copyHeight = pointer->size.cy;
+
+										if (colorInfo)
+										{
+											BYTE* sourceColor = (BYTE*)colorInfo->bmBits + pointer->offset.y * colorInfo->bmWidthBytes + pointer->offset.x;
+											BYTE* sourceMask = (BYTE*)maskInfo->bmBits + pointer->offset.y * maskInfo->bmWidthBytes;
+											BYTE* shadowMask = (BYTE*)sourceMask - SHADOW_OFFSET * maskInfo->bmWidthBytes;
+
+											do
+											{
+												DWORD* src = source;
+												BYTE* srcColor = sourceColor;
+												BYTE* srcMask = sourceMask;
+												BYTE* shadMask = shadowMask;
+
+												BYTE xorMask = *srcMask++;
+												BYTE shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
+
+												xorMask <<= initOffset;
+												shdMask <<= initOffset;
+
+												DWORD countMask = initMask;
+												LONG copyWidth = pointer->size.cx;
+												do
+												{
+													if (xorMask & 0x80)
+													{
+														DWORD color = *src;
+
+														if (!(shdMask & 0x80))
+														{
+															BYTE* cp = (BYTE*)&color;
+															DWORD cc = 3;
+															do
+																*cp++ = BYTE((FLOAT)*cp * 0.60f);
+															while (--cc);
+														}
+
+														*dst = color;
+													}
+													else
+														*dst = _byteswap_ulong(_rotl(Hooks::palEntries[*srcColor], 8));
+
+													if (--countMask)
+													{
+														xorMask <<= 1;
+														shdMask <<= 1;
+													}
+													else
+													{
+														countMask = 8;
+														xorMask = *srcMask++;
+														shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
+													}
+
+													++src;
+													++srcColor;
+													++dst;
+												} while (--copyWidth);
+
+												source += this->width;
+												sourceColor += colorInfo->bmWidthBytes;
+												sourceMask += maskInfo->bmWidthBytes;
+												shadowMask += maskInfo->bmWidthBytes;
+
+												++shadowIdx;
+											} while (--copyHeight);
+										}
+										else
+										{
+											BYTE* sourceMask = (BYTE*)maskInfo->bmBits + pointer->offset.y * maskInfo->bmWidthBytes;
+											BYTE* shadowMask = (BYTE*)sourceMask - SHADOW_OFFSET * maskInfo->bmWidthBytes;
+											BYTE* colorMask = (BYTE*)sourceMask + 32 * maskInfo->bmWidthBytes;
+
+											do
+											{
+												DWORD* src = source;
+												BYTE* clrMask = colorMask;
+												BYTE* srcMask = sourceMask;
+												BYTE* shadMask = shadowMask;
+
+												BYTE andMask = *clrMask++;
+												BYTE xorMask = *srcMask++;
+												BYTE shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
+
+												andMask <<= initOffset;
+												xorMask <<= initOffset;
+												shdMask <<= initOffset;
+
+												DWORD countMask = initMask;
+												LONG copyWidth = pointer->size.cx;
+												do
+												{
+													if (xorMask & 0x80)
+													{
+														DWORD color = *src;
+
+														if (!(shdMask & 0x80))
+														{
+															BYTE* cp = (BYTE*)&color;
+															DWORD cc = 3;
+															do
+																*cp++ = BYTE((FLOAT)*cp * 0.60f);
+															while (--cc);
+														}
+
+														*dst = color;
+													}
+													else
+														*dst = (andMask & 0x80) ? 0xFFFFFFFF : 0xFF000000;
+
+													if (--countMask)
+													{
+														andMask <<= 1;
+														xorMask <<= 1;
+														shdMask <<= 1;
+													}
+													else
+													{
+														countMask = 8;
+														andMask = *clrMask++;
+														xorMask = *srcMask++;
+														shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
+													}
+
+													++src;
+													++dst;
+												} while (--copyWidth);
+
+												source += this->width;
+
+												colorMask += maskInfo->bmWidthBytes;
+												sourceMask += maskInfo->bmWidthBytes;
+												shadowMask += maskInfo->bmWidthBytes;
+
+												++shadowIdx;
+											} while (--copyHeight);
+										}
+
+										GLTexSubImage2D(GL_TEXTURE_2D, 0, pointer->pos.x, pointer->pos.y, pointer->size.cx, pointer->size.cy, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
+									}
 								}
 								else
 								{
@@ -400,18 +611,9 @@ VOID OpenDraw::RenderOld()
 											INT clipHeight = clip.bottom - clip.top;
 											if (clipWidth > 0 && clipHeight > 0)
 											{
-												if (clipWidth & 1)
-												{
-													++clipWidth;
-													if (clip.left != rect->x)
-														--clip.left;
-													else
-														++clip.right;
-												}
-
 												DWORD* source = surface->pixelBuffer + clip.top * this->width + clip.left;
 												DWORD* dest = (DWORD*)frameBuffer;
-												DWORD copyHeight = clipHeight;
+												INT copyHeight = clipHeight;
 												do
 												{
 													MemoryCopy(dest, source, clipWidth << 2);
@@ -425,6 +627,209 @@ VOID OpenDraw::RenderOld()
 
 										if (++update == surface->endClip)
 											update = surface->clipsList;
+									}
+
+									// Clear prev pointer
+									Pointer* prevPointer = &pointersList[pointer == pointersList];
+									if (prevPointer->isActive)
+									{
+										INT ptr_right = prevPointer->pos.x + prevPointer->size.cx;
+										INT ptr_bottom = prevPointer->pos.y + prevPointer->size.cy;
+
+										RECT clip = {
+											rect->x > prevPointer->pos.x ? rect->x : prevPointer->pos.x,
+											rect->y > prevPointer->pos.y ? rect->y : prevPointer->pos.y,
+											rect_right < ptr_right ? rect_right : ptr_right,
+											rect_bottom < ptr_bottom ? rect_bottom : ptr_bottom
+										};
+
+										INT clipWidth = clip.right - clip.left;
+										INT clipHeight = clip.bottom - clip.top;
+										if (clipWidth > 0 && clipHeight > 0)
+										{
+											DWORD* source = surface->pixelBuffer + clip.top * this->width + clip.left;
+											DWORD* dest = (DWORD*)frameBuffer;
+											INT copyHeight = clipHeight;
+											do
+											{
+												MemoryCopy(dest, source, clipWidth << 2);
+												source += this->width;
+												dest += clipWidth;
+											} while (--copyHeight);
+
+											GLTexSubImage2D(GL_TEXTURE_2D, 0, clip.left - rect->x, clip.top - rect->y, clipWidth, clipHeight, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
+										}
+									}
+
+									// Update pointer
+									if (pointer->isActive)
+									{
+										INT ptr_right = pointer->pos.x + pointer->size.cx;
+										INT ptr_bottom = pointer->pos.y + pointer->size.cy;
+
+										RECT clip = {
+											rect->x > pointer->pos.x ? rect->x : pointer->pos.x,
+											rect->y > pointer->pos.y ? rect->y : pointer->pos.y,
+											rect_right < ptr_right ? rect_right : ptr_right,
+											rect_bottom < ptr_bottom ? rect_bottom : ptr_bottom
+										};
+
+										INT clipWidth = clip.right - clip.left;
+										INT clipHeight = clip.bottom - clip.top;
+										if (clipWidth > 0 && clipHeight > 0)
+										{
+											DWORD* source = surface->pixelBuffer + clip.top * this->width + clip.left;
+											DWORD* dst = (DWORD*)frameBuffer;
+
+											POINT offset = {
+												clip.left - pointer->pos.x,
+												clip.top - pointer->pos.y
+											};
+
+											DWORD initMask = 8 - (offset.x % 8);
+											DWORD initOffset = offset.x & (8 - 1);
+
+											INT shadowIdx = offset.y - SHADOW_OFFSET;
+											INT copyHeight = clipHeight;
+											if (colorInfo)
+											{
+												BYTE* sourceColor = (BYTE*)colorInfo->bmBits + offset.y * colorInfo->bmWidthBytes + offset.x;
+												BYTE* sourceMask = (BYTE*)maskInfo->bmBits + offset.y * maskInfo->bmWidthBytes + (offset.x / 8);
+												BYTE* shadowMask = (BYTE*)sourceMask - SHADOW_OFFSET * maskInfo->bmWidthBytes;
+
+												do
+												{
+													DWORD* src = source;
+													BYTE* srcColor = sourceColor;
+													BYTE* srcMask = sourceMask;
+													BYTE* shadMask = shadowMask;
+
+													BYTE xorMask = *srcMask++;
+													BYTE shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
+
+													xorMask <<= initOffset;
+													shdMask <<= initOffset;
+
+													DWORD countMask = initMask;
+													LONG copyWidth = clipWidth;
+													do
+													{
+														if (xorMask & 0x80)
+														{
+															DWORD color = *src;
+
+															if (!(shdMask & 0x80))
+															{
+																BYTE* cp = (BYTE*)&color;
+																DWORD cc = 3;
+																do
+																	*cp++ = BYTE((FLOAT)*cp * 0.60f);
+																while (--cc);
+															}
+
+															*dst = color;
+														}
+														else
+															*dst = _byteswap_ulong(_rotl(Hooks::palEntries[*srcColor], 8));
+
+														if (--countMask)
+														{
+															xorMask <<= 1;
+															shdMask <<= 1;
+														}
+														else
+														{
+															countMask = 8;
+															xorMask = *srcMask++;
+															shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
+														}
+
+														++src;
+														++srcColor;
+														++dst;
+													} while (--copyWidth);
+
+													source += this->width;
+													sourceColor += colorInfo->bmWidthBytes;
+													sourceMask += maskInfo->bmWidthBytes;
+													shadowMask += maskInfo->bmWidthBytes;
+
+													++shadowIdx;
+												} while (--copyHeight);
+											}
+											else
+											{
+												BYTE* sourceMask = (BYTE*)maskInfo->bmBits + offset.y * maskInfo->bmWidthBytes + (offset.x / 8);
+												BYTE* shadowMask = (BYTE*)sourceMask - SHADOW_OFFSET * maskInfo->bmWidthBytes;
+												BYTE* colorMask = (BYTE*)sourceMask + 32 * maskInfo->bmWidthBytes;
+
+												do
+												{
+													DWORD* src = source;
+													BYTE* clrMask = colorMask;
+													BYTE* srcMask = sourceMask;
+													BYTE* shadMask = shadowMask;
+
+													BYTE andMask = *clrMask++;
+													BYTE xorMask = *srcMask++;
+													BYTE shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
+
+													andMask <<= initOffset;
+													xorMask <<= initOffset;
+													shdMask <<= initOffset;
+
+													DWORD countMask = initMask;
+													LONG copyWidth = clipWidth;
+													do
+													{
+														if (xorMask & 0x80)
+														{
+															DWORD color = *src;
+
+															if (!(shdMask & 0x80))
+															{
+																BYTE* cp = (BYTE*)&color;
+																DWORD cc = 3;
+																do
+																	*cp++ = BYTE((FLOAT)*cp * 0.60f);
+																while (--cc);
+															}
+
+															*dst = color;
+														}
+														else
+															*dst = (andMask & 0x80) ? 0xFFFFFFFF : 0xFF000000;
+
+														if (--countMask)
+														{
+															andMask <<= 1;
+															xorMask <<= 1;
+															shdMask <<= 1;
+														}
+														else
+														{
+															countMask = 8;
+															andMask = *clrMask++;
+															xorMask = *srcMask++;
+															shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
+														}
+
+														++src;
+														++dst;
+													} while (--copyWidth);
+
+													source += this->width;
+
+													colorMask += maskInfo->bmWidthBytes;
+													sourceMask += maskInfo->bmWidthBytes;
+													shadowMask += maskInfo->bmWidthBytes;
+
+													++shadowIdx;
+												} while (--copyHeight);
+											}
+
+											GLTexSubImage2D(GL_TEXTURE_2D, 0, clip.left - rect->x, clip.top - rect->y, clipWidth, clipHeight, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
+										}
 									}
 								}
 
@@ -447,11 +852,9 @@ VOID OpenDraw::RenderOld()
 
 										for (DWORD y = 0; y < FPS_HEIGHT; ++y)
 										{
-											DWORD* idx = surface->pixelBuffer + (FPS_Y + y) * this->width +
-												FPS_X + FPS_WIDTH * (dcount - 1);
+											DWORD* idx = surface->pixelBuffer + (FPS_Y + y) * this->width + FPS_X + FPS_WIDTH * (dcount - 1);
 
-											DWORD* pix = (DWORD*)frameBuffer + y * FPS_WIDTH * 4 +
-												FPS_WIDTH * (dcount - 1);
+											DWORD* pix = (DWORD*)frameBuffer + y * FPS_WIDTH * 4 + FPS_WIDTH * (dcount - 1);
 
 											WORD check = *lpDig++;
 											DWORD width = FPS_WIDTH;
@@ -471,11 +874,9 @@ VOID OpenDraw::RenderOld()
 									{
 										for (DWORD y = 0; y < FPS_HEIGHT; ++y)
 										{
-											DWORD* idx = surface->pixelBuffer + (FPS_Y + y) * this->width +
-												FPS_X + FPS_WIDTH * (dcount - 1);
+											DWORD* idx = surface->pixelBuffer + (FPS_Y + y) * this->width + FPS_X + FPS_WIDTH * (dcount - 1);
 
-											DWORD* pix = (DWORD*)frameBuffer + y * FPS_WIDTH * 4 +
-												FPS_WIDTH * (dcount - 1);
+											DWORD* pix = (DWORD*)frameBuffer + y * FPS_WIDTH * 4 + FPS_WIDTH * (dcount - 1);
 
 											DWORD width = FPS_WIDTH;
 											do
@@ -502,11 +903,12 @@ VOID OpenDraw::RenderOld()
 
 									GLTexCoord2f(0.0f, frame->tSize.height);
 									GLVertex2s(frame->rect.x, frame->vSize.height);
-
 								}
 								GLEnd();
 								++frame;
 							}
+
+							pointersList[pointer == pointersList].isActive = FALSE;
 
 							if (this->isTakeSnapshot)
 							{
@@ -584,7 +986,8 @@ VOID OpenDraw::RenderMid()
 
 	DWORD maxSize = this->width > this->height ? this->width : this->height;
 	DWORD maxTexSize = 1;
-	while (maxTexSize < maxSize) maxTexSize <<= 1;
+	while (maxTexSize < maxSize)
+		maxTexSize <<= 1;
 	FLOAT texWidth = this->width == maxTexSize ? 1.0f : (FLOAT)this->width / maxTexSize;
 	FLOAT texHeight = this->height == maxTexSize ? 1.0f : (FLOAT)this->height / maxTexSize;
 
@@ -604,7 +1007,8 @@ VOID OpenDraw::RenderMid()
 		{ -1.0f, 1.0f, -1.0f, 1.0f }
 	};
 
-	struct {
+	struct
+	{
 		ShaderProgram linear;
 		ShaderProgram cubic;
 	} shaders = {
@@ -656,6 +1060,14 @@ VOID OpenDraw::RenderMid()
 							if (WGLSwapInterval && !config.singleThread)
 								WGLSwapInterval(0);
 
+							Pointer pointersList[2];
+							Pointer* pointer = pointersList;
+							MemoryZero(pointersList, sizeof(pointersList));
+
+							ICONINFO* iconInfo = NULL;
+							BITMAP* maskInfo = NULL;
+							BITMAP* colorInfo = NULL;
+
 							DWORD clear = TRUE;
 							do
 							{
@@ -665,24 +1077,10 @@ VOID OpenDraw::RenderMid()
 									OpenDrawPalette* palette = surface->attachedPalette;
 									if (palette)
 									{
-										if (WGLSwapInterval && !config.singleThread)
+										if (isVSync != config.image.vSync && WGLSwapInterval && !config.singleThread)
 										{
-											if (!isVSync)
-											{
-												if (config.image.vSync)
-												{
-													isVSync = TRUE;
-													WGLSwapInterval(1);
-												}
-											}
-											else
-											{
-												if (!config.image.vSync)
-												{
-													isVSync = FALSE;
-													WGLSwapInterval(0);
-												}
-											}
+											isVSync = config.image.vSync;
+											WGLSwapInterval(isVSync);
 										}
 
 										if (this->isStateChanged)
@@ -797,6 +1195,227 @@ VOID OpenDraw::RenderMid()
 													updateClip = surface->clipsList;
 											}
 
+											// Clear prev pointer
+											if (pointer->isActive)
+											{
+												pointer->isActive = FALSE;
+
+												DWORD* source = surface->pixelBuffer + pointer->pos.y * this->width + pointer->pos.x;
+												DWORD* dest = (DWORD*)frameBuffer;
+
+												LONG copyHeight = pointer->size.cy;
+												do
+												{
+													MemoryCopy(dest, source, pointer->size.cx << 2);
+													source += this->width;
+													dest += pointer->size.cx;
+												} while (--copyHeight);
+
+												GLTexSubImage2D(GL_TEXTURE_2D, 0, pointer->pos.x, pointer->pos.y, pointer->size.cx, pointer->size.cy, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
+											}
+
+											// Update pointer
+											pointer = &pointersList[pointer == pointersList];
+											if (config.pointerIndex && !config.pointerHidden)
+											{
+												DWORD ptrIndex = config.pointerIndex - 1;
+
+												iconInfo = &((ICONINFO*)Hooks::hookSpace->icons_info)[ptrIndex];
+												maskInfo = &((BITMAP*)Hooks::hookSpace->masks_info)[ptrIndex];
+												colorInfo = Hooks::hookSpace->colors_info && maskInfo->bmHeight == maskInfo->bmWidth
+													? &((BITMAP*)Hooks::hookSpace->colors_info)[ptrIndex]
+													: NULL;
+
+												GetCursorPos(&pointer->pos);
+												ScreenToClient(this->hWnd, &pointer->pos);
+
+												pointer->pos.x = (LONG)((FLOAT)((pointer->pos.x - this->viewport.rectangle.x) * this->width) / this->viewport.rectangle.width) - iconInfo->xHotspot;
+												pointer->pos.y = (LONG)((FLOAT)((pointer->pos.y - this->viewport.rectangle.y) * this->height) / this->viewport.rectangle.height) - iconInfo->yHotspot;
+
+												pointer->size.cx = 32;
+												pointer->size.cy = 32;
+
+												if (pointer->pos.x < 0)
+												{
+													pointer->offset.x = -pointer->pos.x;
+													pointer->size.cx += pointer->pos.x;
+													pointer->pos.x = 0;
+												}
+												else
+													pointer->offset.x = 0;
+
+												if (pointer->pos.y < 0)
+												{
+													pointer->offset.y = -pointer->pos.y;
+													pointer->size.cy += pointer->pos.y;
+													pointer->pos.y = 0;
+												}
+												else
+													pointer->offset.y = 0;
+
+												if (pointer->size.cx > 0 && pointer->size.cy > 0)
+												{
+													if (pointer->pos.x + pointer->size.cx >= *(INT*)&this->width)
+														pointer->size.cx = this->width - pointer->pos.x;
+
+													if (pointer->pos.y + pointer->size.cy >= *(INT*)&this->height)
+														pointer->size.cy = this->height - pointer->pos.y;
+
+													if (pointer->size.cx > 0 && pointer->size.cy > 0)
+													{
+														pointer->isActive = TRUE;
+
+														DWORD* source = surface->pixelBuffer + pointer->pos.y * this->width + pointer->pos.x;
+														DWORD* dst = (DWORD*)frameBuffer;
+
+														DWORD initMask = 8 - (pointer->offset.x % 8);
+														DWORD initOffset = pointer->offset.x & (8 - 1);
+
+														INT shadowIdx = pointer->offset.y - SHADOW_OFFSET;
+														LONG copyHeight = pointer->size.cy;
+
+														if (colorInfo)
+														{
+															BYTE* sourceColor = (BYTE*)colorInfo->bmBits + pointer->offset.y * colorInfo->bmWidthBytes + pointer->offset.x;
+															BYTE* sourceMask = (BYTE*)maskInfo->bmBits + pointer->offset.y * maskInfo->bmWidthBytes + (pointer->offset.x / 8);
+															BYTE* shadowMask = (BYTE*)sourceMask - SHADOW_OFFSET * maskInfo->bmWidthBytes;
+
+															do
+															{
+																DWORD* src = source;
+																BYTE* srcColor = sourceColor;
+																BYTE* srcMask = sourceMask;
+																BYTE* shadMask = shadowMask;
+
+																BYTE xorMask = *srcMask++;
+																BYTE shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
+
+																xorMask <<= initOffset;
+																shdMask <<= initOffset;
+
+																DWORD countMask = initMask;
+																LONG copyWidth = pointer->size.cx;
+																do
+																{
+																	if (xorMask & 0x80)
+																	{
+																		DWORD color = *src;
+
+																		if (!(shdMask & 0x80))
+																		{
+																			BYTE* cp = (BYTE*)&color;
+																			DWORD cc = 3;
+																			do
+																				*cp++ = BYTE((FLOAT)*cp * 0.60f);
+																			while (--cc);
+																		}
+
+																		*dst = color;
+																	}
+																	else
+																		*dst = _byteswap_ulong(_rotl(Hooks::palEntries[*srcColor], 8));
+
+																	if (--countMask)
+																	{
+																		xorMask <<= 1;
+																		shdMask <<= 1;
+																	}
+																	else
+																	{
+																		countMask = 8;
+																		xorMask = *srcMask++;
+																		shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
+																	}
+
+																	++src;
+																	++srcColor;
+																	++dst;
+																} while (--copyWidth);
+
+																source += this->width;
+																sourceColor += colorInfo->bmWidthBytes;
+																sourceMask += maskInfo->bmWidthBytes;
+																shadowMask += maskInfo->bmWidthBytes;
+
+																++shadowIdx;
+															} while (--copyHeight);
+														}
+														else
+														{
+															BYTE* sourceMask = (BYTE*)maskInfo->bmBits + pointer->offset.y * maskInfo->bmWidthBytes + (pointer->offset.x / 8);
+															BYTE* shadowMask = (BYTE*)sourceMask - SHADOW_OFFSET * maskInfo->bmWidthBytes;
+															BYTE* colorMask = (BYTE*)sourceMask + 32 * maskInfo->bmWidthBytes;
+
+															do
+															{
+																DWORD* src = source;
+																BYTE* clrMask = colorMask;
+																BYTE* srcMask = sourceMask;
+																BYTE* shadMask = shadowMask;
+
+																BYTE andMask = *clrMask++;
+																BYTE xorMask = *srcMask++;
+																BYTE shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
+
+																andMask <<= initOffset;
+																xorMask <<= initOffset;
+																shdMask <<= initOffset;
+
+																DWORD countMask = initMask;
+																LONG copyWidth = pointer->size.cx;
+																do
+																{
+																	if (xorMask & 0x80)
+																	{
+																		DWORD color = *src;
+
+																		if (!(shdMask & 0x80))
+																		{
+																			BYTE* cp = (BYTE*)&color;
+																			DWORD cc = 3;
+																			do
+																				*cp++ = BYTE((FLOAT)*cp * 0.60f);
+																			while (--cc);
+																		}
+
+																		*dst = color;
+																	}
+																	else
+																		*dst = (andMask & 0x80) ? 0xFFFFFFFF : 0xFF000000;
+
+																	if (--countMask)
+																	{
+																		andMask <<= 1;
+																		xorMask <<= 1;
+																		shdMask <<= 1;
+																	}
+																	else
+																	{
+																		countMask = 8;
+																		andMask = *clrMask++;
+																		xorMask = *srcMask++;
+																		shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
+																	}
+
+																	++src;
+																	++dst;
+																} while (--copyWidth);
+
+																source += this->width;
+
+																colorMask += maskInfo->bmWidthBytes;
+																sourceMask += maskInfo->bmWidthBytes;
+																shadowMask += maskInfo->bmWidthBytes;
+
+																++shadowIdx;
+															} while (--copyHeight);
+														}
+
+														GLTexSubImage2D(GL_TEXTURE_2D, 0, pointer->pos.x, pointer->pos.y, pointer->size.cx, pointer->size.cy, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
+													}
+												}
+											}
+
 											// Update FPS
 											if (fpsState && !isTakeSnapshot)
 											{
@@ -817,11 +1436,9 @@ VOID OpenDraw::RenderMid()
 
 													for (DWORD y = 0; y < FPS_HEIGHT; ++y)
 													{
-														DWORD* idx = surface->pixelBuffer + (FPS_Y + y) * this->width +
-															FPS_X + FPS_WIDTH * (dcount - 1);
+														DWORD* idx = surface->pixelBuffer + (FPS_Y + y) * this->width + FPS_X + FPS_WIDTH * (dcount - 1);
 
-														DWORD* pix = (DWORD*)frameBuffer + y * FPS_WIDTH * 4 +
-															FPS_WIDTH * (dcount - 1);
+														DWORD* pix = (DWORD*)frameBuffer + y * FPS_WIDTH * 4 + FPS_WIDTH * (dcount - 1);
 
 														WORD check = *lpDig++;
 														DWORD width = FPS_WIDTH;
@@ -841,11 +1458,9 @@ VOID OpenDraw::RenderMid()
 												{
 													for (DWORD y = 0; y < FPS_HEIGHT; ++y)
 													{
-														DWORD* idx = surface->pixelBuffer + (FPS_Y + y) * this->width +
-															FPS_X + FPS_WIDTH * (dcount - 1);
+														DWORD* idx = surface->pixelBuffer + (FPS_Y + y) * this->width + FPS_X + FPS_WIDTH * (dcount - 1);
 
-														DWORD* pix = (DWORD*)frameBuffer + y * FPS_WIDTH * 4 +
-															FPS_WIDTH * (dcount - 1);
+														DWORD* pix = (DWORD*)frameBuffer + y * FPS_WIDTH * 4 + FPS_WIDTH * (dcount - 1);
 
 														DWORD width = FPS_WIDTH;
 														do
@@ -941,7 +1556,8 @@ VOID OpenDraw::RenderNew()
 {
 	DWORD maxSize = this->width > this->height ? this->width : this->height;
 	DWORD maxTexSize = 1;
-	while (maxTexSize < maxSize) maxTexSize <<= 1;
+	while (maxTexSize < maxSize)
+		maxTexSize <<= 1;
 	FLOAT texWidth = this->width == maxTexSize ? 1.0f : (FLOAT)this->width / maxTexSize;
 	FLOAT texHeight = this->height == maxTexSize ? 1.0f : (FLOAT)this->height / maxTexSize;
 
@@ -965,7 +1581,8 @@ VOID OpenDraw::RenderNew()
 		{ -1.0f, 1.0f, -1.0f, 1.0f }
 	};
 
-	struct {
+	struct
+	{
 		ShaderProgram stencil;
 		ShaderProgram linear;
 		ShaderProgram cubic;
@@ -1054,6 +1671,14 @@ VOID OpenDraw::RenderNew()
 											if (WGLSwapInterval && !config.singleThread)
 												WGLSwapInterval(0);
 
+											Pointer pointersList[2];
+											Pointer* pointer = pointersList;
+											MemoryZero(pointersList, sizeof(pointersList));
+
+											ICONINFO* iconInfo = NULL;
+											BITMAP* maskInfo = NULL;
+											BITMAP* colorInfo = NULL;
+
 											DWORD clear = TRUE;
 											do
 											{
@@ -1063,24 +1688,10 @@ VOID OpenDraw::RenderNew()
 													OpenDrawPalette* palette = surface->attachedPalette;
 													if (palette)
 													{
-														if (WGLSwapInterval && !config.singleThread)
+														if (isVSync != config.image.vSync && WGLSwapInterval && !config.singleThread)
 														{
-															if (!isVSync)
-															{
-																if (config.image.vSync)
-																{
-																	isVSync = TRUE;
-																	WGLSwapInterval(1);
-																}
-															}
-															else
-															{
-																if (!config.image.vSync)
-																{
-																	isVSync = FALSE;
-																	WGLSwapInterval(0);
-																}
-															}
+															isVSync = config.image.vSync;
+															WGLSwapInterval(isVSync);
 														}
 
 														if (this->isStateChanged)
@@ -1104,13 +1715,63 @@ VOID OpenDraw::RenderNew()
 														if (isTakeSnapshot)
 															this->isTakeSnapshot = FALSE;
 
+														pointer = &pointersList[pointer == pointersList];
+														if (config.pointerIndex && !config.pointerHidden && this->viewport.rectangle.width && this->viewport.rectangle.height)
+														{
+															DWORD ptrIndex = config.pointerIndex - 1;
+
+															iconInfo = &((ICONINFO*)Hooks::hookSpace->icons_info)[ptrIndex];
+															maskInfo = &((BITMAP*)Hooks::hookSpace->masks_info)[ptrIndex];
+															colorInfo = Hooks::hookSpace->colors_info && maskInfo->bmHeight == maskInfo->bmWidth
+																? &((BITMAP*)Hooks::hookSpace->colors_info)[ptrIndex]
+																: NULL;
+
+															GetCursorPos(&pointer->pos);
+															ScreenToClient(this->hWnd, &pointer->pos);
+
+															pointer->pos.x = (LONG)((FLOAT)((pointer->pos.x - this->viewport.rectangle.x) * this->width) / this->viewport.rectangle.width) - iconInfo->xHotspot;
+															pointer->pos.y = (LONG)((FLOAT)((pointer->pos.y - this->viewport.rectangle.y) * this->height) / this->viewport.rectangle.height) - iconInfo->yHotspot;
+
+															pointer->size.cx = 32;
+															pointer->size.cy = 32;
+
+															if (pointer->pos.x < 0)
+															{
+																pointer->offset.x = -pointer->pos.x;
+																pointer->size.cx += pointer->pos.x;
+																pointer->pos.x = 0;
+															}
+															else
+																pointer->offset.x = 0;
+
+															if (pointer->pos.y < 0)
+															{
+																pointer->offset.y = -pointer->pos.y;
+																pointer->size.cy += pointer->pos.y;
+																pointer->pos.y = 0;
+															}
+															else
+																pointer->offset.y = 0;
+
+															if (pointer->size.cx > 0 && pointer->size.cy > 0)
+															{
+																if (pointer->pos.x + pointer->size.cx >= *(INT*)&this->width)
+																	pointer->size.cx = this->width - pointer->pos.x;
+
+																if (pointer->pos.y + pointer->size.cy >= *(INT*)&this->height)
+																	pointer->size.cy = this->height - pointer->pos.y;
+
+																if (pointer->size.cx > 0 && pointer->size.cy > 0)
+																	pointer->isActive = TRUE;
+															}
+														}
+
 														UpdateRect* updateClip = surface->poinetrClip;
 														UpdateRect* finClip = surface->currentClip;
 														surface->poinetrClip = finClip;
 
 														ImageFilter frameFilter = config.image.filter;
-														if (frameFilter == FilterXRBZ || frameFilter == FilterScaleHQ ||
-															frameFilter == FilterXSal || frameFilter == FilterEagle || frameFilter == FilterScaleNx)
+														if (frameFilter == FilterXRBZ || frameFilter == FilterScaleHQ || frameFilter == FilterXSal || frameFilter == FilterEagle || frameFilter == FilterScaleNx)
 														{
 															GLBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboId);
 
@@ -1183,7 +1844,6 @@ VOID OpenDraw::RenderNew()
 																	filterProgram = &shaders.eagle_2x;
 																	filterProgram2 = config.image.eagle.type ? &shaders.cubic : &shaders.linear;
 																	break;
-
 																}
 
 																UseShaderProgram(filterProgram, texSize);
@@ -1219,25 +1879,31 @@ VOID OpenDraw::RenderNew()
 
 																	if (!stencil)
 																	{
-																		DWORD size = (STENCIL_COUNT + 1) * sizeof(POINTFLOAT) * STENCIL_POINTS;
-																		stencil = (POINTFLOAT*)MemoryAlloc(size); // +1 for FPS counter
+																		DWORD size = (STENCIL_COUNT + 3) * sizeof(POINTFLOAT) * STENCIL_POINTS;
+																		stencil = (POINTFLOAT*)MemoryAlloc(size); // +1 for FPS counter +2 for cursor
 
 																		// FPS points
 																		{
 																			POINTFLOAT* point = stencil;
 
-																			point->x = (FLOAT)(FPS_X);  point->y = (FLOAT)(FPS_Y);
+																			point->x = (FLOAT)(FPS_X);
+																			point->y = (FLOAT)(FPS_Y);
 																			++point;
-																			point->x = (FLOAT)(FPS_X + FPS_WIDTH * 4);  point->y = (FLOAT)(FPS_Y);
+																			point->x = (FLOAT)(FPS_X + FPS_WIDTH * 4);
+																			point->y = (FLOAT)(FPS_Y);
 																			++point;
-																			point->x = (FLOAT)(FPS_X + FPS_WIDTH * 4);  point->y = (FLOAT)(FPS_Y + FPS_HEIGHT);
+																			point->x = (FLOAT)(FPS_X + FPS_WIDTH * 4);
+																			point->y = (FLOAT)(FPS_Y + FPS_HEIGHT);
 																			++point;
 
-																			point->x = (FLOAT)(FPS_X);  point->y = (FLOAT)(FPS_Y);
+																			point->x = (FLOAT)(FPS_X);
+																			point->y = (FLOAT)(FPS_Y);
 																			++point;
-																			point->x = (FLOAT)(FPS_X + FPS_WIDTH * 4);  point->y = (FLOAT)(FPS_Y + FPS_HEIGHT);
+																			point->x = (FLOAT)(FPS_X + FPS_WIDTH * 4);
+																			point->y = (FLOAT)(FPS_Y + FPS_HEIGHT);
 																			++point;
-																			point->x = (FLOAT)(FPS_X);  point->y = (FLOAT)(FPS_Y + FPS_HEIGHT);
+																			point->x = (FLOAT)(FPS_X);
+																			point->y = (FLOAT)(FPS_Y + FPS_HEIGHT);
 																		}
 
 																		UseShaderProgram(&shaders.stencil, 0);
@@ -1327,18 +1993,29 @@ VOID OpenDraw::RenderNew()
 																			{
 																				if (clip->isActive)
 																				{
-																					point->x = (FLOAT)clip->rect.left;  point->y = (FLOAT)clip->rect.top;
+																					FLOAT left = (FLOAT)clip->rect.left;
+																					FLOAT top = (FLOAT)clip->rect.top;
+																					FLOAT right = (FLOAT)clip->rect.right;
+																					FLOAT bottom = (FLOAT)clip->rect.bottom;
+
+																					point->x = left;
+																					point->y = top;
 																					++point;
-																					point->x = (FLOAT)clip->rect.right;  point->y = (FLOAT)clip->rect.top;
+																					point->x = right;
+																					point->y = top;
 																					++point;
-																					point->x = (FLOAT)clip->rect.right;  point->y = (FLOAT)clip->rect.bottom;
+																					point->x = right;
+																					point->y = bottom;
 																					++point;
 
-																					point->x = (FLOAT)clip->rect.left;  point->y = (FLOAT)clip->rect.top;
+																					point->x = left;
+																					point->y = top;
 																					++point;
-																					point->x = (FLOAT)clip->rect.right;  point->y = (FLOAT)clip->rect.bottom;
+																					point->x = right;
+																					point->y = bottom;
 																					++point;
-																					point->x = (FLOAT)clip->rect.left;  point->y = (FLOAT)clip->rect.bottom;
+																					point->x = left;
+																					point->y = bottom;
 																					++point;
 																				}
 
@@ -1346,7 +2023,42 @@ VOID OpenDraw::RenderNew()
 																					clip = surface->clipsList;
 																			}
 
-																			DWORD count = point - start;
+																			Pointer* ptr = pointersList;
+																			DWORD count = sizeof(pointersList) / sizeof(Pointer);
+																			do
+																			{
+																				if (ptr->isActive)
+																				{
+																					FLOAT left = (FLOAT)ptr->pos.x;
+																					FLOAT top = (FLOAT)ptr->pos.y;
+																					FLOAT right = (FLOAT)(ptr->pos.x + ptr->size.cx);
+																					FLOAT bottom = (FLOAT)(ptr->pos.y + ptr->size.cy);
+
+																					point->x = left;
+																					point->y = top;
+																					++point;
+																					point->x = right;
+																					point->y = top;
+																					++point;
+																					point->x = right;
+																					point->y = bottom;
+																					++point;
+
+																					point->x = left;
+																					point->y = top;
+																					++point;
+																					point->x = right;
+																					point->y = bottom;
+																					++point;
+																					point->x = left;
+																					point->y = bottom;
+																					++point;
+																				}
+
+																				++ptr;
+																			} while (--count);
+
+																			count = point - start;
 																			if (count)
 																				GLBufferSubData(GL_ARRAY_BUFFER, STENCIL_POINTS * sizeof(POINTFLOAT), count * sizeof(POINTFLOAT), start);
 
@@ -1465,6 +2177,178 @@ VOID OpenDraw::RenderNew()
 																	updateClip = surface->clipsList;
 															}
 
+															// Clear prev pointer
+															Pointer* prevPointer = &pointersList[pointer == pointersList];
+															if (prevPointer->isActive)
+															{
+																prevPointer->isActive = FALSE;
+
+																DWORD* source = surface->pixelBuffer + prevPointer->pos.y * this->width + prevPointer->pos.x;
+																DWORD* dest = (DWORD*)frameBuffer;
+
+																LONG copyHeight = prevPointer->size.cy;
+																do
+																{
+																	MemoryCopy(dest, source, prevPointer->size.cx << 2);
+																	source += this->width;
+																	dest += prevPointer->size.cx;
+																} while (--copyHeight);
+
+																GLTexSubImage2D(GL_TEXTURE_2D, 0, prevPointer->pos.x, prevPointer->pos.y, prevPointer->size.cx, prevPointer->size.cy, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
+															}
+
+															// Update pointer
+															if (pointer->isActive)
+															{
+																DWORD* source = surface->pixelBuffer + pointer->pos.y * this->width + pointer->pos.x;
+																DWORD* dst = (DWORD*)frameBuffer;
+
+																DWORD initMask = 8 - (pointer->offset.x % 8);
+																DWORD initOffset = pointer->offset.x & (8 - 1);
+
+																INT shadowIdx = pointer->offset.y - SHADOW_OFFSET;
+																LONG copyHeight = pointer->size.cy;
+
+																if (colorInfo)
+																{
+																	BYTE* sourceColor = (BYTE*)colorInfo->bmBits + pointer->offset.y * colorInfo->bmWidthBytes + pointer->offset.x;
+																	BYTE* sourceMask = (BYTE*)maskInfo->bmBits + pointer->offset.y * maskInfo->bmWidthBytes;
+																	BYTE* shadowMask = (BYTE*)sourceMask - SHADOW_OFFSET * maskInfo->bmWidthBytes;
+
+																	do
+																	{
+																		DWORD* src = source;
+																		BYTE* srcColor = sourceColor;
+																		BYTE* srcMask = sourceMask;
+																		BYTE* shadMask = shadowMask;
+
+																		BYTE xorMask = *srcMask++;
+																		BYTE shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
+
+																		xorMask <<= initOffset;
+																		shdMask <<= initOffset;
+
+																		DWORD countMask = initMask;
+																		LONG copyWidth = pointer->size.cx;
+																		do
+																		{
+																			if (xorMask & 0x80)
+																			{
+																				DWORD color = *src;
+
+																				if (!(shdMask & 0x80))
+																				{
+																					BYTE* cp = (BYTE*)&color;
+																					DWORD cc = 3;
+																					do
+																						*cp++ = BYTE((FLOAT)*cp * 0.60f);
+																					while (--cc);
+																				}
+
+																				*dst = color;
+																			}
+																			else
+																				*dst = _byteswap_ulong(_rotl(Hooks::palEntries[*srcColor], 8));
+
+																			if (--countMask)
+																			{
+																				xorMask <<= 1;
+																				shdMask <<= 1;
+																			}
+																			else
+																			{
+																				countMask = 8;
+																				xorMask = *srcMask++;
+																				shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
+																			}
+
+																			++src;
+																			++srcColor;
+																			++dst;
+																		} while (--copyWidth);
+
+																		source += this->width;
+																		sourceColor += colorInfo->bmWidthBytes;
+																		sourceMask += maskInfo->bmWidthBytes;
+																		shadowMask += maskInfo->bmWidthBytes;
+
+																		++shadowIdx;
+																	} while (--copyHeight);
+																}
+																else
+																{
+																	BYTE* sourceMask = (BYTE*)maskInfo->bmBits + pointer->offset.y * maskInfo->bmWidthBytes + (pointer->offset.x / 8);
+																	BYTE* shadowMask = (BYTE*)sourceMask - SHADOW_OFFSET * maskInfo->bmWidthBytes;
+																	BYTE* colorMask = (BYTE*)sourceMask + 32 * maskInfo->bmWidthBytes;
+
+																	do
+																	{
+																		DWORD* src = source;
+																		BYTE* clrMask = colorMask;
+																		BYTE* srcMask = sourceMask;
+																		BYTE* shadMask = shadowMask;
+
+																		BYTE andMask = *clrMask++;
+																		BYTE xorMask = *srcMask++;
+																		BYTE shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
+
+																		andMask <<= initOffset;
+																		xorMask <<= initOffset;
+																		shdMask <<= initOffset;
+
+																		DWORD countMask = initMask;
+																		LONG copyWidth = pointer->size.cx;
+																		do
+																		{
+																			if (xorMask & 0x80)
+																			{
+																				DWORD color = *src;
+
+																				if (!(shdMask & 0x80))
+																				{
+																					BYTE* cp = (BYTE*)&color;
+																					DWORD cc = 3;
+																					do
+																						*cp++ = BYTE((FLOAT)*cp * 0.60f);
+																					while (--cc);
+																				}
+
+																				*dst = color;
+																			}
+																			else
+																				*dst = (andMask & 0x80) ? 0xFFFFFFFF : 0xFF000000;
+
+																			if (--countMask)
+																			{
+																				andMask <<= 1;
+																				xorMask <<= 1;
+																				shdMask <<= 1;
+																			}
+																			else
+																			{
+																				countMask = 8;
+																				andMask = *clrMask++;
+																				xorMask = *srcMask++;
+																				shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
+																			}
+
+																			++src;
+																			++dst;
+																		} while (--copyWidth);
+
+																		source += this->width;
+
+																		colorMask += maskInfo->bmWidthBytes;
+																		sourceMask += maskInfo->bmWidthBytes;
+																		shadowMask += maskInfo->bmWidthBytes;
+
+																		++shadowIdx;
+																	} while (--copyHeight);
+																}
+
+																GLTexSubImage2D(GL_TEXTURE_2D, 0, pointer->pos.x, pointer->pos.y, pointer->size.cx, pointer->size.cy, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
+															}
+
 															// Update FPS
 															if (fpsState && !isTakeSnapshot)
 															{
@@ -1485,11 +2369,9 @@ VOID OpenDraw::RenderNew()
 
 																	for (DWORD y = 0; y < FPS_HEIGHT; ++y)
 																	{
-																		DWORD* idx = surface->pixelBuffer + (FPS_Y + y) * this->width +
-																			FPS_X + FPS_WIDTH * (dcount - 1);
+																		DWORD* idx = surface->pixelBuffer + (FPS_Y + y) * this->width + FPS_X + FPS_WIDTH * (dcount - 1);
 
-																		DWORD* pix = (DWORD*)frameBuffer + y * FPS_WIDTH * 4 +
-																			FPS_WIDTH * (dcount - 1);
+																		DWORD* pix = (DWORD*)frameBuffer + y * FPS_WIDTH * 4 + FPS_WIDTH * (dcount - 1);
 
 																		WORD check = *lpDig++;
 																		DWORD width = FPS_WIDTH;
@@ -1509,11 +2391,9 @@ VOID OpenDraw::RenderNew()
 																{
 																	for (DWORD y = 0; y < FPS_HEIGHT; ++y)
 																	{
-																		DWORD* idx = surface->pixelBuffer + (FPS_Y + y) * this->width +
-																			FPS_X + FPS_WIDTH * (dcount - 1);
+																		DWORD* idx = surface->pixelBuffer + (FPS_Y + y) * this->width + FPS_X + FPS_WIDTH * (dcount - 1);
 
-																		DWORD* pix = (DWORD*)frameBuffer + y * FPS_WIDTH * 4 +
-																			FPS_WIDTH * (dcount - 1);
+																		DWORD* pix = (DWORD*)frameBuffer + y * FPS_WIDTH * 4 + FPS_WIDTH * (dcount - 1);
 
 																		DWORD width = FPS_WIDTH;
 																		do
@@ -1531,8 +2411,7 @@ VOID OpenDraw::RenderNew()
 														}
 
 														// Draw from FBO
-														if (frameFilter == FilterXRBZ || frameFilter == FilterScaleHQ ||
-															frameFilter == FilterXSal || frameFilter == FilterEagle || frameFilter == FilterScaleNx)
+														if (frameFilter == FilterXRBZ || frameFilter == FilterScaleHQ || frameFilter == FilterXSal || frameFilter == FilterEagle || frameFilter == FilterScaleNx)
 														{
 															GLDisable(GL_STENCIL_TEST);
 															//GLFinish();
@@ -1839,12 +2718,16 @@ BOOL OpenDraw::CheckView()
 
 VOID OpenDraw::ScaleMouse(LPPOINT p)
 {
-	p->x = (LONG)((FLOAT)((p->x - this->viewport.rectangle.x) * this->viewport.width) / this->viewport.rectangle.width);
-	p->y = (LONG)((FLOAT)((p->y - this->viewport.rectangle.y) * this->viewport.height) / this->viewport.rectangle.height);
+	if (this->viewport.rectangle.width && this->viewport.rectangle.height)
+	{
+		p->x = (LONG)((FLOAT)((p->x - this->viewport.rectangle.x) * this->viewport.width) / this->viewport.rectangle.width);
+		p->y = (LONG)((FLOAT)((p->y - this->viewport.rectangle.y) * this->viewport.height) / this->viewport.rectangle.height);
+	}
 }
 
 OpenDraw::OpenDraw(IDraw** last)
 {
+	this->refCount = 1;
 	this->last = *last;
 	*last = this;
 
@@ -1866,12 +2749,22 @@ OpenDraw::OpenDraw(IDraw** last)
 	this->hDrawEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 }
 
-ULONG __stdcall OpenDraw::Release()
+OpenDraw::~OpenDraw()
 {
 	this->RenderStop();
-
 	CloseHandle(this->hDrawEvent);
 	ClipCursor(NULL);
+}
+
+ULONG __stdcall OpenDraw::AddRef()
+{
+	return ++this->refCount;
+}
+
+ULONG __stdcall OpenDraw::Release()
+{
+	if (--this->refCount)
+		return this->refCount;
 
 	delete this;
 	return 0;

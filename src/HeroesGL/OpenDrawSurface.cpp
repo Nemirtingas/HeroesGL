@@ -29,6 +29,7 @@
 
 OpenDrawSurface::OpenDrawSurface(IDraw* lpDD, DWORD index)
 {
+	this->refCount = 1;
 	this->ddraw = lpDD;
 	this->last = lpDD->surfaceEntries;
 	lpDD->surfaceEntries = this;
@@ -59,6 +60,15 @@ OpenDrawSurface::OpenDrawSurface(IDraw* lpDD, DWORD index)
 
 OpenDrawSurface::~OpenDrawSurface()
 {
+	if (((OpenDraw*)this->ddraw)->attachedSurface == this)
+		((OpenDraw*)this->ddraw)->attachedSurface = NULL;
+
+	if (this->attachedClipper)
+		this->attachedClipper->Release();
+
+	if (this->attachedPalette)
+		this->attachedPalette->Release();
+
 	if (this->pixelBuffer)
 		MemoryFree(this->pixelBuffer);
 
@@ -66,10 +76,15 @@ OpenDrawSurface::~OpenDrawSurface()
 		MemoryFree(this->clipsList);
 }
 
+ULONG __stdcall OpenDrawSurface::AddRef()
+{
+	return ++this->refCount;
+}
+
 ULONG __stdcall OpenDrawSurface::Release()
 {
-	if (((OpenDraw*)this->ddraw)->attachedSurface == this)
-		((OpenDraw*)this->ddraw)->attachedSurface = NULL;
+	if (--this->refCount)
+		return this->refCount;
 
 	delete this;
 	return 0;
@@ -123,8 +138,7 @@ HRESULT __stdcall OpenDrawSurface::Blt(LPRECT lpDestRect, LPDIRECTDRAWSURFACE lp
 	this->currentClip->rect.bottom = top + height;
 	this->currentClip->isActive = TRUE;
 
-	if (width == ((OpenDraw*)this->ddraw)->width &&
-		height == ((OpenDraw*)this->ddraw)->height)
+	if (width == ((OpenDraw*)this->ddraw)->width && height == ((OpenDraw*)this->ddraw)->height)
 		this->poinetrClip = this->currentClip;
 	else
 	{
@@ -135,15 +149,9 @@ HRESULT __stdcall OpenDrawSurface::Blt(LPRECT lpDestRect, LPDIRECTDRAWSURFACE lp
 		{
 			if (oldClip->isActive)
 			{
-				if (oldClip->rect.left >= currClip->rect.left &&
-					oldClip->rect.top >= currClip->rect.top &&
-					oldClip->rect.right <= currClip->rect.right &&
-					oldClip->rect.bottom <= currClip->rect.bottom)
+				if (oldClip->rect.left >= currClip->rect.left && oldClip->rect.top >= currClip->rect.top && oldClip->rect.right <= currClip->rect.right && oldClip->rect.bottom <= currClip->rect.bottom)
 					oldClip->isActive = FALSE;
-				else if (currClip->rect.left >= oldClip->rect.left &&
-					currClip->rect.top >= oldClip->rect.top &&
-					currClip->rect.right <= oldClip->rect.right &&
-					currClip->rect.bottom <= oldClip->rect.bottom)
+				else if (currClip->rect.left >= oldClip->rect.left && currClip->rect.top >= oldClip->rect.top && currClip->rect.right <= oldClip->rect.right && currClip->rect.bottom <= oldClip->rect.bottom)
 				{
 					currClip->isActive = FALSE;
 					break;
@@ -171,12 +179,42 @@ HRESULT __stdcall OpenDrawSurface::Lock(LPRECT lpDestRect, LPDDSURFACEDESC lpDDS
 
 HRESULT __stdcall OpenDrawSurface::SetClipper(LPDIRECTDRAWCLIPPER lpDDClipper)
 {
+	OpenDrawClipper* old = this->attachedClipper;
 	this->attachedClipper = (OpenDrawClipper*)lpDDClipper;
+
+	if (this->attachedClipper)
+	{
+		if (old != this->attachedClipper)
+		{
+			if (old)
+				old->Release();
+
+			this->attachedClipper->AddRef();
+		}
+	}
+	else if (old)
+		old->Release();
+
 	return DD_OK;
 }
 
 HRESULT __stdcall OpenDrawSurface::SetPalette(LPDIRECTDRAWPALETTE lpDDPalette)
 {
+	OpenDrawPalette* old = this->attachedPalette;
 	this->attachedPalette = (OpenDrawPalette*)lpDDPalette;
+
+	if (this->attachedPalette)
+	{
+		if (old != this->attachedPalette)
+		{
+			if (old)
+				old->Release();
+
+			this->attachedPalette->AddRef();
+		}
+	}
+	else if (old)
+		old->Release();
+
 	return DD_OK;
 }

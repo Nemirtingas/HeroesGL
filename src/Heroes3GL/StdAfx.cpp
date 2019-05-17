@@ -35,29 +35,6 @@ RELEASEACTCTX ReleaseActCtxC;
 ACTIVATEACTCTX ActivateActCtxC;
 DEACTIVATEACTCTX DeactivateActCtxC;
 
-MALLOC MemoryAlloc;
-FREE MemoryFree;
-MEMSET MemorySet;
-MEMCPY MemoryCopy;
-CEIL MathCeil;
-FLOOR MathFloor;
-ROUND MathRound;
-SPRINTF StrPrint;
-STRCMP StrCompare;
-STRICMP StrCompareInsensitive;
-STRCPY StrCopy;
-STRCAT StrCat;
-STRCHR StrChar;
-STRRCHR StrLastChar;
-STRSTR StrStr;
-STRDUP StrDuplicate;
-WCSTOMBS StrToAnsi;
-FOPEN FileOpen;
-FCLOSE FileClose;
-RAND Random;
-SRAND SeedRandom;
-EXIT Exit;
-
 DWORD
 	pAcquireDDThreadLock,
 	pCompleteCreateSysmemSurface,
@@ -104,9 +81,9 @@ VOID _declspec(naked) __stdcall exRegisterSpecialCase() { _asm { JMP pRegisterSp
 VOID _declspec(naked) __stdcall exReleaseDDThreadLock() { _asm { JMP pReleaseDDThreadLock } }
 VOID _declspec(naked) __stdcall exSetAppCompatData() { _asm { JMP pSetAppCompatData } }
 
-double __cdecl round(double number)
+DOUBLE __fastcall MathRound(DOUBLE number)
 {
-	double floorVal = MathFloor(number);
+	DOUBLE floorVal = MathFloor(number);
 	return floorVal + 0.5f > number ? floorVal : MathCeil(number);
 }
 
@@ -119,57 +96,6 @@ VOID LoadKernel32()
 		ReleaseActCtxC = (RELEASEACTCTX)GetProcAddress(hLib, "ReleaseActCtx");
 		ActivateActCtxC = (ACTIVATEACTCTX)GetProcAddress(hLib, "ActivateActCtx");
 		DeactivateActCtxC = (DEACTIVATEACTCTX)GetProcAddress(hLib, "DeactivateActCtx");
-	}
-}
-
-VOID LoadMsvCRT()
-{
-	HMODULE hLib = LoadLibrary("MSVCRT.dll");
-	if (hLib)
-	{
-		StrPrint = (SPRINTF)GetProcAddress(hLib, "sprintf");
-
-		CHAR libName[MAX_PATH];
-		for (DWORD i = 12; i >= 7; --i)
-		{
-			StrPrint(libName, "MSVCR%d0.dll", i);
-			HMODULE hCrtLib = LoadLibrary(libName);
-			if (hCrtLib)
-			{
-				FreeLibrary(hLib);
-				hLib = hCrtLib;
-				StrPrint = (SPRINTF)GetProcAddress(hLib, "sprintf");
-				break;
-			}
-		}
-
-		MemoryAlloc = (MALLOC)GetProcAddress(hLib, "malloc");
-		MemoryFree = (FREE)GetProcAddress(hLib, "free");
-		MemorySet = (MEMSET)GetProcAddress(hLib, "memset");
-		MemoryCopy = (MEMCPY)GetProcAddress(hLib, "memcpy");
-
-		MathCeil = (CEIL)GetProcAddress(hLib, "ceil");
-		MathFloor = (FLOOR)GetProcAddress(hLib, "floor");
-		MathRound = (ROUND)GetProcAddress(hLib, "round");
-		if (!MathRound)
-			MathRound = round;
-
-		StrCompare = (STRCMP)GetProcAddress(hLib, "strcmp");
-		StrCompareInsensitive = (STRICMP)GetProcAddress(hLib, "_stricmp");
-		StrCopy = (STRCPY)GetProcAddress(hLib, "strcpy");
-		StrCat = (STRCAT)GetProcAddress(hLib, "strcat");
-		StrChar = (STRCHR)GetProcAddress(hLib, "strchr");
-		StrLastChar = (STRRCHR)GetProcAddress(hLib, "strrchr");
-		StrStr = (STRSTR)GetProcAddress(hLib, "strstr");
-		StrDuplicate = (STRDUP)GetProcAddress(hLib, "_strdup");
-		StrToAnsi = (WCSTOMBS)GetProcAddress(hLib, "wcstombs");
-
-		FileOpen = (FOPEN)GetProcAddress(hLib, "fopen");
-		FileClose = (FCLOSE)GetProcAddress(hLib, "fclose");
-
-		Random = (RAND)GetProcAddress(hLib, "rand");
-		SeedRandom = (SRAND)GetProcAddress(hLib, "srand");
-		Exit = (EXIT)GetProcAddress(hLib, "exit");
 	}
 }
 

@@ -28,12 +28,16 @@
 
 class OpenDrawClipper : public IDrawClipper
 {
+protected:
+	ULONG refCount;
+
 public:
 	HWND hWnd;
 
 	OpenDrawClipper(IDraw*);
 
 	// Inherited via IDrawClipper
+	ULONG __stdcall AddRef();
 	ULONG __stdcall Release();
 	HRESULT __stdcall SetHWnd(DWORD, HWND);
 };

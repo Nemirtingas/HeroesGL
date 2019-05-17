@@ -35,7 +35,7 @@ extern ConfigItems config;
 
 namespace Config
 {
-	VOID __fastcall Load(HMODULE hModule, AddressSpace* hookSpace);
+	VOID __fastcall Load(HMODULE hModule, const AddressSpace* hookSpace);
 	BOOL __fastcall Check(const CHAR* app, const CHAR* key);
 	INT __fastcall Get(const CHAR* app, const CHAR* key, INT default);
 	DWORD __fastcall Get(const CHAR* app, const CHAR* key, CHAR* default, CHAR* returnString, DWORD nSize);

@@ -29,13 +29,16 @@
 
 class OpenDraw : public IDraw7
 {
+protected:
+	ULONG refCount;
+
 public:
 	OpenDrawSurface* attachedSurface;
 
 	HWND hDraw;
 	HDC hDc;
 
-	DisplayMode* mode;
+	const DisplayMode* mode;
 
 	BOOL isFinish;
 
@@ -49,6 +52,7 @@ public:
 	BOOL isTakeSnapshot;
 
 	OpenDraw(IDraw7**);
+	~OpenDraw();
 
 	BOOL CheckView();
 	VOID __fastcall ScaleMouse(LPPOINT);
@@ -63,6 +67,7 @@ public:
 	VOID ResetDisplayMode(DWORD, DWORD);
 
 	// Inherited via IDraw7
+	ULONG __stdcall AddRef();
 	ULONG __stdcall Release();
 	HRESULT __stdcall CreateClipper(DWORD, LPDIRECTDRAWCLIPPER*, IUnknown*);
 	HRESULT __stdcall CreateSurface(LPDDSURFACEDESC2, LPDIRECTDRAWSURFACE7*, IUnknown*);

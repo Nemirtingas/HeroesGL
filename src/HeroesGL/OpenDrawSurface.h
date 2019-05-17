@@ -34,6 +34,9 @@
 
 class OpenDrawSurface : public IDrawSurface
 {
+protected:
+	ULONG refCount;
+
 public:
 	DWORD index;
 
@@ -53,6 +56,7 @@ public:
 	~OpenDrawSurface();
 
 	// Inherited via IDrawSurface
+	ULONG __stdcall AddRef();
 	ULONG __stdcall Release();
 	HRESULT __stdcall Blt(LPRECT, LPDIRECTDRAWSURFACE, LPRECT, DWORD, LPDDBLTFX);
 	HRESULT __stdcall Lock(LPRECT, LPDDSURFACEDESC, DWORD, HANDLE);

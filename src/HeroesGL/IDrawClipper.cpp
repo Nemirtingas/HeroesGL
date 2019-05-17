@@ -29,7 +29,7 @@
 IDrawClipper::~IDrawClipper()
 {
 	if (this->ddraw->clipperEntries == this)
-		this->ddraw->clipperEntries = NULL;
+		this->ddraw->clipperEntries = this->ddraw->clipperEntries->last;
 	else
 	{
 		IDrawClipper* entry = this->ddraw->clipperEntries;

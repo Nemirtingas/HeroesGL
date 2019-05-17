@@ -29,7 +29,7 @@
 IDrawPalette::~IDrawPalette()
 {
 	if (this->ddraw->paletteEntries == this)
-		this->ddraw->paletteEntries = NULL;
+		this->ddraw->paletteEntries = this->ddraw->paletteEntries->last;
 	else
 	{
 		IDrawPalette* entry = this->ddraw->paletteEntries;

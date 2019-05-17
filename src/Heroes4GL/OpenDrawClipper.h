@@ -29,12 +29,16 @@
 
 class OpenDrawClipper : public IDrawClipper
 {
+protected:
+	ULONG refCount;
+
 public:
 	RGNRECTDATA rgnData;
 
 	OpenDrawClipper(IDraw7*);
 
 	// Inherited via IDrawClipper
+	ULONG __stdcall AddRef();
 	ULONG __stdcall Release();
 	HRESULT __stdcall GetClipList(LPRECT, LPRGNDATA, LPDWORD);
 };

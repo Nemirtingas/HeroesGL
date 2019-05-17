@@ -29,7 +29,7 @@
 #include "ExtraTypes.h"
 
 extern IDraw7* drawList;
-extern DisplayMode modesList[3];
+extern const DisplayMode modesList[3];
 
 namespace Main
 {
@@ -37,6 +37,7 @@ namespace Main
 
 	OpenDraw* __fastcall FindOpenDrawByWindow(HWND hWnd);
 
+	VOID __fastcall ShowError(UINT id, CHAR* file, DWORD line);
 	VOID __fastcall ShowError(CHAR* message, CHAR* file, DWORD line);
 
 #ifdef _DEBUG

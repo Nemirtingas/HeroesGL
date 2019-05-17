@@ -28,7 +28,7 @@
 #include "DirectDraw.h"
 
 IDraw7* drawList;
-DisplayMode modesList[3] = {
+const DisplayMode modesList[3] = {
 	800, 600, 16,
 	1024, 768, 16,
 	1280, 1024, 16
@@ -64,6 +64,13 @@ namespace Main
 		}
 
 		return NULL;
+	}
+
+	VOID __fastcall ShowError(UINT id, CHAR* file, DWORD line)
+	{
+		CHAR message[256];
+		LoadString(hDllModule, id, message, sizeof(message));
+		ShowError(message, file, line);
 	}
 
 	VOID __fastcall ShowError(CHAR* message, CHAR* file, DWORD line)

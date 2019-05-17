@@ -45,7 +45,7 @@ IDraw7::~IDraw7()
 	}
 
 	if (drawList == this)
-		drawList = NULL;
+		drawList = drawList->last;
 	else
 	{
 		IDraw7* ddraw = drawList;

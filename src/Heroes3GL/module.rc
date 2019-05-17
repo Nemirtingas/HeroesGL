@@ -135,6 +135,24 @@ IDM_MANIFEST            RT_MANIFEST             "module.manifest"
 
 /////////////////////////////////////////////////////////////////////////////
 //
+// String Table
+//
+
+STRINGTABLE DISCARDABLE
+BEGIN
+	IDS_ERROR_CHOOSE_PF				"ChoosePixelFormat failed"
+	IDS_ERROR_SET_PF				"SetPixelFormat failed"
+	IDS_ERROR_DESCRIBE_PF			"DescribePixelFormat failed"
+	IDS_ERROR_NEED_PALETTE			"Needs palette"
+	IDS_ERROR_BAD_PF				"Bad pixel type"
+	IDS_ERROR_ARB_VERSION			"Invalid ARB version"
+	IDS_ERROR_ARB_PROFILE			"Invalid ARB profile"
+	IDS_ERROR_LOAD_RESOURCE			"Load resource failed"
+	IDS_ERROR_COMPILE_SHADER		"Compile shader failed"
+END
+
+/////////////////////////////////////////////////////////////////////////////
+//
 // Menu
 //
 
@@ -283,8 +301,8 @@ IDR_SCALENX_FRAGMENT_3X			RCDATA					"..\\glsl\\scalenx\\fragment_3x.glsl"
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2019,5,16,228
- PRODUCTVERSION 1,2,7,0
+ FILEVERSION 2019,5,17,234
+ PRODUCTVERSION 1,2,8,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS VS_FF_DEBUG
@@ -300,10 +318,10 @@ BEGIN
 		BLOCK "040904b0"
 		BEGIN
 			VALUE "FileDescription", "HoMM III - OpenGL wrapper"
-			VALUE "FileVersion", "2019.05.16.228"
+			VALUE "FileVersion", "2019.05.17.234"
 			VALUE "LegalCopyright", "© 2019 Verok (verokster@gmail.com)"
 			VALUE "OriginalFilename", "ddraw.dll"
-			VALUE "ProductVersion", "1.2.7"
+			VALUE "ProductVersion", "1.2.8"
 			VALUE "ProductName", "Heroes3GL"
 		END
 	END

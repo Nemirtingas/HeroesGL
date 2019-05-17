@@ -24,8 +24,14 @@
 
 #pragma once
 
+#include "ExtraTypes.h"
+
 namespace Hooks
 {
+	extern const AddressSpace* hookSpace;
+	extern const DWORD monoEntries[2];
+	extern const DWORD palEntries[256];
+
 	BOOL __stdcall EnumChildProc(HWND hDlg, LPARAM lParam);
 	BOOL Load();
 	VOID __fastcall ScalePointer(FLOAT cx, FLOAT cy);

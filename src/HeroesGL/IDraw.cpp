@@ -53,7 +53,7 @@ IDraw::~IDraw()
 	}
 
 	if (drawList == this)
-		drawList = NULL;
+		drawList = drawList->last;
 	else
 	{
 		IDraw* ddraw = drawList;

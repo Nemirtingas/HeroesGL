@@ -29,6 +29,9 @@
 
 class OpenDraw : public IDraw
 {
+protected:
+	ULONG refCount;
+
 public:
 	OpenDrawSurface* attachedSurface;
 
@@ -50,6 +53,7 @@ public:
 	BOOL isTakeSnapshot;
 
 	OpenDraw(IDraw**);
+	~OpenDraw();
 
 	BOOL CheckView();
 	VOID __fastcall ScaleMouse(LPPOINT);
@@ -62,6 +66,7 @@ public:
 	VOID RenderNew();
 
 	// Inherited via  IDraw
+	ULONG __stdcall AddRef();
 	ULONG __stdcall Release();
 	HRESULT __stdcall CreateClipper(DWORD, LPDIRECTDRAWCLIPPER*, IUnknown*);
 	HRESULT __stdcall CreatePalette(DWORD, LPPALETTEENTRY, LPDIRECTDRAWPALETTE*, IUnknown*);

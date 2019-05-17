@@ -33,6 +33,9 @@
 
 class OpenDrawSurface : public IDrawSurface7
 {
+protected:
+	ULONG refCount;
+
 public:
 	DWORD index;
 	DWORD width;
@@ -57,6 +60,7 @@ public:
 	VOID ReleaseBuffer();
 
 	// Inherited via IDrawSurface7
+	ULONG __stdcall AddRef();
 	ULONG __stdcall Release();
 	HRESULT __stdcall Blt(LPRECT, LPDIRECTDRAWSURFACE7, LPRECT, DWORD, LPDDBLTFX);
 	HRESULT __stdcall BltFast(DWORD, DWORD, LPDIRECTDRAWSURFACE7, LPRECT, DWORD);

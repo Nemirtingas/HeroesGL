@@ -25,6 +25,7 @@
 #include "stdafx.h"
 #include "Main.h"
 #include "GLib.h"
+#include "Resource.h"
 
 #define PREFIX_GL "gl"
 #define PREFIX_WGL "wgl"
@@ -181,9 +182,9 @@ namespace GL
 		{
 			DWORD errorCode = GetLastError();
 			if (errorCode == ERROR_INVALID_VERSION_ARB)
-				Main::ShowError("Invalid ARB version", __FILE__, __LINE__);
+				Main::ShowError(IDS_ERROR_ARB_VERSION, __FILE__, __LINE__);
 			else if (errorCode == ERROR_INVALID_PROFILE_ARB)
-				Main::ShowError("Invalid ARB profile", __FILE__, __LINE__);
+				Main::ShowError(IDS_ERROR_ARB_PROFILE, __FILE__, __LINE__);
 		}
 
 		return FALSE;
@@ -211,7 +212,7 @@ namespace GL
 				GetContext(hDc, hRc, 1, 4, TRUE);
 		}
 
-		LoadFunction(buffer, "wgl", "SwapInterval", (PROC*)&WGLSwapInterval, "EXT");
+		LoadFunction(buffer, PREFIX_WGL, "SwapInterval", (PROC*)&WGLSwapInterval, "EXT");
 
 		LoadFunction(buffer, PREFIX_GL, "GetString", (PROC*)&GLGetString);
 		LoadFunction(buffer, PREFIX_GL, "TexCoord2f", (PROC*)&GLTexCoord2f);
@@ -349,21 +350,25 @@ namespace GL
 			glVersion = GL_VER_1_1;
 	}
 
-	VOID __fastcall PreparePixelFormatDescription(PIXELFORMATDESCRIPTOR* pfd)
+	VOID __fastcall ResetPixelFormatDescription(PIXELFORMATDESCRIPTOR* pfd)
 	{
-		DEVMODE devMode;
-		MemoryZero(&devMode, sizeof(DEVMODE));
-		devMode.dmSize = sizeof(DEVMODE);
-
-		DWORD bpp;
-		if (EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &devMode) && devMode.dmBitsPerPel >= 16 && devMode.dmBitsPerPel <= 32)
-			bpp = devMode.dmBitsPerPel;
-		else
-			bpp = 32;
-
 		MemoryZero(pfd, sizeof(PIXELFORMATDESCRIPTOR));
 		pfd->nSize = sizeof(PIXELFORMATDESCRIPTOR);
 		pfd->nVersion = 1;
+	}
+
+	VOID __fastcall PreparePixelFormatDescription(PIXELFORMATDESCRIPTOR* pfd)
+	{
+		ResetPixelFormatDescription(pfd);
+
+		INT bpp = 0;
+		HDC hDc = GetDC(NULL);
+		if (hDc)
+		{
+			bpp = GetDeviceCaps(hDc, BITSPIXEL);
+			ReleaseDC(NULL, hDc);
+		}
+
 		pfd->dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER | PFD_DEPTH_DONTCARE | PFD_STEREO_DONTCARE | PFD_SWAP_EXCHANGE;
 		pfd->iPixelType = PFD_TYPE_RGBA;
 		pfd->cColorBits = LOBYTE(bpp);
@@ -373,6 +378,8 @@ namespace GL
 
 	INT __fastcall PreparePixelFormat(PIXELFORMATDESCRIPTOR* pfd)
 	{
+		PreparePixelFormatDescription(pfd);
+
 		INT res = 0;
 
 		HWND hWnd = CreateWindowEx(
@@ -444,17 +451,18 @@ namespace GL
 
 	GLuint __fastcall CompileShaderSource(DWORD name, const CHAR* version, GLenum type)
 	{
+		HGLOBAL hResourceData;
+		LPVOID pData = NULL;
 		HRSRC hResource = FindResource(hDllModule, MAKEINTRESOURCE(name), RT_RCDATA);
-		if (!hResource)
-			Main::ShowError("FindResource failed", __FILE__, __LINE__);
+		if (hResource)
+		{
+			hResourceData = LoadResource(hDllModule, hResource);
+			if (hResourceData)
+				pData = LockResource(hResourceData);
+		}
 
-		HGLOBAL hResourceData = LoadResource(hDllModule, hResource);
-		if (!hResourceData)
-			Main::ShowError("LoadResource failed", __FILE__, __LINE__);
-
-		LPVOID pData = LockResource(hResourceData);
 		if (!pData)
-			Main::ShowError("LockResource failed", __FILE__, __LINE__);
+			Main::ShowError(IDS_ERROR_LOAD_RESOURCE, __FILE__, __LINE__);
 
 		GLuint shader = GLCreateShader(type);
 
@@ -480,7 +488,7 @@ namespace GL
 			GLGetShaderiv(shader, GL_INFO_LOG_LENGTH, &result);
 
 			if (!result)
-				Main::ShowError("Compile shader failed", __FILE__, __LINE__);
+				Main::ShowError(IDS_ERROR_COMPILE_SHADER, __FILE__, __LINE__);
 			else
 			{
 				CHAR data[512];
@@ -495,7 +503,6 @@ namespace GL
 	DWORD __stdcall ResetThread(LPVOID lpParameter)
 	{
 		PIXELFORMATDESCRIPTOR pfd;
-		GL::PreparePixelFormatDescription(&pfd);
 		GL::PreparePixelFormat(&pfd);
 
 		return NULL;
@@ -503,12 +510,11 @@ namespace GL
 
 	VOID __fastcall ResetContext()
 	{
-		DWORD threadId;
-		SECURITY_ATTRIBUTES sAttribs;
-		MemoryZero(&sAttribs, sizeof(SECURITY_ATTRIBUTES));
-		sAttribs.nLength = sizeof(SECURITY_ATTRIBUTES);
-		HANDLE hDummy = CreateThread(&sAttribs, NULL, ResetThread, NULL, NORMAL_PRIORITY_CLASS, &threadId);
-		WaitForSingleObject(hDummy, INFINITE);
-		CloseHandle(hDummy);
+		HANDLE hThread = CreateThread(NULL, NULL, ResetThread, NULL, NORMAL_PRIORITY_CLASS, NULL);
+		if (hThread)
+		{
+			WaitForSingleObject(hThread, INFINITE);
+			CloseHandle(hThread);
+		}
 	}
 }
