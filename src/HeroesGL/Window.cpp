@@ -691,17 +691,17 @@ namespace Window
 		case WM_RBUTTONDBLCLK:
 		case WM_MOUSEMOVE:
 		{
-			if (config.image.aspect)
+			OpenDraw* ddraw = Main::FindOpenDrawByWindow(hWnd);
+			if (ddraw)
 			{
-				OpenDraw* ddraw = Main::FindOpenDrawByWindow(hWnd);
-				if (ddraw)
+				if (config.image.aspect)
 				{
 					POINT p = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
 					ddraw->ScaleMouse(&p);
 					lParam = MAKELONG(p.x, p.y);
-
-					SetEvent(ddraw->hDrawEvent);
 				}
+
+				SetEvent(ddraw->hDrawEvent);
 			}
 
 			return CallWindowProc(Window::OldWindowProc, hWnd, uMsg, wParam, lParam);
