@@ -490,7 +490,7 @@ IDR_SCALENX_FRAGMENT_3X			RCDATA					"..\\glsl\\scalenx\\fragment_3x.glsl"
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2019,5,17,235
+ FILEVERSION 2019,5,22,237
  PRODUCTVERSION 1,2,4,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
@@ -507,7 +507,7 @@ BEGIN
 		BLOCK "040904b0"
 		BEGIN
 			VALUE "FileDescription", "HoMM IV - OpenGL wrapper"
-			VALUE "FileVersion", "2019.05.17.235"
+			VALUE "FileVersion", "2019.05.22.237"
 			VALUE "LegalCopyright", "© 2019 Verok (verokster@gmail.com)"
 			VALUE "OriginalFilename", "ddraw.dll"
 			VALUE "ProductVersion", "1.2.4"

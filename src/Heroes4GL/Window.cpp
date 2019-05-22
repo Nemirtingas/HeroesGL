@@ -23,6 +23,7 @@
 */
 
 #include "stdafx.h"
+#include "timeapi.h"
 #include "Window.h"
 #include "CommCtrl.h"
 #include "Windowsx.h"
@@ -757,6 +758,11 @@ namespace Window
 			case IDM_PATCH_CPU:
 			{
 				config.coldCPU = !config.coldCPU;
+				if (config.coldCPU)
+					timeBeginPeriod(1);
+				else
+					timeEndPeriod(1);
+
 				Config::Set(CONFIG_WRAPPER, "ColdCPU", config.coldCPU);
 				CheckMenu(hWnd);
 

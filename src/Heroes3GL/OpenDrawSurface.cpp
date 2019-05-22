@@ -194,14 +194,13 @@ HRESULT __stdcall OpenDrawSurface::Blt(LPRECT lpDestRect, LPDIRECTDRAWSURFACE lp
 		DWORD sWidth;
 		if (surface->attachedClipper)
 		{
-			RECT clip;
-			GetClientRect(surface->attachedClipper->hWnd, &clip);
-			ClientToScreen(surface->attachedClipper->hWnd, (POINT*)&clip.left);
+			POINT clip;
+			ClientToScreen(surface->attachedClipper->hWnd, &clip);
 
-			lpSrcRect->left -= clip.left;
-			lpSrcRect->top -= clip.top;
-			lpSrcRect->right -= clip.left;
-			lpSrcRect->bottom -= clip.top;
+			lpSrcRect->left -= clip.x;
+			lpSrcRect->top -= clip.y;
+			lpSrcRect->right -= clip.x;
+			lpSrcRect->bottom -= clip.y;
 
 			sWidth = ((OpenDraw*)this->ddraw)->mode.width;
 		}
@@ -211,14 +210,13 @@ HRESULT __stdcall OpenDrawSurface::Blt(LPRECT lpDestRect, LPDIRECTDRAWSURFACE lp
 		DWORD dWidth;
 		if (this->attachedClipper)
 		{
-			RECT clip;
-			GetClientRect(this->attachedClipper->hWnd, &clip);
-			ClientToScreen(this->attachedClipper->hWnd, (POINT*)&clip.left);
+			POINT clip;
+			ClientToScreen(this->attachedClipper->hWnd, &clip);
 
-			lpDestRect->left -= clip.left;
-			lpDestRect->top -= clip.top;
-			lpDestRect->right -= clip.left;
-			lpDestRect->bottom -= clip.top;
+			lpDestRect->left -= clip.x;
+			lpDestRect->top -= clip.y;
+			lpDestRect->right -= clip.x;
+			lpDestRect->bottom -= clip.y;
 
 			dWidth = ((OpenDraw*)this->ddraw)->mode.width;
 		}

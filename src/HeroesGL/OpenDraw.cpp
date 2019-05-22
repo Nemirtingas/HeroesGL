@@ -473,7 +473,7 @@ VOID OpenDraw::RenderOld()
 															BYTE* cp = (BYTE*)&color;
 															DWORD cc = 3;
 															do
-																*cp++ = BYTE((FLOAT)*cp * 0.60f);
+																*cp++ >>= 1;
 															while (--cc);
 														}
 
@@ -541,7 +541,7 @@ VOID OpenDraw::RenderOld()
 															BYTE* cp = (BYTE*)&color;
 															DWORD cc = 3;
 															do
-																*cp++ = BYTE((FLOAT)*cp * 0.60f);
+																*cp++ >>= 1;
 															while (--cc);
 														}
 
@@ -723,7 +723,7 @@ VOID OpenDraw::RenderOld()
 																BYTE* cp = (BYTE*)&color;
 																DWORD cc = 3;
 																do
-																	*cp++ = BYTE((FLOAT)*cp * 0.60f);
+																	*cp++ >>= 1;
 																while (--cc);
 															}
 
@@ -791,7 +791,7 @@ VOID OpenDraw::RenderOld()
 																BYTE* cp = (BYTE*)&color;
 																DWORD cc = 3;
 																do
-																	*cp++ = BYTE((FLOAT)*cp * 0.60f);
+																	*cp++ >>= 1;
 																while (--cc);
 															}
 
@@ -853,7 +853,6 @@ VOID OpenDraw::RenderOld()
 										for (DWORD y = 0; y < FPS_HEIGHT; ++y)
 										{
 											DWORD* idx = surface->pixelBuffer + (FPS_Y + y) * this->width + FPS_X + FPS_WIDTH * (dcount - 1);
-
 											DWORD* pix = (DWORD*)frameBuffer + y * FPS_WIDTH * 4 + FPS_WIDTH * (dcount - 1);
 
 											WORD check = *lpDig++;
@@ -875,7 +874,6 @@ VOID OpenDraw::RenderOld()
 										for (DWORD y = 0; y < FPS_HEIGHT; ++y)
 										{
 											DWORD* idx = surface->pixelBuffer + (FPS_Y + y) * this->width + FPS_X + FPS_WIDTH * (dcount - 1);
-
 											DWORD* pix = (DWORD*)frameBuffer + y * FPS_WIDTH * 4 + FPS_WIDTH * (dcount - 1);
 
 											DWORD width = FPS_WIDTH;
@@ -1306,7 +1304,7 @@ VOID OpenDraw::RenderMid()
 																			BYTE* cp = (BYTE*)&color;
 																			DWORD cc = 3;
 																			do
-																				*cp++ = BYTE((FLOAT)*cp * 0.60f);
+																				*cp++ >>= 1;
 																			while (--cc);
 																		}
 
@@ -1374,7 +1372,7 @@ VOID OpenDraw::RenderMid()
 																			BYTE* cp = (BYTE*)&color;
 																			DWORD cc = 3;
 																			do
-																				*cp++ = BYTE((FLOAT)*cp * 0.60f);
+																				*cp++ >>= 1;
 																			while (--cc);
 																		}
 
@@ -1437,7 +1435,6 @@ VOID OpenDraw::RenderMid()
 													for (DWORD y = 0; y < FPS_HEIGHT; ++y)
 													{
 														DWORD* idx = surface->pixelBuffer + (FPS_Y + y) * this->width + FPS_X + FPS_WIDTH * (dcount - 1);
-
 														DWORD* pix = (DWORD*)frameBuffer + y * FPS_WIDTH * 4 + FPS_WIDTH * (dcount - 1);
 
 														WORD check = *lpDig++;
@@ -1459,7 +1456,6 @@ VOID OpenDraw::RenderMid()
 													for (DWORD y = 0; y < FPS_HEIGHT; ++y)
 													{
 														DWORD* idx = surface->pixelBuffer + (FPS_Y + y) * this->width + FPS_X + FPS_WIDTH * (dcount - 1);
-
 														DWORD* pix = (DWORD*)frameBuffer + y * FPS_WIDTH * 4 + FPS_WIDTH * (dcount - 1);
 
 														DWORD width = FPS_WIDTH;
@@ -2241,7 +2237,7 @@ VOID OpenDraw::RenderNew()
 																					BYTE* cp = (BYTE*)&color;
 																					DWORD cc = 3;
 																					do
-																						*cp++ = BYTE((FLOAT)*cp * 0.60f);
+																						*cp++ >>= 1;
 																					while (--cc);
 																				}
 
@@ -2309,7 +2305,7 @@ VOID OpenDraw::RenderNew()
 																					BYTE* cp = (BYTE*)&color;
 																					DWORD cc = 3;
 																					do
-																						*cp++ = BYTE((FLOAT)*cp * 0.60f);
+																						*cp++ >>= 1;
 																					while (--cc);
 																				}
 
@@ -2370,7 +2366,6 @@ VOID OpenDraw::RenderNew()
 																	for (DWORD y = 0; y < FPS_HEIGHT; ++y)
 																	{
 																		DWORD* idx = surface->pixelBuffer + (FPS_Y + y) * this->width + FPS_X + FPS_WIDTH * (dcount - 1);
-
 																		DWORD* pix = (DWORD*)frameBuffer + y * FPS_WIDTH * 4 + FPS_WIDTH * (dcount - 1);
 
 																		WORD check = *lpDig++;
@@ -2392,7 +2387,6 @@ VOID OpenDraw::RenderNew()
 																	for (DWORD y = 0; y < FPS_HEIGHT; ++y)
 																	{
 																		DWORD* idx = surface->pixelBuffer + (FPS_Y + y) * this->width + FPS_X + FPS_WIDTH * (dcount - 1);
-
 																		DWORD* pix = (DWORD*)frameBuffer + y * FPS_WIDTH * 4 + FPS_WIDTH * (dcount - 1);
 
 																		DWORD width = FPS_WIDTH;
@@ -2590,8 +2584,8 @@ VOID OpenDraw::RenderStart()
 				WC_DRAW,
 				NULL,
 				WS_VISIBLE | WS_POPUP,
-				rect.left, rect.top,
-				rect.right - rect.left, rect.bottom - rect.top,
+				0, 0,
+				rect.right, rect.bottom,
 				this->hWnd,
 				NULL,
 				hDllModule,
@@ -2604,8 +2598,8 @@ VOID OpenDraw::RenderStart()
 				WC_DRAW,
 				NULL,
 				WS_VISIBLE | WS_CHILD,
-				rect.left, rect.top,
-				rect.right - rect.left, rect.bottom - rect.top,
+				0, 0,
+				rect.right, rect.bottom,
 				this->hWnd,
 				NULL,
 				hDllModule,
@@ -2621,8 +2615,8 @@ VOID OpenDraw::RenderStart()
 	SetClassLongPtr(this->hWnd, GCLP_HBRBACKGROUND, NULL);
 	RedrawWindow(this->hWnd, NULL, NULL, RDW_INVALIDATE);
 
-	this->viewport.width = rect.right - rect.left;
-	this->viewport.height = rect.bottom - rect.top;
+	this->viewport.width = rect.right;
+	this->viewport.height = rect.bottom;
 	this->viewport.refresh = TRUE;
 
 	DWORD threadId;
