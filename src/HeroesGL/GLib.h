@@ -104,12 +104,8 @@ typedef char GLchar;
 #define GL_RENDERBUFFER                   0x8D41
 #define GL_DEPTH24_STENCIL8               0x88F0
 
-typedef PROC(__stdcall *WGLGETPROCADDRESS)(LPCSTR name);
-typedef BOOL(__stdcall *WGLMAKECURRENT)(HDC devContext, HGLRC glContext);
-typedef HGLRC(__stdcall *WGLCREATECONTEXT)(HDC devContext);
-typedef BOOL(__stdcall *WGLDELETECONTEXT)(HGLRC glContext);
-typedef HGLRC(__stdcall *WGLCREATECONTEXTATTRIBSARB)(HDC hDC, HGLRC hshareContext, const DWORD *attribList);
-typedef BOOL(__stdcall *WGLCHOOSEPIXELFORMATARB) (HDC hDC, const INT* piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats, INT *piFormats, UINT *nNumFormats);
+typedef HGLRC(__stdcall *WGLCREATECONTEXTATTRIBS)(HDC hDC, HGLRC hshareContext, const DWORD *attribList);
+typedef BOOL(__stdcall *WGLCHOOSEPIXELFORMAT) (HDC hDC, const INT* piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats, INT *piFormats, UINT *nNumFormats);
 typedef BOOL(__stdcall *WGLSWAPINTERVAL)(INT interval);
 
 typedef const GLubyte* (__stdcall *GLGETSTRING)(GLenum name);
@@ -170,7 +166,7 @@ typedef VOID(__stdcall *GLUSEPROGRAM)(GLuint program);
 typedef VOID(__stdcall *GLGETSHADERIV)(GLuint shader, GLenum pname, GLint* params);
 typedef VOID(__stdcall *GLGETSHADERINFOLOG)(GLuint shader, GLsizei maxLength, GLsizei* length, GLchar* infoLog);
 
-typedef GLuint(__stdcall *GLGETATTRIBLOCATION)(GLuint program, const GLchar* name);
+typedef VOID(__stdcall* GLBINDATTRIBLOCATION)(GLuint program, GLuint index, const GLchar* name);
 typedef GLuint(__stdcall *GLGETUNIFORMLOCATION)(GLuint program, const GLchar* name);
 
 typedef VOID(__stdcall *GLUNIFORM1I)(GLint location, GLint v0);
@@ -192,11 +188,7 @@ typedef VOID(__stdcall *GLBINDRENDERBUFFER)(GLenum target, GLuint renderbuffer);
 typedef VOID(__stdcall *GLRENDERBUFFERSTORAGE)(GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
 typedef VOID(__stdcall *GLFRAMEBUFFERRENDERBUFFER)(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
 
-extern WGLGETPROCADDRESS WGLGetProcAddress;
-extern WGLMAKECURRENT WGLMakeCurrent;
-extern WGLCREATECONTEXT WGLCreateContext;
-extern WGLDELETECONTEXT WGLDeleteContext;
-extern WGLCREATECONTEXTATTRIBSARB WGLCreateContextAttribs;
+extern WGLCREATECONTEXTATTRIBS WGLCreateContextAttribs;
 extern WGLSWAPINTERVAL WGLSwapInterval;
 
 extern GLGETSTRING GLGetString;
@@ -256,7 +248,7 @@ extern GLUSEPROGRAM GLUseProgram;
 extern GLGETSHADERIV GLGetShaderiv;
 extern GLGETSHADERINFOLOG GLGetShaderInfoLog;
 
-extern GLGETATTRIBLOCATION GLGetAttribLocation;
+extern GLBINDATTRIBLOCATION GLBindAttribLocation;
 extern GLGETUNIFORMLOCATION GLGetUniformLocation;
 
 extern GLUNIFORM1I GLUniform1i;
@@ -283,12 +275,10 @@ extern DWORD glCapsClampToEdge;
 
 namespace GL
 {
-	BOOL __fastcall Load();
-	VOID __fastcall Free();
 	VOID __fastcall CreateContextAttribs(HDC hDc, HGLRC* hRc);
 	VOID __fastcall ResetPixelFormatDescription(PIXELFORMATDESCRIPTOR* pfd);
 	VOID __fastcall PreparePixelFormatDescription(PIXELFORMATDESCRIPTOR* pfd);
 	INT __fastcall PreparePixelFormat(PIXELFORMATDESCRIPTOR* pfd);
+	VOID __fastcall ResetPixelFormat();
 	GLuint __fastcall CompileShaderSource(DWORD name, const CHAR* version, GLenum type);
-	VOID __fastcall ResetContext();
 }

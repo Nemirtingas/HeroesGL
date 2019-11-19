@@ -31,11 +31,22 @@
 #include "Config.h"
 #include "Window.h"
 
+DWORD __fastcall GetPow2(DWORD value)
+{
+	DWORD res = 1;
+	while (res < value)
+		res <<= 1;
+	return res;
+}
+
 VOID __fastcall UseShaderProgram(ShaderProgram* program, DWORD texSize)
 {
 	if (!program->id)
 	{
 		program->id = GLCreateProgram();
+
+		GLBindAttribLocation(program->id, 0, "vCoord");
+		GLBindAttribLocation(program->id, 1, "vTexCoord");
 
 		GLuint vShader = GL::CompileShaderSource(program->vertexName, program->version, GL_VERTEX_SHADER);
 		GLuint fShader = GL::CompileShaderSource(program->fragmentName, program->version, GL_FRAGMENT_SHADER);
@@ -69,7 +80,6 @@ VOID __fastcall UseShaderProgram(ShaderProgram* program, DWORD texSize)
 		if (program->texSize.location >= 0 && program->texSize.value != texSize)
 		{
 			program->texSize.value = texSize;
-			FLOAT val = (FLOAT)texSize;
 			GLUniform2f(program->texSize.location, (FLOAT)LOWORD(texSize), (FLOAT)HIWORD(texSize));
 		}
 	}
@@ -84,49 +94,45 @@ DWORD __stdcall RenderThread(LPVOID lpParameter)
 		{
 			ddraw->hDc = ::GetDC(ddraw->hDraw);
 			{
-				PIXELFORMATDESCRIPTOR pfd;
-				GL::PreparePixelFormatDescription(&pfd);
-				INT glPixelFormat = GL::PreparePixelFormat(&pfd);
-				if (!glPixelFormat)
+				if (!::GetPixelFormat(ddraw->hDc))
 				{
-					glPixelFormat = ::ChoosePixelFormat(ddraw->hDc, &pfd);
+					PIXELFORMATDESCRIPTOR pfd;
+					GL::PreparePixelFormatDescription(&pfd);
+					INT glPixelFormat = GL::PreparePixelFormat(&pfd);
 					if (!glPixelFormat)
-						Main::ShowError(IDS_ERROR_CHOOSE_PF, __FILE__, __LINE__);
-					else if (pfd.dwFlags & PFD_NEED_PALETTE)
-						Main::ShowError(IDS_ERROR_NEED_PALETTE, __FILE__, __LINE__);
+					{
+						glPixelFormat = ::ChoosePixelFormat(ddraw->hDc, &pfd);
+						if (!glPixelFormat)
+							Main::ShowError(IDS_ERROR_CHOOSE_PF, __FILE__, __LINE__);
+						else if (pfd.dwFlags & PFD_NEED_PALETTE)
+							Main::ShowError(IDS_ERROR_NEED_PALETTE, __FILE__, __LINE__);
+					}
+
+					GL::ResetPixelFormatDescription(&pfd);
+					if (::DescribePixelFormat(ddraw->hDc, glPixelFormat, sizeof(PIXELFORMATDESCRIPTOR), &pfd) == NULL)
+						Main::ShowError(IDS_ERROR_DESCRIBE_PF, __FILE__, __LINE__);
+
+					if (!::SetPixelFormat(ddraw->hDc, glPixelFormat, &pfd))
+						Main::ShowError(IDS_ERROR_SET_PF, __FILE__, __LINE__);
+
+					if ((pfd.iPixelType != PFD_TYPE_RGBA) || (pfd.cRedBits < 5) || (pfd.cGreenBits < 6) || (pfd.cBlueBits < 5))
+						Main::ShowError(IDS_ERROR_BAD_PF, __FILE__, __LINE__);
 				}
 
-				if (!::SetPixelFormat(ddraw->hDc, glPixelFormat, &pfd))
-					Main::ShowError(IDS_ERROR_SET_PF, __FILE__, __LINE__);
-
-				GL::ResetPixelFormatDescription(&pfd);
-				if (::DescribePixelFormat(ddraw->hDc, glPixelFormat, sizeof(PIXELFORMATDESCRIPTOR), &pfd) == NULL)
-					Main::ShowError(IDS_ERROR_DESCRIBE_PF, __FILE__, __LINE__);
-
-				if ((pfd.iPixelType != PFD_TYPE_RGBA) || (pfd.cRedBits < 5) || (pfd.cGreenBits < 6) || (pfd.cBlueBits < 5))
-					Main::ShowError(IDS_ERROR_BAD_PF, __FILE__, __LINE__);
-
-				HGLRC hRc = WGLCreateContext(ddraw->hDc);
+				HGLRC hRc = wglCreateContext(ddraw->hDc);
 				if (hRc)
 				{
-					if (WGLMakeCurrent(ddraw->hDc, hRc))
+					if (wglMakeCurrent(ddraw->hDc, hRc))
 					{
 						GL::CreateContextAttribs(ddraw->hDc, &hRc);
 						if (glVersion >= GL_VER_2_0)
 						{
-							DWORD maxSize = ddraw->mode->width > ddraw->mode->height ? ddraw->mode->width : ddraw->mode->height;
-
-							DWORD maxTexSize = 1;
-							while (maxTexSize < maxSize)
-								maxTexSize <<= 1;
-
 							DWORD glMaxTexSize;
 							GLGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint*)&glMaxTexSize);
-							if (maxTexSize > glMaxTexSize)
+							if (glMaxTexSize < GetPow2(ddraw->mode->width > ddraw->mode->height ? ddraw->mode->width : ddraw->mode->height))
 								glVersion = GL_VER_1_1;
 						}
 
-						Window::CheckMenu(ddraw->hWnd);
 						if (glVersion >= GL_VER_3_0)
 							ddraw->RenderNew();
 						else if (glVersion >= GL_VER_2_0)
@@ -134,10 +140,10 @@ DWORD __stdcall RenderThread(LPVOID lpParameter)
 						else
 							ddraw->RenderOld();
 
-						WGLMakeCurrent(ddraw->hDc, NULL);
+						wglMakeCurrent(ddraw->hDc, NULL);
 					}
 
-					WGLDeleteContext(hRc);
+					wglDeleteContext(hRc);
 				}
 			}
 			::ReleaseDC(ddraw->hDraw, ddraw->hDc);
@@ -153,21 +159,18 @@ DWORD __stdcall RenderThread(LPVOID lpParameter)
 
 VOID OpenDraw::RenderOld()
 {
-	if (config.image.filter > FilterLinear)
-		config.image.filter = FilterLinear;
+	if (this->filterState.interpolation > InterpolateLinear)
+		this->filterState.interpolation = InterpolateLinear;
+
+	PostMessage(this->hWnd, config.msgMenu, NULL, NULL);
 
 	DWORD glMaxTexSize;
 	GLGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint*)&glMaxTexSize);
 	if (glMaxTexSize < 256)
 		glMaxTexSize = 256;
 
-	DWORD size = this->mode->width > this->mode->height ? this->mode->width : this->mode->height;
-	DWORD maxAllow = 1;
-	while (maxAllow < size)
-		maxAllow <<= 1;
-
+	DWORD maxAllow = GetPow2(this->mode->width > this->mode->height ? this->mode->width : this->mode->height);
 	DWORD maxTexSize = maxAllow < glMaxTexSize ? maxAllow : glMaxTexSize;
-	DWORD glFilter = config.image.filter == FilterNearest ? GL_NEAREST : GL_LINEAR;
 
 	DWORD framePerWidth = this->mode->width / maxTexSize + (this->mode->width % maxTexSize ? 1 : 0);
 	DWORD framePerHeight = this->mode->height / maxTexSize + (this->mode->height % maxTexSize ? 1 : 0);
@@ -205,8 +208,8 @@ VOID OpenDraw::RenderOld()
 				GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, glCapsClampToEdge);
 				GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
 				GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-				GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glFilter);
-				GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, glFilter);
+				GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+				GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
 				GLTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
@@ -225,15 +228,14 @@ VOID OpenDraw::RenderOld()
 
 		GLEnable(GL_TEXTURE_2D);
 		GLClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		this->viewport.refresh = TRUE;
 
 		VOID* frameBuffer = MemoryAlloc(maxTexSize * maxTexSize * (glVersion > GL_VER_1_1 ? sizeof(WORD) : sizeof(DWORD)));
 		{
 			FpsCounter* fpsCounter = new FpsCounter(FPS_ACCURACY);
 			{
-				BOOL isVSync = FALSE;
-				if (WGLSwapInterval && !config.singleThread)
-					WGLSwapInterval(0);
+				BOOL isVSync = config.image.vSync;
+				if (WGLSwapInterval)
+					WGLSwapInterval(isVSync);
 
 				DWORD clear = TRUE;
 				do
@@ -241,23 +243,22 @@ VOID OpenDraw::RenderOld()
 					OpenDrawSurface* surface = this->attachedSurface;
 					if (surface)
 					{
-						if (isVSync != config.image.vSync && WGLSwapInterval && !config.singleThread)
+						if (isVSync != config.image.vSync)
 						{
 							isVSync = config.image.vSync;
-							WGLSwapInterval(isVSync);
+							if (WGLSwapInterval)
+								WGLSwapInterval(isVSync);
 						}
 
 						if (fpsState)
 						{
 							if (isFpsChanged)
-							{
-								isFpsChanged = FALSE;
 								fpsCounter->Reset();
-							}
 
 							fpsCounter->Calculate();
 						}
-						else if (isFpsChanged)
+						
+						if (isFpsChanged)
 						{
 							isFpsChanged = FALSE;
 							clear = TRUE;
@@ -265,17 +266,15 @@ VOID OpenDraw::RenderOld()
 
 						if (this->CheckView())
 						{
-							clear = TRUE;
 							GLViewport(this->viewport.rectangle.x, this->viewport.rectangle.y, this->viewport.rectangle.width, this->viewport.rectangle.height);
+							clear = TRUE;
 						}
 
-						glFilter = 0;
-						if (this->isStateChanged)
-						{
-							this->isStateChanged = FALSE;
-							clear = TRUE;
-							glFilter = config.image.filter == FilterNearest ? GL_NEAREST : GL_LINEAR;
-						}
+						DWORD glFilter = 0;
+						FilterState state = this->filterState;
+						this->filterState.flags = FALSE;
+						if (state.flags)
+							glFilter = state.interpolation == InterpolateNearest ? GL_NEAREST : GL_LINEAR;
 
 						UpdateRect* updateClip = surface->poinetrClip;
 						UpdateRect* finClip = surface->currentClip;
@@ -687,13 +686,9 @@ VOID OpenDraw::RenderOld()
 
 VOID OpenDraw::RenderMid()
 {
-	if (config.image.filter > FilterCubic)
-		config.image.filter = FilterLinear;
+	PostMessage(this->hWnd, config.msgMenu, NULL, NULL);
 
-	DWORD maxSize = this->mode->width > this->mode->height ? this->mode->width : this->mode->height;
-	DWORD maxTexSize = 1;
-	while (maxTexSize < maxSize)
-		maxTexSize <<= 1;
+	DWORD maxTexSize = GetPow2(this->mode->width > this->mode->height ? this->mode->width : this->mode->height);
 	FLOAT texWidth = this->mode->width == maxTexSize ? 1.0f : (FLOAT)this->mode->width / maxTexSize;
 	FLOAT texHeight = this->mode->height == maxTexSize ? 1.0f : (FLOAT)this->mode->height / maxTexSize;
 
@@ -715,13 +710,14 @@ VOID OpenDraw::RenderMid()
 
 	struct {
 		ShaderProgram linear;
+		ShaderProgram hermite;
 		ShaderProgram cubic;
 	} shaders = {
 		{ 0, GLSL_VER_1_10, IDR_LINEAR_VERTEX, IDR_LINEAR_FRAGMENT, (GLfloat*)mvpMatrix },
+		{ 0, GLSL_VER_1_10, IDR_HERMITE_VERTEX, IDR_HERMITE_FRAGMENT, (GLfloat*)mvpMatrix },
 		{ 0, GLSL_VER_1_10, IDR_CUBIC_VERTEX, IDR_CUBIC_FRAGMENT, (GLfloat*)mvpMatrix }
 	};
 
-	ShaderProgram* filterProgram = &shaders.linear;
 	{
 		GLuint bufferName;
 		GLGenBuffers(1, &bufferName);
@@ -730,27 +726,23 @@ VOID OpenDraw::RenderMid()
 			{
 				GLBufferData(GL_ARRAY_BUFFER, sizeof(buffer), buffer, GL_STATIC_DRAW);
 
-				UseShaderProgram(filterProgram, texSize);
-				GLint attrLoc = GLGetAttribLocation(filterProgram->id, "vCoord");
-				GLEnableVertexAttribArray(attrLoc);
-				GLVertexAttribPointer(attrLoc, 2, GL_FLOAT, GL_FALSE, 16, (GLvoid*)0);
+				GLEnableVertexAttribArray(0);
+				GLVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 16, (GLvoid*)0);
 
-				attrLoc = GLGetAttribLocation(filterProgram->id, "vTexCoord");
-				GLEnableVertexAttribArray(attrLoc);
-				GLVertexAttribPointer(attrLoc, 2, GL_FLOAT, GL_FALSE, 16, (GLvoid*)8);
+				GLEnableVertexAttribArray(1);
+				GLVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 16, (GLvoid*)8);
 
 				GLuint textureId;
 				GLGenTextures(1, &textureId);
 				{
-					DWORD filter = config.image.filter == FilterLinear ? GL_LINEAR : GL_NEAREST;
 					GLActiveTexture(GL_TEXTURE0);
 					GLBindTexture(GL_TEXTURE_2D, textureId);
 					GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, glCapsClampToEdge);
 					GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, glCapsClampToEdge);
 					GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
 					GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-					GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
-					GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+					GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+					GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 					GLTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, maxTexSize, maxTexSize, GL_NONE, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, NULL);
 
 					GLClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -759,11 +751,9 @@ VOID OpenDraw::RenderMid()
 					{
 						FpsCounter* fpsCounter = new FpsCounter(FPS_ACCURACY);
 						{
-							this->isStateChanged = TRUE;
-
-							BOOL isVSync = FALSE;
-							if (WGLSwapInterval && !config.singleThread)
-								WGLSwapInterval(0);
+							BOOL isVSync = config.image.vSync;
+							if (WGLSwapInterval)
+								WGLSwapInterval(isVSync);
 
 							DWORD clear = TRUE;
 							do
@@ -771,13 +761,17 @@ VOID OpenDraw::RenderMid()
 								OpenDrawSurface* surface = this->attachedSurface;
 								if (surface)
 								{
-									if (isVSync != config.image.vSync && WGLSwapInterval && !config.singleThread)
+									if (isVSync != config.image.vSync)
 									{
 										isVSync = config.image.vSync;
-										WGLSwapInterval(isVSync);
+										if (WGLSwapInterval)
+											WGLSwapInterval(isVSync);
 									}
 
-									if (this->isStateChanged)
+									FilterState state = this->filterState;
+									this->filterState.flags = FALSE;
+
+									if (state.flags)
 									{
 										this->viewport.refresh = TRUE;
 										isFpsChanged = TRUE;
@@ -786,12 +780,15 @@ VOID OpenDraw::RenderMid()
 									if (fpsState)
 									{
 										if (isFpsChanged)
-										{
-											isFpsChanged = FALSE;
 											fpsCounter->Reset();
-										}
 
 										fpsCounter->Calculate();
+									}
+
+									if (isFpsChanged)
+									{
+										isFpsChanged = FALSE;
+										clear = TRUE;
 									}
 
 									BOOL isTakeSnapshot = this->isTakeSnapshot;
@@ -802,27 +799,30 @@ VOID OpenDraw::RenderMid()
 									UpdateRect* finClip = surface->currentClip;
 									surface->poinetrClip = finClip;
 
-									if (isFpsChanged)
-									{
-										isFpsChanged = FALSE;
-										clear = TRUE;
-									}
-
 									if (this->CheckView())
 									{
-										clear = TRUE;
 										GLViewport(this->viewport.rectangle.x, this->viewport.rectangle.y, this->viewport.rectangle.width, this->viewport.rectangle.height);
+										clear = TRUE;
 									}
 
-									if (this->isStateChanged)
+									if (state.flags)
 									{
-										this->isStateChanged = FALSE;
+										ShaderProgram* program;
+										switch (state.interpolation)
+										{
+										case InterpolateHermite:
+											program = &shaders.hermite;
+											break;
+										case InterpolateCubic:
+											program = &shaders.cubic;
+											break;
+										default:
+											program = &shaders.linear;
+											break;
+										}
+										UseShaderProgram(program, texSize);
 
-										ImageFilter frameFilter = config.image.filter;
-										filterProgram = frameFilter == FilterCubic ? &shaders.cubic : &shaders.linear;
-										UseShaderProgram(filterProgram, texSize);
-
-										filter = frameFilter == FilterLinear ? GL_LINEAR : GL_NEAREST;
+										DWORD filter = state.interpolation == InterpolateLinear || state.interpolation == InterpolateHermite ? GL_LINEAR : GL_NEAREST;
 										GLBindTexture(GL_TEXTURE_2D, textureId);
 										GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
 										GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
@@ -1021,15 +1021,15 @@ VOID OpenDraw::RenderMid()
 		if (shaderProgram->id)
 			GLDeleteProgram(shaderProgram->id);
 
+		++shaderProgram;
 	} while (--count);
 }
 
 VOID OpenDraw::RenderNew()
 {
-	DWORD maxSize = this->mode->width > this->mode->height ? this->mode->width : this->mode->height;
-	DWORD maxTexSize = 1;
-	while (maxTexSize < maxSize)
-		maxTexSize <<= 1;
+	PostMessage(this->hWnd, config.msgMenu, NULL, NULL);
+
+	DWORD maxTexSize = GetPow2(this->mode->width > this->mode->height ? this->mode->width : this->mode->height);
 	FLOAT texWidth = this->mode->width == maxTexSize ? 1.0f : (FLOAT)this->mode->width / maxTexSize;
 	FLOAT texHeight = this->mode->height == maxTexSize ? 1.0f : (FLOAT)this->mode->height / maxTexSize;
 
@@ -1056,6 +1056,7 @@ VOID OpenDraw::RenderNew()
 	struct {
 		ShaderProgram stencil;
 		ShaderProgram linear;
+		ShaderProgram hermite;
 		ShaderProgram cubic;
 		ShaderProgram xBRz_2x;
 		ShaderProgram xBRz_3x;
@@ -1071,6 +1072,7 @@ VOID OpenDraw::RenderNew()
 	} shaders = {
 		{ 0, GLSL_VER_1_30, IDR_STENCIL_VERTEX, IDR_STENCIL_FRAGMENT, (GLfloat*)mvpMatrix },
 		{ 0, GLSL_VER_1_30, IDR_LINEAR_VERTEX, IDR_LINEAR_FRAGMENT, (GLfloat*)mvpMatrix },
+		{ 0, GLSL_VER_1_30, IDR_HERMITE_VERTEX, IDR_HERMITE_FRAGMENT, (GLfloat*)mvpMatrix },
 		{ 0, GLSL_VER_1_30, IDR_CUBIC_VERTEX, IDR_CUBIC_FRAGMENT, (GLfloat*)mvpMatrix },
 		{ 0, GLSL_VER_1_30, IDR_XBRZ_VERTEX, IDR_XBRZ_FRAGMENT_2X, (GLfloat*)mvpMatrix },
 		{ 0, GLSL_VER_1_30, IDR_XBRZ_VERTEX, IDR_XBRZ_FRAGMENT_3X, (GLfloat*)mvpMatrix },
@@ -1085,8 +1087,6 @@ VOID OpenDraw::RenderNew()
 		{ 0, GLSL_VER_1_30, IDR_SCALENX_VERTEX_3X, IDR_SCALENX_FRAGMENT_3X, (GLfloat*)mvpMatrix }
 	};
 
-	ShaderProgram* filterProgram = &shaders.linear;
-	ShaderProgram* filterProgram2 = &shaders.linear;
 	{
 		POINTFLOAT* stencil = NULL;
 		GLuint stArrayName, stBufferName, arrayName;
@@ -1102,27 +1102,23 @@ VOID OpenDraw::RenderNew()
 					{
 						GLBufferData(GL_ARRAY_BUFFER, sizeof(buffer), buffer, GL_STATIC_DRAW);
 
-						UseShaderProgram(filterProgram, texSize);
-						GLint attrLoc = GLGetAttribLocation(filterProgram->id, "vCoord");
-						GLEnableVertexAttribArray(attrLoc);
-						GLVertexAttribPointer(attrLoc, 2, GL_FLOAT, GL_FALSE, 16, (GLvoid*)0);
+						GLEnableVertexAttribArray(0);
+						GLVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 16, (GLvoid*)0);
 
-						attrLoc = GLGetAttribLocation(filterProgram->id, "vTexCoord");
-						GLEnableVertexAttribArray(attrLoc);
-						GLVertexAttribPointer(attrLoc, 2, GL_FLOAT, GL_FALSE, 16, (GLvoid*)8);
+						GLEnableVertexAttribArray(1);
+						GLVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 16, (GLvoid*)8);
 
 						GLuint textureId;
 						GLGenTextures(1, &textureId);
 						{
-							DWORD filter = config.image.filter == FilterLinear ? GL_LINEAR : GL_NEAREST;
 							GLActiveTexture(GL_TEXTURE0);
 							GLBindTexture(GL_TEXTURE_2D, textureId);
 							GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, glCapsClampToEdge);
 							GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, glCapsClampToEdge);
 							GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
 							GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-							GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
-							GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+							GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+							GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 							GLTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, maxTexSize, maxTexSize, GL_NONE, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, NULL);
 
 							GLuint fboId;
@@ -1137,11 +1133,10 @@ VOID OpenDraw::RenderNew()
 									{
 										FpsCounter* fpsCounter = new FpsCounter(FPS_ACCURACY);
 										{
-											this->isStateChanged = TRUE;
-
-											BOOL isVSync = FALSE;
-											if (WGLSwapInterval && !config.singleThread)
-												WGLSwapInterval(0);
+											ShaderProgram* upscaleProgram;
+											BOOL isVSync = config.image.vSync;
+											if (WGLSwapInterval)
+												WGLSwapInterval(isVSync);
 
 											DWORD clear = TRUE;
 											do
@@ -1149,13 +1144,17 @@ VOID OpenDraw::RenderNew()
 												OpenDrawSurface* surface = this->attachedSurface;
 												if (surface)
 												{
-													if (isVSync != config.image.vSync && WGLSwapInterval && !config.singleThread)
+													if (isVSync != config.image.vSync)
 													{
 														isVSync = config.image.vSync;
-														WGLSwapInterval(isVSync);
+														if (WGLSwapInterval)
+															WGLSwapInterval(isVSync);
 													}
 
-													if (this->isStateChanged)
+													FilterState state = this->filterState;
+													this->filterState.flags = FALSE;
+
+													if (state.flags)
 													{
 														this->viewport.refresh = TRUE;
 														isFpsChanged = TRUE;
@@ -1164,12 +1163,15 @@ VOID OpenDraw::RenderNew()
 													if (fpsState)
 													{
 														if (isFpsChanged)
-														{
-															isFpsChanged = FALSE;
 															fpsCounter->Reset();
-														}
 
 														fpsCounter->Calculate();
+													}
+
+													if (isFpsChanged)
+													{
+														isFpsChanged = FALSE;
+														clear = TRUE;
 													}
 
 													BOOL isTakeSnapshot = this->isTakeSnapshot;
@@ -1180,85 +1182,76 @@ VOID OpenDraw::RenderNew()
 													UpdateRect* finClip = surface->currentClip;
 													surface->poinetrClip = finClip;
 
-													ImageFilter frameFilter = config.image.filter;
-													if (frameFilter == FilterXRBZ || frameFilter == FilterScaleHQ || frameFilter == FilterXSal || frameFilter == FilterEagle || frameFilter == FilterScaleNx)
+													if (state.upscaling)
 													{
 														GLBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboId);
 
-														if (this->isStateChanged)
+														if (state.flags)
 														{
-															this->isStateChanged = FALSE;
-
-															DWORD scaleValue;
-															switch (frameFilter)
+															switch (state.upscaling)
 															{
-															case FilterScaleNx:
-																scaleValue = config.image.scaleNx.value;
-																switch (scaleValue)
+															case UpscaleScaleNx:
+																switch (state.value)
 																{
-																case 4:
-																	filterProgram = &shaders.scaleNx_3x;
+																case 3:
+																	upscaleProgram = &shaders.scaleNx_3x;
 																	break;
 																default:
-																	filterProgram = &shaders.scaleNx_2x;
+																	upscaleProgram = &shaders.scaleNx_2x;
 																	break;
 																}
-																filterProgram2 = config.image.scaleNx.type ? &shaders.cubic : &shaders.linear;
+
 																break;
 
-															case FilterScaleHQ:
-																scaleValue = config.image.scaleHQ.value;
-																switch (scaleValue)
+															case UpscaleScaleHQ:
+																switch (state.value)
 																{
 																case 4:
-																	filterProgram = &shaders.scaleHQ_4x;
+																	upscaleProgram = &shaders.scaleHQ_4x;
 																	break;
 																default:
-																	filterProgram = &shaders.scaleHQ_2x;
+																	upscaleProgram = &shaders.scaleHQ_2x;
 																	break;
 																}
-																filterProgram2 = config.image.scaleHQ.type ? &shaders.cubic : &shaders.linear;
+
 																break;
 
-															case FilterXRBZ:
-																scaleValue = config.image.xBRz.value;
-																switch (scaleValue)
+															case UpscaleXRBZ:
+																switch (state.value)
 																{
 																case 6:
-																	filterProgram = &shaders.xBRz_6x;
+																	upscaleProgram = &shaders.xBRz_6x;
 																	break;
 																case 5:
-																	filterProgram = &shaders.xBRz_5x;
+																	upscaleProgram = &shaders.xBRz_5x;
 																	break;
 																case 4:
-																	filterProgram = &shaders.xBRz_4x;
+																	upscaleProgram = &shaders.xBRz_4x;
 																	break;
 																case 3:
-																	filterProgram = &shaders.xBRz_3x;
+																	upscaleProgram = &shaders.xBRz_3x;
 																	break;
 																default:
-																	filterProgram = &shaders.xBRz_2x;
+																	upscaleProgram = &shaders.xBRz_2x;
 																	break;
 																}
-																filterProgram2 = config.image.xBRz.type ? &shaders.cubic : &shaders.linear;
+
 																break;
 
-															case FilterXSal:
-																scaleValue = config.image.xSal.value;
-																filterProgram = &shaders.xSal_2x;
-																filterProgram2 = config.image.xSal.type ? &shaders.cubic : &shaders.linear;
+															case UpscaleXSal:
+																upscaleProgram = &shaders.xSal_2x;
+
 																break;
 
 															default:
-																scaleValue = config.image.eagle.value;
-																filterProgram = &shaders.eagle_2x;
-																filterProgram2 = config.image.eagle.type ? &shaders.cubic : &shaders.linear;
+																upscaleProgram = &shaders.eagle_2x;
+
 																break;
 															}
 
-															UseShaderProgram(filterProgram, texSize);
+															UseShaderProgram(upscaleProgram, texSize);
 
-															DWORD newSize = (this->mode->width * scaleValue) | ((this->mode->height * scaleValue) << 16);
+															DWORD newSize = MAKELONG(this->mode->width * state.value, this->mode->height * state.value);
 															if (newSize != viewSize)
 															{
 																if (!viewSize)
@@ -1325,23 +1318,16 @@ VOID OpenDraw::RenderNew()
 																		{
 																			GLBufferData(GL_ARRAY_BUFFER, size, stencil, GL_STREAM_DRAW);
 
-																			attrLoc = GLGetAttribLocation(shaders.stencil.id, "vCoord");
-																			GLEnableVertexAttribArray(attrLoc);
-																			GLVertexAttribPointer(attrLoc, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);
+																			GLEnableVertexAttribArray(0);
+																			GLVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);
 																		}
 
 																		GLBindVertexArray(arrayName);
 																		GLBindBuffer(GL_ARRAY_BUFFER, bufferName);
 																	}
-																	UseShaderProgram(filterProgram, texSize);
+																	UseShaderProgram(upscaleProgram, texSize);
 																}
 															}
-														}
-
-														if (isFpsChanged)
-														{
-															isFpsChanged = FALSE;
-															clear = TRUE;
 														}
 
 														GLViewport(0, 0, LOWORD(viewSize), HIWORD(viewSize));
@@ -1432,7 +1418,7 @@ VOID OpenDraw::RenderNew()
 																GLStencilFunc(GL_EQUAL, 0x01, 0x01);
 																GLStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 															}
-															UseShaderProgram(filterProgram, texSize);
+															UseShaderProgram(upscaleProgram, texSize);
 														}
 
 														GLBindTexture(GL_TEXTURE_2D, textureId);
@@ -1441,25 +1427,14 @@ VOID OpenDraw::RenderNew()
 													}
 													else
 													{
-														if (isFpsChanged)
-														{
-															isFpsChanged = FALSE;
-															clear = TRUE;
-														}
-
 														if (this->CheckView())
 														{
-															clear = TRUE;
 															GLViewport(this->viewport.rectangle.x, this->viewport.rectangle.y, this->viewport.rectangle.width, this->viewport.rectangle.height);
+															clear = TRUE;
 														}
 
-														if (this->isStateChanged)
+														if (state.flags)
 														{
-															this->isStateChanged = FALSE;
-
-															filterProgram = frameFilter == FilterCubic ? &shaders.cubic : &shaders.linear;
-															UseShaderProgram(filterProgram, texSize);
-
 															if (viewSize)
 															{
 																GLDeleteTextures(1, &tboId);
@@ -1467,8 +1442,26 @@ VOID OpenDraw::RenderNew()
 																viewSize = 0;
 															}
 
-															filter = frameFilter == FilterLinear ? GL_LINEAR : GL_NEAREST;
+															ShaderProgram* program;
+															switch (state.interpolation)
+															{
+															case InterpolateHermite:
+																program = &shaders.hermite;
+																break;
+															case InterpolateCubic:
+																program = &shaders.cubic;
+																break;
+															default:
+																program = &shaders.linear;
+																break;
+															}
+
+															UseShaderProgram(program, texSize);
+
+
 															GLBindTexture(GL_TEXTURE_2D, textureId);
+
+															DWORD filter = state.interpolation == InterpolateLinear || state.interpolation == InterpolateHermite ? GL_LINEAR : GL_NEAREST;
 															GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
 															GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
 														}
@@ -1601,20 +1594,34 @@ VOID OpenDraw::RenderNew()
 													}
 
 													// Draw from FBO
-													if (frameFilter == FilterXRBZ || frameFilter == FilterScaleHQ || frameFilter == FilterXSal || frameFilter == FilterEagle || frameFilter == FilterScaleNx)
+													if (state.upscaling)
 													{
 														GLDisable(GL_STENCIL_TEST);
 														//GLFinish();
 														GLBindFramebuffer(GL_DRAW_FRAMEBUFFER, NULL);
 
-														UseShaderProgram(filterProgram2, viewSize);
+														ShaderProgram* program;
+														switch (state.interpolation)
+														{
+														case InterpolateHermite:
+															program = &shaders.hermite;
+															break;
+														case InterpolateCubic:
+															program = &shaders.cubic;
+															break;
+														default:
+															program = &shaders.linear;
+															break;
+														}
+
+														UseShaderProgram(program, viewSize);
 														{
 															GLViewport(this->viewport.rectangle.x, this->viewport.rectangle.y, this->viewport.rectangle.width, this->viewport.rectangle.height);
 
 															GLClear(GL_COLOR_BUFFER_BIT);
 															GLBindTexture(GL_TEXTURE_2D, tboId);
 
-															filter = filterProgram2 == &shaders.linear ? GL_LINEAR : GL_NEAREST;
+															DWORD filter = state.interpolation == InterpolateLinear || state.interpolation == InterpolateHermite ? GL_LINEAR : GL_NEAREST;
 															GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
 															GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
 
@@ -1658,7 +1665,7 @@ VOID OpenDraw::RenderNew()
 																}
 															}
 														}
-														UseShaderProgram(filterProgram, texSize);
+														UseShaderProgram(upscaleProgram, texSize);
 													}
 													else
 													{
@@ -1751,7 +1758,45 @@ VOID OpenDraw::RenderNew()
 		if (shaderProgram->id)
 			GLDeleteProgram(shaderProgram->id);
 
+		++shaderProgram;
 	} while (--count);
+}
+
+VOID OpenDraw::LoadFilterState()
+{
+	FilterState state;
+	state.interpolation = config.image.interpolation;
+	state.upscaling = config.image.upscaling;
+
+	switch (state.upscaling)
+	{
+	case UpscaleScaleNx:
+		state.value = config.image.scaleNx;
+		break;
+
+	case UpscaleScaleHQ:
+		state.value = config.image.scaleHQ;
+		break;
+
+	case UpscaleXRBZ:
+		state.value = config.image.xBRz;
+		break;
+
+	case UpscaleXSal:
+		state.value = config.image.xSal;
+		break;
+
+	case UpscaleEagle:
+		state.value = config.image.eagle;
+		break;
+
+	default:
+		state.value = 0;
+		break;
+	}
+
+	state.flags = TRUE;
+	this->filterState = state;
 }
 
 VOID OpenDraw::ResetDisplayMode(DWORD width, DWORD height)
@@ -1790,7 +1835,6 @@ VOID OpenDraw::RenderStart()
 		return;
 
 	this->isFinish = FALSE;
-	GL::Load();
 
 	RECT rect;
 	GetClientRect(this->hWnd, &rect);
@@ -1837,6 +1881,7 @@ VOID OpenDraw::RenderStart()
 	SetClassLongPtr(this->hWnd, GCLP_HBRBACKGROUND, NULL);
 	RedrawWindow(this->hWnd, NULL, NULL, RDW_INVALIDATE);
 
+	this->filterState.flags = TRUE;
 	this->viewport.width = rect.right;
 	this->viewport.height = rect.bottom;
 	this->viewport.refresh = TRUE;
@@ -1859,15 +1904,12 @@ VOID OpenDraw::RenderStop()
 	CloseHandle(this->hDrawThread);
 	this->hDrawThread = NULL;
 
-	if (!config.singleWindow)
-	{
-		BOOL wasFull = GetWindowLong(this->hDraw, GWL_STYLE) & WS_POPUP;
-		if (DestroyWindow(this->hDraw))
-			this->hDraw = NULL;
+	if (this->hDraw != this->hWnd)
+		DestroyWindow(this->hDraw);
 
-		if (wasFull)
-			GL::ResetContext();
-	}
+	GL::ResetPixelFormat();
+
+	this->hDraw = NULL;
 
 	ClipCursor(NULL);
 
@@ -1906,7 +1948,8 @@ BOOL OpenDraw::CheckView()
 			}
 		}
 
-		if (config.image.aspect && this->windowState != WinStateWindowed)
+		HWND hActive = GetForegroundWindow();
+		if (config.image.aspect && this->windowState != WinStateWindowed && (hActive == this->hWnd || hActive == this->hDraw))
 		{
 			RECT clipRect;
 			GetClientRect(this->hWnd, &clipRect);
@@ -1957,6 +2000,7 @@ OpenDraw::OpenDraw(IDraw7** last)
 	this->mode = NULL;
 	this->isTakeSnapshot = FALSE;
 	this->isFinish = TRUE;
+	this->LoadFilterState();
 
 	this->hDrawEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 }

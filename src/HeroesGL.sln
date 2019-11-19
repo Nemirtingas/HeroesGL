@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2024
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29424.173
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Heroes3GL", "Heroes3GL\Heroes3GL.vcxproj", "{62A3E190-3331-4F08-9A9F-24315D6A805E}"
 EndProject
@@ -67,6 +67,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "xsal", "xsal", "{C7909C56-3
 		glsl\xsal\vertex.glsl = glsl\xsal\vertex.glsl
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "hermite", "hermite", "{91ECB352-8DF9-4AD6-A6D4-7409107FA052}"
+	ProjectSection(SolutionItems) = preProject
+		glsl\hermite\fragment.glsl = glsl\hermite\fragment.glsl
+		glsl\hermite\vertex.glsl = glsl\hermite\vertex.glsl
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -106,6 +112,7 @@ Global
 		{C618BC8F-282D-4668-92CB-0A19EE2C45FE} = {520D4B5D-885D-43CC-B75C-4F342C729245}
 		{AE45BC76-A7E0-49BF-B05B-F58D72A4E3C6} = {520D4B5D-885D-43CC-B75C-4F342C729245}
 		{C7909C56-36E5-4C1E-A7DA-E7F7EB05C41D} = {520D4B5D-885D-43CC-B75C-4F342C729245}
+		{91ECB352-8DF9-4AD6-A6D4-7409107FA052} = {520D4B5D-885D-43CC-B75C-4F342C729245}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {76298140-6EFF-4E41-BE27-FD61CE97B9DE}

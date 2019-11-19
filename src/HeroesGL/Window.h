@@ -24,11 +24,16 @@
 
 #pragma once
 
+#include "ExtraTypes.h"
+
 #define MIN_WIDTH 240
 #define MIN_HEIGHT 180
 
 namespace Window
 {
+	VOID __fastcall CheckMenu(HMENU hMenu, MenuType type);
+	VOID __fastcall CheckMenu(HWND hWnd, MenuType type);
+
 	VOID __fastcall CheckMenu(HMENU hMenu);
 	VOID __fastcall CheckMenu(HWND hWnd);
 

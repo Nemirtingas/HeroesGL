@@ -35,8 +35,8 @@ protected:
 public:
 	OpenDrawSurface* attachedSurface;
 
-	HWND hDraw;
 	HDC hDc;
+	HWND hDraw;
 
 	const DisplayMode* mode;
 
@@ -48,7 +48,7 @@ public:
 	Viewport viewport;
 	WindowState windowState;
 
-	BOOL isStateChanged;
+	FilterState filterState;
 	BOOL isTakeSnapshot;
 
 	OpenDraw(IDraw7**);
@@ -63,6 +63,7 @@ public:
 	VOID RenderOld();
 	VOID RenderMid();
 	VOID RenderNew();
+	VOID LoadFilterState();
 
 	VOID ResetDisplayMode(DWORD, DWORD);
 

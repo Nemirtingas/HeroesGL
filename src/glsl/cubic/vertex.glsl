@@ -32,7 +32,6 @@ uniform vec2 texSize;
 #if __VERSION__ >= 130
 	#define COMPAT_IN in
 	#define COMPAT_OUT out
-	precision mediump float;
 #else
 	#define COMPAT_IN attribute 
 	#define COMPAT_OUT varying 

@@ -22,8 +22,6 @@
 	SOFTWARE.
 */
 
-precision lowp float;
-
 out vec4 fragColor;
 
 void main() {

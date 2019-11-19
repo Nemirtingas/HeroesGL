@@ -22,8 +22,6 @@
 	SOFTWARE.
 */
 
-precision lowp float;
-
 uniform mat4 mvp;
 
 in vec2 vCoord;

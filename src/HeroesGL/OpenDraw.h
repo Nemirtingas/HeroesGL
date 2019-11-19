@@ -35,8 +35,8 @@ protected:
 public:
 	OpenDrawSurface* attachedSurface;
 
-	HWND hDraw;
 	HDC hDc;
+	HWND hDraw;
 
 	DWORD width;
 	DWORD height;
@@ -49,7 +49,7 @@ public:
 	Viewport viewport;
 	WindowState windowState;
 
-	BOOL isStateChanged;
+	FilterState filterState;
 	BOOL isTakeSnapshot;
 
 	OpenDraw(IDraw**);
@@ -64,6 +64,7 @@ public:
 	VOID RenderOld();
 	VOID RenderMid();
 	VOID RenderNew();
+	VOID LoadFilterState();
 
 	// Inherited via  IDraw
 	ULONG __stdcall AddRef();

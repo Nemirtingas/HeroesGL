@@ -26,8 +26,6 @@
 	SOFTWARE.
 */
 
-precision mediump float;
-
 uniform sampler2D tex01;
 uniform vec2 texSize;
 

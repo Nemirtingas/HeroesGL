@@ -26,8 +26,6 @@
 	SOFTWARE.
 */
 
-precision mediump float;
-
 uniform mat4 mvp;
 
 in vec2 vCoord;

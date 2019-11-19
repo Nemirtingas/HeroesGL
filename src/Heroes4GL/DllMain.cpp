@@ -111,7 +111,6 @@ BOOL __stdcall DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 			if (!config.isNoGL)
 			{
 				UnregisterClass(WC_DRAW, hDllModule);
-				GL::Free();
 				ClipCursor(NULL);
 				Window::SetCaptureKeys(FALSE);
 			}

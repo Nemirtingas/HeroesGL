@@ -28,12 +28,12 @@
 
 #include "windows.h"
 #include "mmreg.h"
-//#include "stdio.h"
 #include "math.h"
 #include "ddraw.h"
 #include "ExtraTypes.h"
 
 #define WC_DRAW "drawclass"
+#define WM_CHECK_MENU "WM_CHECK_MENU"
 
 typedef DWORD(__stdcall *AIL_WAVEOUTOPEN)(LPVOID driver, DWORD a1, DWORD a2, LPPCMWAVEFORMAT waveFormat);
 typedef LPVOID(__stdcall *AIL_OPEN_STREAM)(LPVOID driver, CHAR* filePath, DWORD unknown);
@@ -68,28 +68,28 @@ extern "C"
 	_CRTIMP int __cdecl fclose(FILE*);
 }
 
-#define MemoryAlloc malloc
-#define MemoryFree free
-#define MemorySet memset
+#define MemoryAlloc(size) malloc(size)
+#define MemoryFree(block) free(block)
+#define MemorySet(dst, val, size) memset(dst, val, size)
 #define MemoryZero(dst, size) memset(dst, 0, size)
-#define MemoryCopy memcpy
-#define MathCeil ceil
-#define MathFloor floor
-#define StrPrint sprintf
-#define StrCompare strcmp
-#define StrCompareInsensitive _stricmp
-#define StrCopy strcpy
-#define StrCat strcat
-#define StrChar strchr
-#define StrLastChar strrchr
-#define StrStr strstr
-#define StrDuplicate _strdup
-#define StrToAnsi wcstombs
-#define FileOpen fopen
-#define FileClose fclose
-#define Random rand
-#define SeedRandom srand
-#define Exit exit
+#define MemoryCopy(dst, src, size) memcpy(dst, src, size)
+#define MathCeil(x) ceil(x)
+#define MathFloor(x) floor(x)
+#define StrPrint(buf, fmt, ...) sprintf(buf, fmt, __VA_ARGS__)
+#define StrCompare(str1, str2) strcmp(str1, str2)
+#define StrCompareInsensitive(str1, str2) _stricmp(str1, str2)
+#define StrCopy(dst, src) strcpy(dst, src)
+#define StrCat(dst, src) strcat(dst, src)
+#define StrChar(str, ch) strchr(str, ch)
+#define StrLastChar(str, ch) strrchr(str, ch)
+#define StrStr(str, substr) strstr(str, substr)
+#define StrDuplicate(str) _strdup(str)
+#define StrToAnsi(dst, src, size) wcstombs(dst, src, size)
+#define FileOpen(filename, mode) fopen(filename, mode)
+#define FileClose(stream) fclose(stream)
+#define Random() rand()
+#define SeedRandom(seed) srand(seed)
+#define Exit(code) exit(code)
 
 DOUBLE __fastcall MathRound(DOUBLE);
 

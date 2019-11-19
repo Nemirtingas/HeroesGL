@@ -71,22 +71,29 @@ enum WindowState
 	WinStateWindowed
 };
 
-enum ImageFilter
+enum InterpolationFilter : BYTE
 {
-	FilterNearest = 0,
-	FilterLinear = 1,
-	FilterCubic = 2,
-	FilterXRBZ = 3,
-	FilterScaleHQ = 4,
-	FilterXSal = 5,
-	FilterEagle = 6,
-	FilterScaleNx = 7
+	InterpolateNearest = 0,
+	InterpolateLinear = 1,
+	InterpolateHermite = 2,
+	InterpolateCubic = 3
 };
 
-struct FilterType
+enum UpscalingFilter : BYTE
 {
-	WORD value;
-	WORD type;
+	UpscaleNone = 0,
+	UpscaleXRBZ = 1,
+	UpscaleScaleHQ = 2,
+	UpscaleXSal = 3,
+	UpscaleEagle = 4,
+	UpscaleScaleNx = 5
+};
+
+struct FilterState {
+	InterpolationFilter interpolation;
+	UpscalingFilter upscaling;
+	BYTE value;
+	BYTE flags;
 };
 
 struct DisplayMode
@@ -149,20 +156,21 @@ struct ConfigItems
 	DWORD dialog;
 	HICON icon;
 	HFONT font;
+	UINT msgMenu;
 
-	BOOL singleThread;
 	BOOL singleWindow;
 	BOOL coldCPU;
 
 	struct {
 		BOOL aspect;
 		BOOL vSync;
-		ImageFilter filter;
-		FilterType scaleNx;
-		FilterType xSal;
-		FilterType eagle;
-		FilterType scaleHQ;
-		FilterType xBRz;
+		InterpolationFilter interpolation;
+		UpscalingFilter upscaling;
+		BYTE scaleNx;
+		BYTE xSal;
+		BYTE eagle;
+		BYTE scaleHQ;
+		BYTE xBRz;
 	} image;
 
 	struct {
@@ -183,4 +191,20 @@ struct MappedFile
 	HANDLE hFile;
 	HANDLE hMap;
 	VOID* address;
+};
+
+struct MenuItemData {
+	HMENU hParent;
+	HMENU hMenu;
+	UINT index;
+	UINT childId;
+};
+
+enum MenuType
+{
+	MenuAspect,
+	MenuVSync,
+	MenuInterpolate,
+	MenuUpscale,
+	MenuCpu
 };

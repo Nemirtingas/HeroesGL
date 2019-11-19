@@ -1,25 +1,25 @@
 /*
-        MIT License
+	MIT License
 
-        Copyright (c) 2019 Oleksiy Ryabchun
+	Copyright (c) 2019 Oleksiy Ryabchun
 
-        Permission is hereby granted, free of charge, to any person obtaining a
-   copy of this software and associated documentation files (the "Software"), to
-   deal in the Software without restriction, including without limitation the
-   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-   sell copies of the Software, and to permit persons to whom the Software is
-        furnished to do so, subject to the following conditions:
+	Permission is hereby granted, free of charge, to any person obtaining a
+	copy of this software and associated documentation files (the "Software"), to
+	deal in the Software without restriction, including without limitation the
+	rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+	sell copies of the Software, and to permit persons to whom the Software is
+	furnished to do so, subject to the following conditions:
 
-        The above copyright notice and this permission notice shall be included
-   in all copies or substantial portions of the Software.
+	The above copyright notice and this permission notice shall be included
+	in all copies or substantial portions of the Software.
 
-        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-   OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-   THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-   IN THE SOFTWARE.
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+	OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+	THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+	FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+	IN THE SOFTWARE.
 */
 
 #pragma once
@@ -27,11 +27,11 @@
 //#define WINVER 0x0400
 
 #include "windows.h"
-//#include "stdio.h"
 #include "math.h"
 #include "ddraw.h"
 
 #define WC_DRAW "drawclass"
+#define WM_CHECK_MENU "WM_CHECK_MENU"
 
 typedef HRESULT(__stdcall* DIRECTDRAWCREATEEX)(GUID* lpGuid,
 	LPVOID* lplpDD,
@@ -64,26 +64,26 @@ extern "C"
 	_CRTIMP int __cdecl fclose(FILE*);
 }
 
-#define MemoryAlloc malloc
-#define MemoryFree free
-#define MemorySet memset
+#define MemoryAlloc(size) malloc(size)
+#define MemoryFree(block) free(block)
+#define MemorySet(dst, val, size) memset(dst, val, size)
 #define MemoryZero(dst, size) memset(dst, 0, size)
-#define MemoryCopy memcpy
-#define MathCeil ceil
-#define MathFloor floor
-#define StrPrint sprintf
-#define StrCompare strcmp
-#define StrCompareInsensitive _stricmp
-#define StrCopy strcpy
-#define StrCat strcat
-#define StrChar strchr
-#define StrLastChar strrchr
-#define StrStr strstr
-#define StrToAnsi wcstombs
-#define StrLength strlen
-#define FileOpen fopen
-#define FileClose fclose
-#define Exit exit
+#define MemoryCopy(dst, src, size) memcpy(dst, src, size)
+#define MathCeil(x) ceil(x)
+#define MathFloor(x) floor(x)
+#define StrPrint(buf, fmt, ...) sprintf(buf, fmt, __VA_ARGS__)
+#define StrCompare(str1, str2) strcmp(str1, str2)
+#define StrCompareInsensitive(str1, str2) _stricmp(str1, str2)
+#define StrCopy(dst, src) strcpy(dst, src)
+#define StrCat(dst, src) strcat(dst, src)
+#define StrChar(str, ch) strchr(str, ch)
+#define StrLastChar(str, ch) strrchr(str, ch)
+#define StrStr(str, substr) strstr(str, substr)
+#define StrToAnsi(dst, src, size) wcstombs(dst, src, size)
+#define StrLength(str) strlen(str)
+#define FileOpen(filename, mode) fopen(filename, mode)
+#define FileClose(stream) fclose(stream)
+#define Exit(code) exit(code)
 
 DOUBLE __fastcall MathRound(DOUBLE);
 

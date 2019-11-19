@@ -52,27 +52,14 @@ namespace Config
 			OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
 			DEFAULT_PITCH | FF_DONTCARE, TEXT("MS Shell Dlg"));
 
-		config.singleThread = TRUE;
-		DWORD processMask, systemMask;
-		if (GetProcessAffinityMask(GetCurrentProcess(), &processMask, &systemMask))
-		{
-			BOOL isSingle = FALSE;
-			DWORD count = sizeof(DWORD) << 3;
-			do
-			{
-				if (processMask & 1)
-				{
-					if (isSingle)
-					{
-						config.singleThread = FALSE;
-						break;
-					}
-					else
-						isSingle = TRUE;
-				}
+		config.msgMenu = RegisterWindowMessage(WM_CHECK_MENU);
 
-				processMask >>= 1;
-			} while (--count);
+		DWORD processMask, systemMask;
+		HANDLE process = GetCurrentProcess();
+		if (GetProcessAffinityMask(process, &processMask, &systemMask))
+		{
+			if (processMask != systemMask && SetProcessAffinityMask(process, systemMask))
+				GetProcessAffinityMask(process, &processMask, &systemMask);
 		}
 
 		HMODULE hLibrary = LoadLibrary("NTDLL.dll");
@@ -82,9 +69,6 @@ namespace Config
 				config.singleWindow = TRUE;
 			FreeLibrary(hLibrary);
 		}
-
-		if (!config.singleWindow)
-			config.singleWindow = Config::Get(CONFIG_WRAPPER, "SingleWindow", FALSE);
 
 		if (!config.isNoGL)
 		{
@@ -110,28 +94,26 @@ namespace Config
 			config.image.vSync = TRUE;
 			Config::Set(CONFIG_WRAPPER, "ImageVSync", config.image.vSync);
 
-			config.image.filter = FilterLinear;
-			Config::Set(CONFIG_WRAPPER, "ImageFilter", *(INT*)&config.image.filter);
+			config.image.interpolation = InterpolateHermite;
+			Config::Set(CONFIG_WRAPPER, "Interpolation", *(INT*)&config.image.interpolation);
 
-			config.image.scaleNx.value = 2;
-			config.image.scaleNx.type = 0;
-			Config::Set(CONFIG_WRAPPER, "ImageScaleNx", *(INT*)&config.image.scaleNx);
+			config.image.upscaling = UpscaleNone;
+			Config::Set(CONFIG_WRAPPER, "Upscaling", *(INT*)&config.image.upscaling);
 
-			config.image.xSal.value = 2;
-			config.image.xSal.type = 0;
-			Config::Set(CONFIG_WRAPPER, "ImageXSal", *(INT*)&config.image.xSal);
+			config.image.scaleNx = 2;
+			Config::Set(CONFIG_WRAPPER, "ScaleNx", config.image.scaleNx);
 
-			config.image.eagle.value = 2;
-			config.image.eagle.type = 0;
-			Config::Set(CONFIG_WRAPPER, "ImageEagle", *(INT*)&config.image.eagle);
+			config.image.xSal = 2;
+			Config::Set(CONFIG_WRAPPER, "XSal", config.image.xSal);
 
-			config.image.scaleHQ.value = 2;
-			config.image.scaleHQ.type = 0;
-			Config::Set(CONFIG_WRAPPER, "ImageScaleHQ", *(INT*)&config.image.scaleHQ);
+			config.image.eagle = 2;
+			Config::Set(CONFIG_WRAPPER, "Eagle", config.image.eagle);
 
-			config.image.xBRz.value = 2;
-			config.image.xBRz.type = 0;
-			Config::Set(CONFIG_WRAPPER, "ImageXBRZ", *(INT*)&config.image.xBRz);
+			config.image.scaleHQ = 2;
+			Config::Set(CONFIG_WRAPPER, "ScaleHQ", config.image.scaleHQ);
+
+			config.image.xBRz = 2;
+			Config::Set(CONFIG_WRAPPER, "XBRZ", config.image.xBRz);
 
 			config.keys.fpsCounter = 2;
 			Config::Set(CONFIG_KEYS, "FpsCounter", config.keys.fpsCounter);
@@ -158,46 +140,35 @@ namespace Config
 				config.image.aspect = (BOOL)Config::Get(CONFIG_WRAPPER, "ImageAspect", TRUE);
 				config.image.vSync = (BOOL)Config::Get(CONFIG_WRAPPER, "ImageVSync", TRUE);
 
-				INT value = Config::Get(CONFIG_WRAPPER, "ImageFilter", FilterLinear);
-				config.image.filter = *(ImageFilter*)&value;
-				if (config.image.filter < FilterNearest || config.image.filter > FilterScaleNx)
-					config.image.filter = FilterLinear;
+				INT value = Config::Get(CONFIG_WRAPPER, "Interpolation", InterpolateHermite);
+				config.image.interpolation = *(InterpolationFilter*)&value;
+				if (config.image.interpolation < InterpolateNearest || config.image.interpolation > InterpolateCubic)
+					config.image.interpolation = InterpolateHermite;
 
-				value = Config::Get(CONFIG_WRAPPER, "ImageScaleNx", 2);
-				config.image.scaleNx = *(FilterType*)&value;
-				if (config.image.scaleNx.value != 2 && config.image.scaleNx.value != 3)
-					config.image.scaleNx.value = 2;
-				if (config.image.scaleNx.type & 0xFE)
-					config.image.scaleNx.type = 0;
+				value = Config::Get(CONFIG_WRAPPER, "Upscaling", UpscaleNone);
+				config.image.upscaling = *(UpscalingFilter*)&value;
+				if (config.image.upscaling < UpscaleNone || config.image.upscaling > UpscaleScaleNx)
+					config.image.upscaling = UpscaleNone;
 
-				value = Config::Get(CONFIG_WRAPPER, "ImageXSal", 2);
-				config.image.xSal = *(FilterType*)&value;
-				if (config.image.xSal.value != 2)
-					config.image.xSal.value = 2;
-				if (config.image.xSal.type & 0xFE)
-					config.image.xSal.type = 0;
+				config.image.scaleNx = Config::Get(CONFIG_WRAPPER, "ScaleNx", 2);
+				if (config.image.scaleNx != 2 && config.image.scaleNx != 3)
+					config.image.scaleNx = 2;
 
-				value = Config::Get(CONFIG_WRAPPER, "ImageEagle", 2);
-				config.image.eagle = *(FilterType*)&value;
-				if (config.image.eagle.value != 2)
-					config.image.eagle.value = 2;
-				if (config.image.eagle.type & 0xFE)
-					config.image.eagle.type = 0;
+				config.image.xSal = Config::Get(CONFIG_WRAPPER, "XSal", 2);
+				if (config.image.xSal != 2)
+					config.image.xSal = 2;
 
-				value = Config::Get(CONFIG_WRAPPER, "ImageScaleHQ", 2);
-				config.image.scaleHQ = *(FilterType*)&value;
-				if (config.image.scaleHQ.value != 2 && config.image.scaleHQ.value != 4)
-					config.image.scaleHQ.value = 2;
-				if (config.image.scaleHQ.type & 0xFE)
-					config.image.scaleHQ.type = 0;
+				config.image.eagle = Config::Get(CONFIG_WRAPPER, "Eagle", 2);
+				if (config.image.eagle != 2)
+					config.image.eagle = 2;
 
-				value = Config::Get(CONFIG_WRAPPER, "ImageXBRZ", 2);
-				config.image.xBRz = *(FilterType*)&value;
-				if (config.image.xBRz.value < 2 || config.image.xBRz.value > 6)
-					config.image.xBRz.value = 6;
-				if (config.image.xBRz.type & 0xFE)
-					config.image.xBRz.type = 0;
+				config.image.scaleHQ = Config::Get(CONFIG_WRAPPER, "ScaleHQ", 2);
+				if (config.image.scaleHQ != 2 && config.image.scaleHQ != 4)
+					config.image.scaleHQ = 2;
 
+				config.image.xBRz = Config::Get(CONFIG_WRAPPER, "XBRZ", 2);
+				if (config.image.xBRz < 2 || config.image.xBRz > 6)
+					config.image.xBRz = 6;
 
 				CHAR buffer[20];
 				if (Config::Get(CONFIG_KEYS, "FpsCounter", "", buffer, sizeof(buffer)))
@@ -245,22 +216,14 @@ namespace Config
 		{
 			config.image.aspect = FALSE;
 			config.image.vSync = FALSE;
-			config.image.filter = FilterLinear;
 
-			config.image.scaleNx.value = 2;
-			config.image.scaleNx.type = 0;
-
-			config.image.xSal.value = 2;
-			config.image.xSal.type = 0;
-
-			config.image.eagle.value = 2;
-			config.image.eagle.type = 0;
-
-			config.image.scaleHQ.value = 2;
-			config.image.scaleHQ.type = 0;
-
-			config.image.xBRz.value = 2;
-			config.image.xBRz.type = 0;
+			config.image.interpolation = InterpolateNearest;
+			config.image.upscaling = UpscaleNone;
+			config.image.scaleNx = 2;
+			config.image.xSal = 2;
+			config.image.eagle = 2;
+			config.image.scaleHQ = 2;
+			config.image.xBRz = 2;
 
 			config.keys.fpsCounter = 2;
 			config.keys.imageFilter = 3;
