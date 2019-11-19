@@ -51,14 +51,6 @@ namespace Config
 
 		config.msgMenu = RegisterWindowMessage(WM_CHECK_MENU);
 
-		DWORD processMask, systemMask;
-		HANDLE process = GetCurrentProcess();
-		if (GetProcessAffinityMask(process, &processMask, &systemMask))
-		{
-			if (processMask != systemMask && SetProcessAffinityMask(process, systemMask))
-				GetProcessAffinityMask(process, &processMask, &systemMask);
-		}
-
 		HMODULE hLibrary = LoadLibrary("NTDLL.dll");
 		if (hLibrary)
 		{
