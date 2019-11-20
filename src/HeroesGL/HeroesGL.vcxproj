@@ -98,7 +98,7 @@
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <FixedBaseAddress>true</FixedBaseAddress>
-      <OutputFile>D:\Games\Heroes 2\wing32$(TargetExt)</OutputFile>
+      <OutputFile>D:\Games\Heroes 2\WING32$(TargetExt)</OutputFile>
       <StackReserveSize>
       </StackReserveSize>
       <EntryPointSymbol>DllMain</EntryPointSymbol>
@@ -153,7 +153,7 @@
       <SectionAlignment>4096</SectionAlignment>
       <ModuleDefinitionFile>$(ProjectDir)\module.def</ModuleDefinitionFile>
       <EntryPointSymbol>DllMain</EntryPointSymbol>
-      <OutputFile>D:\Games\Heroes 2\wing32$(TargetExt)</OutputFile>
+      <OutputFile>D:\Games\Heroes 2\WING32$(TargetExt)</OutputFile>
       <CLRSupportLastError>Disabled</CLRSupportLastError>
       <TurnOffAssemblyGeneration>true</TurnOffAssemblyGeneration>
       <IgnoreEmbeddedIDL>true</IgnoreEmbeddedIDL>

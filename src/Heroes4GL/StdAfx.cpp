@@ -34,6 +34,8 @@ RELEASEACTCTX ReleaseActCtxC;
 ACTIVATEACTCTX ActivateActCtxC;
 DEACTIVATEACTCTX DeactivateActCtxC;
 
+SETPROCESSDPIAWARENESS SetProcessDpiAwarenessC;
+
 DWORD
 	pAcquireDDThreadLock,
 	pCompleteCreateSysmemSurface,
@@ -131,4 +133,11 @@ VOID LoadDDraw()
 			pSetAppCompatData = (DWORD)GetProcAddress(hLib, "SetAppCompatData");
 		}
 	}
+}
+
+VOID LoadShcore()
+{
+	HMODULE hLib = LoadLibrary("SHCORE.dll");
+	if (hLib)
+		SetProcessDpiAwarenessC = (SETPROCESSDPIAWARENESS)GetProcAddress(hLib, "SetProcessDpiAwareness");
 }

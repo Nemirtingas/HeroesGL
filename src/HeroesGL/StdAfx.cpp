@@ -34,6 +34,8 @@ RELEASEACTCTX ReleaseActCtxC;
 ACTIVATEACTCTX ActivateActCtxC;
 DEACTIVATEACTCTX DeactivateActCtxC;
 
+SETPROCESSDPIAWARENESS SetProcessDpiAwarenessC;
+
 DWORD
 	pWinGBitBlt,
 	pWinGCreateBitmap,
@@ -109,4 +111,11 @@ VOID LoadDDraw()
 		if (hLib)
 			DDCreate = (DIRECTDRAWCREATE)GetProcAddress(hLib, "DirectDrawCreate");
 	}
+}
+
+VOID LoadShcore()
+{
+	HMODULE hLib = LoadLibrary("SHCORE.dll");
+	if (hLib)
+		SetProcessDpiAwarenessC = (SETPROCESSDPIAWARENESS)GetProcAddress(hLib, "SetProcessDpiAwareness");
 }

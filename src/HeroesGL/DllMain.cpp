@@ -94,6 +94,10 @@ BOOL __stdcall DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 				hActCtx = CreateActCtxC(&actCtx);
 			}
 
+			LoadShcore();
+			if (SetProcessDpiAwarenessC)
+				SetProcessDpiAwarenessC(PROCESS_PER_MONITOR_DPI_AWARE);
+
 			if (config.coldCPU)
 				timeBeginPeriod(1);
 		}

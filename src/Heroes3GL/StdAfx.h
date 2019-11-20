@@ -29,6 +29,7 @@
 #include "windows.h"
 #include "mmreg.h"
 #include "math.h"
+#include "shellscalingapi.h"
 #include "ddraw.h"
 #include "ExtraTypes.h"
 
@@ -53,6 +54,10 @@ extern CREATEACTCTXA CreateActCtxC;
 extern RELEASEACTCTX ReleaseActCtxC;
 extern ACTIVATEACTCTX ActivateActCtxC;
 extern DEACTIVATEACTCTX DeactivateActCtxC;
+
+typedef HRESULT(__stdcall* SETPROCESSDPIAWARENESS)(PROCESS_DPI_AWARENESS);
+
+extern SETPROCESSDPIAWARENESS SetProcessDpiAwarenessC;
 
 #ifndef _FILE_DEFINED
 #define _FILE_DEFINED
@@ -100,3 +105,4 @@ extern DisplayMode displayMode;
 
 VOID LoadKernel32();
 VOID LoadDDraw();
+VOID LoadShcore();
