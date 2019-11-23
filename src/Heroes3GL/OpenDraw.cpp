@@ -2374,7 +2374,7 @@ VOID OpenDraw::RenderStart()
 	SetClassLongPtr(this->hWnd, GCLP_HBRBACKGROUND, NULL);
 	RedrawWindow(this->hWnd, NULL, NULL, RDW_INVALIDATE);
 
-	this->filterState.flags = TRUE;
+	this->LoadFilterState();
 	this->viewport.width = rect.right;
 	this->viewport.height = rect.bottom;
 	this->viewport.refresh = TRUE;
@@ -2496,7 +2496,6 @@ OpenDraw::OpenDraw(IDraw** last)
 	this->isNextIsMode = FALSE;
 	this->isTakeSnapshot = FALSE;
 	this->isFinish = TRUE;
-	this->LoadFilterState();
 
 	this->hDrawEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 }
