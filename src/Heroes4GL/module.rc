@@ -26,6 +26,15 @@ BEGIN
 	END
 	POPUP "&Экран"
 	BEGIN
+		POPUP "&Рендерер"
+		BEGIN
+			MENUITEM "Авто",						IDM_REND_AUTO
+			MENUITEM SEPARATOR
+			MENUITEM "OpenGL 1",					IDM_REND_GL1
+			MENUITEM "OpenGL 2",					IDM_REND_GL2
+			MENUITEM "OpenGL 3",					IDM_REND_GL3
+		END
+		MENUITEM SEPARATOR
 		MENUITEM "В &полный экран",					IDM_RES_FULL_SCREEN
 		MENUITEM "Верт. &синхронизация",			IDM_VSYNC
 	END
@@ -210,6 +219,15 @@ BEGIN
 	END
 	POPUP "&Display"
 	BEGIN
+		POPUP "&Renderer"
+		BEGIN
+			MENUITEM "Auto",						IDM_REND_AUTO
+			MENUITEM SEPARATOR
+			MENUITEM "OpenGL 1",					IDM_REND_GL1
+			MENUITEM "OpenGL 2",					IDM_REND_GL2
+			MENUITEM "OpenGL 3",					IDM_REND_GL3
+		END
+		MENUITEM SEPARATOR
 		MENUITEM "Full &Screen",					IDM_RES_FULL_SCREEN
 		MENUITEM "Enable &VSync",					IDM_VSYNC
 	END
@@ -483,8 +501,8 @@ IDR_SCALENX_FRAGMENT_3X			RCDATA					"..\\glsl\\scalenx\\fragment_3x.glsl"
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2019,11,20,254
- PRODUCTVERSION 1,2,8,0
+ FILEVERSION 2019,11,23,262
+ PRODUCTVERSION 1,2,9,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS VS_FF_DEBUG
@@ -500,10 +518,10 @@ BEGIN
 		BLOCK "040904b0"
 		BEGIN
 			VALUE "FileDescription", "HoMM IV - OpenGL wrapper"
-			VALUE "FileVersion", "2019.11.20.254"
+			VALUE "FileVersion", "2019.11.23.262"
 			VALUE "LegalCopyright", "© 2019 Verok (verokster@gmail.com)"
 			VALUE "OriginalFilename", "ddraw.dll"
-			VALUE "ProductVersion", "1.2.8"
+			VALUE "ProductVersion", "1.2.9"
 			VALUE "ProductName", "Heroes4GL"
 		END
 	END

@@ -74,6 +74,9 @@ namespace Config
 
 		if (!config.isExist)
 		{
+			config.renderer = RendererAuto;
+			Config::Set(CONFIG_WRAPPER, "Renderer", *(INT*)&config.renderer);
+
 			config.coldCPU = FALSE;
 			Config::Set(CONFIG_WRAPPER, "ColdCPU", config.coldCPU);
 
@@ -107,8 +110,7 @@ namespace Config
 			config.image.xBRz = 2;
 			Config::Set(CONFIG_WRAPPER, "XBRZ", config.image.xBRz);
 
-			config.keys.fpsCounter = 2;
-			Config::Set(CONFIG_KEYS, "FpsCounter", config.keys.fpsCounter);
+			Config::Set(CONFIG_KEYS, "FpsCounter", "");
 
 			config.keys.imageFilter = 3;
 			Config::Set(CONFIG_KEYS, "ImageFilter", config.keys.imageFilter);
@@ -116,10 +118,7 @@ namespace Config
 			config.keys.windowedMode = 4;
 			Config::Set(CONFIG_KEYS, "WindowedMode", config.keys.windowedMode);
 
-			config.keys.aspectRatio = 5;
-			Config::Set(CONFIG_KEYS, "AspectRatio", config.keys.aspectRatio);
-
-			config.keys.vSync = 0;
+			Config::Set(CONFIG_KEYS, "AspectRatio", "");
 			Config::Set(CONFIG_KEYS, "VSync", "");
 		}
 		else
@@ -132,10 +131,15 @@ namespace Config
 		{
 			if (config.isExist)
 			{
+				INT value = Config::Get(CONFIG_WRAPPER, "Renderer", RendererAuto);
+				config.renderer = *(RendererType*)&value;
+				if (config.renderer < RendererAuto || config.renderer > RendererOpenGL3)
+					config.renderer = RendererAuto;
+
 				config.image.aspect = (BOOL)Config::Get(CONFIG_WRAPPER, "ImageAspect", TRUE);
 				config.image.vSync = (BOOL)Config::Get(CONFIG_WRAPPER, "ImageVSync", TRUE);
 
-				INT value = Config::Get(CONFIG_WRAPPER, "Interpolation", InterpolateHermite);
+				value = Config::Get(CONFIG_WRAPPER, "Interpolation", InterpolateHermite);
 				config.image.interpolation = *(InterpolationFilter*)&value;
 				if (config.image.interpolation < InterpolateNearest || config.image.interpolation > InterpolateCubic)
 					config.image.interpolation = InterpolateHermite;
@@ -209,6 +213,8 @@ namespace Config
 		}
 		else
 		{
+			config.renderer = RendererAuto;
+
 			config.image.aspect = FALSE;
 			config.image.vSync = FALSE;
 

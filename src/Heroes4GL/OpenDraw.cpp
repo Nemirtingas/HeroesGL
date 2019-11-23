@@ -103,20 +103,20 @@ DWORD __stdcall RenderThread(LPVOID lpParameter)
 					{
 						glPixelFormat = ::ChoosePixelFormat(ddraw->hDc, &pfd);
 						if (!glPixelFormat)
-							Main::ShowError(IDS_ERROR_CHOOSE_PF, __FILE__, __LINE__);
+							Main::ShowError(IDS_ERROR_CHOOSE_PF, "OpenDraw.cpp", __LINE__);
 						else if (pfd.dwFlags & PFD_NEED_PALETTE)
-							Main::ShowError(IDS_ERROR_NEED_PALETTE, __FILE__, __LINE__);
+							Main::ShowError(IDS_ERROR_NEED_PALETTE, "OpenDraw.cpp", __LINE__);
 					}
 
 					GL::ResetPixelFormatDescription(&pfd);
 					if (::DescribePixelFormat(ddraw->hDc, glPixelFormat, sizeof(PIXELFORMATDESCRIPTOR), &pfd) == NULL)
-						Main::ShowError(IDS_ERROR_DESCRIBE_PF, __FILE__, __LINE__);
+						Main::ShowError(IDS_ERROR_DESCRIBE_PF, "OpenDraw.cpp", __LINE__);
 
 					if (!::SetPixelFormat(ddraw->hDc, glPixelFormat, &pfd))
-						Main::ShowError(IDS_ERROR_SET_PF, __FILE__, __LINE__);
+						Main::ShowError(IDS_ERROR_SET_PF, "OpenDraw.cpp", __LINE__);
 
 					if ((pfd.iPixelType != PFD_TYPE_RGBA) || (pfd.cRedBits < 5) || (pfd.cGreenBits < 6) || (pfd.cBlueBits < 5))
-						Main::ShowError(IDS_ERROR_BAD_PF, __FILE__, __LINE__);
+						Main::ShowError(IDS_ERROR_BAD_PF, "OpenDraw.cpp", __LINE__);
 				}
 
 				HGLRC hRc = wglCreateContext(ddraw->hDc);
@@ -125,17 +125,43 @@ DWORD __stdcall RenderThread(LPVOID lpParameter)
 					if (wglMakeCurrent(ddraw->hDc, hRc))
 					{
 						GL::CreateContextAttribs(ddraw->hDc, &hRc);
-						if (glVersion >= GL_VER_2_0)
+						if (config.gl.version.value >= GL_VER_2_0)
 						{
 							DWORD glMaxTexSize;
 							GLGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint*)&glMaxTexSize);
 							if (glMaxTexSize < GetPow2(ddraw->mode->width > ddraw->mode->height ? ddraw->mode->width : ddraw->mode->height))
-								glVersion = GL_VER_1_1;
+								config.gl.version.value = GL_VER_1_1;
 						}
 
-						if (glVersion >= GL_VER_3_0)
+						config.gl.version.real = config.gl.version.value;
+						switch (config.renderer)
+						{
+						case RendererOpenGL1:
+							if (config.gl.version.value > GL_VER_1_1)
+								config.gl.version.value = GL_VER_1_2;
+							break;
+
+						case RendererOpenGL2:
+							if (config.gl.version.value >= GL_VER_2_0)
+								config.gl.version.value = GL_VER_2_0;
+							else
+								config.renderer = RendererAuto;
+							break;
+
+						case RendererOpenGL3:
+							if (config.gl.version.value >= GL_VER_3_0)
+								config.gl.version.value = GL_VER_3_0;
+							else
+								config.renderer = RendererAuto;
+							break;
+
+						default:
+							break;
+						}
+
+						if (config.gl.version.value >= GL_VER_3_0)
 							ddraw->RenderNew();
-						else if (glVersion >= GL_VER_2_0)
+						else if (config.gl.version.value >= GL_VER_2_0)
 							ddraw->RenderMid();
 						else
 							ddraw->RenderOld();
@@ -204,8 +230,8 @@ VOID OpenDraw::RenderOld()
 				GLGenTextures(1, &frame->id);
 				GLBindTexture(GL_TEXTURE_2D, frame->id);
 
-				GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, glCapsClampToEdge);
-				GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, glCapsClampToEdge);
+				GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, config.gl.caps.clampToEdge);
+				GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, config.gl.caps.clampToEdge);
 				GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
 				GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
 				GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -213,7 +239,7 @@ VOID OpenDraw::RenderOld()
 
 				GLTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
-				if (glVersion > GL_VER_1_1)
+				if (config.gl.version.value > GL_VER_1_1)
 					GLTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, maxTexSize, maxTexSize, GL_NONE, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, NULL);
 				else
 					GLTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, maxTexSize, maxTexSize, GL_NONE, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
@@ -229,7 +255,7 @@ VOID OpenDraw::RenderOld()
 		GLEnable(GL_TEXTURE_2D);
 		GLClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-		VOID* frameBuffer = MemoryAlloc(maxTexSize * maxTexSize * (glVersion > GL_VER_1_1 ? sizeof(WORD) : sizeof(DWORD)));
+		VOID* frameBuffer = MemoryAlloc(maxTexSize * maxTexSize * (config.gl.version.value > GL_VER_1_1 ? sizeof(WORD) : sizeof(DWORD)));
 		{
 			FpsCounter* fpsCounter = new FpsCounter(FPS_ACCURACY);
 			{
@@ -324,7 +350,7 @@ VOID OpenDraw::RenderOld()
 
 										if (texWidth == this->mode->width)
 										{
-											if (glVersion > GL_VER_1_1)
+											if (config.gl.version.value > GL_VER_1_1)
 												GLTexSubImage2D(GL_TEXTURE_2D, 0, 0, update.top, texWidth, texHeight, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, surface->indexBuffer + update.top * texWidth);
 											else
 											{
@@ -359,7 +385,7 @@ VOID OpenDraw::RenderOld()
 													++update.right;
 											}
 
-											if (glVersion > GL_VER_1_1)
+											if (config.gl.version.value > GL_VER_1_1)
 											{
 												WORD* source = surface->indexBuffer + update.top * this->mode->width + update.left;
 												WORD* dest = (WORD*)frameBuffer;
@@ -440,7 +466,7 @@ VOID OpenDraw::RenderOld()
 													++clip.right;
 											}
 
-											if (glVersion > GL_VER_1_1)
+											if (config.gl.version.value > GL_VER_1_1)
 											{
 												WORD* source = surface->indexBuffer + clip.top * this->mode->width + clip.left;
 												WORD* dest = (WORD*)frameBuffer;
@@ -495,7 +521,7 @@ VOID OpenDraw::RenderOld()
 									current = current / 10;
 								} while (current);
 
-								if (glVersion > GL_VER_1_1)
+								if (config.gl.version.value > GL_VER_1_1)
 								{
 									WORD fpsColor = fpsState == FpsBenchmark ? 0xFFE0 : 0xFFFF;
 									DWORD dcount = digCount;
@@ -737,8 +763,8 @@ VOID OpenDraw::RenderMid()
 				{
 					GLActiveTexture(GL_TEXTURE0);
 					GLBindTexture(GL_TEXTURE_2D, textureId);
-					GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, glCapsClampToEdge);
-					GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, glCapsClampToEdge);
+					GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, config.gl.caps.clampToEdge);
+					GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, config.gl.caps.clampToEdge);
 					GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
 					GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
 					GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -1113,8 +1139,8 @@ VOID OpenDraw::RenderNew()
 						{
 							GLActiveTexture(GL_TEXTURE0);
 							GLBindTexture(GL_TEXTURE_2D, textureId);
-							GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, glCapsClampToEdge);
-							GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, glCapsClampToEdge);
+							GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, config.gl.caps.clampToEdge);
+							GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, config.gl.caps.clampToEdge);
 							GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
 							GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
 							GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -1264,8 +1290,8 @@ VOID OpenDraw::RenderNew()
 
 																// Gen texture
 																GLBindTexture(GL_TEXTURE_2D, tboId);
-																GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, glCapsClampToEdge);
-																GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, glCapsClampToEdge);
+																GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, config.gl.caps.clampToEdge);
+																GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, config.gl.caps.clampToEdge);
 																GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
 																GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
 																GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -1913,7 +1939,7 @@ VOID OpenDraw::RenderStop()
 
 	ClipCursor(NULL);
 
-	glVersion = NULL;
+	config.gl.version.value = NULL;
 	Window::CheckMenu(this->hWnd);
 }
 

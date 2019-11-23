@@ -25,6 +25,7 @@
 #include "stdafx.h"
 #include "Main.h"
 #include "GLib.h"
+#include "Config.h"
 #include "Resource.h"
 
 #define PREFIX_GL "gl"
@@ -114,10 +115,6 @@ GLFRAMEBUFFERRENDERBUFFER GLFramebufferRenderbuffer;
 
 HMODULE hGLModule;
 
-DWORD glVersion;
-DWORD glCapsClampToEdge;
-BOOL glCapsBGRA;
-
 namespace GL
 {
 	VOID __fastcall LoadFunction(CHAR* buffer, const CHAR* prefix, const CHAR* name, PROC* func, const CHAR* sufix = NULL)
@@ -159,9 +156,9 @@ namespace GL
 		{
 			DWORD errorCode = GetLastError();
 			if (errorCode == ERROR_INVALID_VERSION_ARB)
-				Main::ShowError(IDS_ERROR_ARB_VERSION, __FILE__, __LINE__);
+				Main::ShowError(IDS_ERROR_ARB_VERSION, "GLib.cpp", __LINE__);
 			else if (errorCode == ERROR_INVALID_PROFILE_ARB)
-				Main::ShowError(IDS_ERROR_ARB_PROFILE, __FILE__, __LINE__);
+				Main::ShowError(IDS_ERROR_ARB_PROFILE, "GLib.cpp", __LINE__);
 		}
 
 		return FALSE;
@@ -270,13 +267,13 @@ namespace GL
 		LoadFunction(buffer, PREFIX_GL, "RenderbufferStorage", (PROC*)&GLRenderbufferStorage);
 		LoadFunction(buffer, PREFIX_GL, "FramebufferRenderbuffer", (PROC*)&GLFramebufferRenderbuffer);
 
-		glVersion = NULL;
+		config.gl.version.value = NULL;
 		if (GLGetString)
 		{
 			CHAR* strVer = (CHAR*)GLGetString(GL_VERSION);
 			if (strVer && *strVer >= '0' && *strVer <= '9')
 			{
-				BYTE* ver = (BYTE*)&glVersion;
+				BYTE* ver = (BYTE*)&config.gl.version.value;
 
 				BOOL appears = FALSE;
 				CHAR* p = strVer;
@@ -292,44 +289,46 @@ namespace GL
 					{
 						if (*p != '.' || appears)
 						{
-							if (glVersion)
+							if (config.gl.version.value)
 							{
-								BYTE* ver = (BYTE*)&glVersion + 3;
+								BYTE* ver = (BYTE*)&config.gl.version.value + 3;
 								while (!*ver)
-									glVersion <<= 8;
+									config.gl.version.value <<= 8;
 							}
 
 							break;
 						}
 
 						appears = TRUE;
-						glVersion <<= 8;
+						config.gl.version.value <<= 8;
 						++byteIdx;
 						charIdx = 0;
 					}
 				}
 			}
 			else
-				glVersion = GL_VER_1_1;
+				config.gl.version.value = GL_VER_1_1;
 
-			if (glVersion < GL_VER_1_2)
+			if (config.gl.version.value < GL_VER_1_2)
 			{
 				CHAR* extensions = (CHAR*)GLGetString(GL_EXTENSIONS);
 				if (extensions)
 				{
-					glCapsClampToEdge = (StrStr(extensions, "GL_EXT_texture_edge_clamp") || StrStr(extensions, "GL_SGIS_texture_edge_clamp")) ? GL_CLAMP_TO_EDGE : GL_CLAMP;
-					glCapsBGRA = StrStr(extensions, "GL_EXT_bgra") || StrStr(extensions, "GL_EXT_texture_format_BGRA8888") || StrStr(extensions, "GL_APPLE_texture_format_BGRA8888");
+					config.gl.caps.clampToEdge = (StrStr(extensions, "GL_EXT_texture_edge_clamp") || StrStr(extensions, "GL_SGIS_texture_edge_clamp")) ? GL_CLAMP_TO_EDGE : GL_CLAMP;
+					config.gl.caps.bgra = StrStr(extensions, "GL_EXT_bgra") || StrStr(extensions, "GL_EXT_texture_format_BGRA8888") || StrStr(extensions, "GL_APPLE_texture_format_BGRA8888");
 				}
 			}
 			else
 			{
-				glCapsClampToEdge = GL_CLAMP_TO_EDGE;
-				glCapsBGRA = TRUE;
+				config.gl.caps.clampToEdge = GL_CLAMP_TO_EDGE;
+				config.gl.caps.bgra = TRUE;
 			}
 		}
 
-		if (!glVersion)
-			glVersion = GL_VER_1_1;
+		if (!config.gl.version.value)
+			config.gl.version.value = GL_VER_1_1;
+
+		config.gl.version.real = config.gl.version.value;
 	}
 
 	VOID __fastcall ResetPixelFormatDescription(PIXELFORMATDESCRIPTOR* pfd)
@@ -477,7 +476,7 @@ namespace GL
 		}
 
 		if (!pData)
-			Main::ShowError(IDS_ERROR_LOAD_RESOURCE, __FILE__, __LINE__);
+			Main::ShowError(IDS_ERROR_LOAD_RESOURCE, "GLib.cpp", __LINE__);
 
 		GLuint shader = GLCreateShader(type);
 
@@ -503,12 +502,12 @@ namespace GL
 			GLGetShaderiv(shader, GL_INFO_LOG_LENGTH, &result);
 
 			if (!result)
-				Main::ShowError(IDS_ERROR_COMPILE_SHADER, __FILE__, __LINE__);
+				Main::ShowError(IDS_ERROR_COMPILE_SHADER, "GLib.cpp", __LINE__);
 			else
 			{
 				CHAR data[512];
 				GLGetShaderInfoLog(shader, sizeof(data), &result, data);
-				Main::ShowError(data, __FILE__, __LINE__);
+				Main::ShowError(data, "GLib.cpp", __LINE__);
 			}
 		}
 

@@ -99,15 +99,15 @@ namespace Window
 		{
 		case MenuAspect:
 		{
-			EnableMenuItem(hMenu, IDM_ASPECT_RATIO, MF_BYCOMMAND | (glVersion ? MF_ENABLED : (MF_DISABLED | MF_GRAYED)));
-			CheckMenuItem(hMenu, IDM_ASPECT_RATIO, MF_BYCOMMAND | (glVersion && config.image.aspect ? MF_CHECKED : MF_UNCHECKED));
+			EnableMenuItem(hMenu, IDM_ASPECT_RATIO, MF_BYCOMMAND | (config.gl.version.value ? MF_ENABLED : (MF_DISABLED | MF_GRAYED)));
+			CheckMenuItem(hMenu, IDM_ASPECT_RATIO, MF_BYCOMMAND | (config.gl.version.value && config.image.aspect ? MF_CHECKED : MF_UNCHECKED));
 		}
 		break;
 
 		case MenuVSync:
 		{
-			EnableMenuItem(hMenu, IDM_VSYNC, MF_BYCOMMAND | (glVersion && WGLSwapInterval ? MF_ENABLED : (MF_DISABLED | MF_GRAYED)));
-			CheckMenuItem(hMenu, IDM_VSYNC, MF_BYCOMMAND | (glVersion && WGLSwapInterval && config.image.vSync ? MF_CHECKED : MF_UNCHECKED));
+			EnableMenuItem(hMenu, IDM_VSYNC, MF_BYCOMMAND | (config.gl.version.value && WGLSwapInterval ? MF_ENABLED : (MF_DISABLED | MF_GRAYED)));
+			CheckMenuItem(hMenu, IDM_VSYNC, MF_BYCOMMAND | (config.gl.version.value && WGLSwapInterval && config.image.vSync ? MF_CHECKED : MF_UNCHECKED));
 		}
 		break;
 
@@ -115,10 +115,10 @@ namespace Window
 		{
 			CheckMenuItem(hMenu, IDM_FILT_OFF, MF_BYCOMMAND | MF_UNCHECKED);
 
-			EnableMenuItem(hMenu, IDM_FILT_LINEAR, MF_BYCOMMAND | (glVersion ? MF_ENABLED : (MF_DISABLED | MF_GRAYED)));
+			EnableMenuItem(hMenu, IDM_FILT_LINEAR, MF_BYCOMMAND | (config.gl.version.value ? MF_ENABLED : (MF_DISABLED | MF_GRAYED)));
 			CheckMenuItem(hMenu, IDM_FILT_LINEAR, MF_BYCOMMAND | MF_UNCHECKED);
 
-			DWORD isFilters = glVersion >= GL_VER_2_0 ? MF_ENABLED : (MF_DISABLED | MF_GRAYED);
+			DWORD isFilters = config.gl.version.value >= GL_VER_2_0 ? MF_ENABLED : (MF_DISABLED | MF_GRAYED);
 
 			EnableMenuItem(hMenu, IDM_FILT_HERMITE, MF_BYCOMMAND | isFilters);
 			CheckMenuItem(hMenu, IDM_FILT_HERMITE, MF_BYCOMMAND | MF_UNCHECKED);
@@ -151,7 +151,7 @@ namespace Window
 		{
 			CheckMenuItem(hMenu, IDM_FILT_NONE, MF_BYCOMMAND | MF_UNCHECKED);
 
-			DWORD isFilters = glVersion >= GL_VER_3_0 ? MF_ENABLED : (MF_DISABLED | MF_GRAYED);
+			DWORD isFilters = config.gl.version.value >= GL_VER_3_0 ? MF_ENABLED : (MF_DISABLED | MF_GRAYED);
 
 			MenuItemData mScaleNx, mEagle, mXSal, mScaleHQ, mXBRZ;
 
@@ -273,6 +273,37 @@ namespace Window
 		}
 		break;
 
+		case MenuRenderer:
+		{
+			EnableMenuItem(hMenu, IDM_REND_GL1, MF_BYCOMMAND | (config.gl.version.real >= GL_VER_1_1 ? MF_ENABLED : (MF_DISABLED | MF_GRAYED)));
+			EnableMenuItem(hMenu, IDM_REND_GL2, MF_BYCOMMAND | (config.gl.version.real >= GL_VER_2_0 ? MF_ENABLED : (MF_DISABLED | MF_GRAYED)));
+			EnableMenuItem(hMenu, IDM_REND_GL3, MF_BYCOMMAND | (config.gl.version.real >= GL_VER_3_0 ? MF_ENABLED : (MF_DISABLED | MF_GRAYED)));
+
+			CheckMenuItem(hMenu, IDM_REND_AUTO, MF_BYCOMMAND | MF_UNCHECKED);
+			CheckMenuItem(hMenu, IDM_REND_GL1, MF_BYCOMMAND | MF_UNCHECKED);
+			CheckMenuItem(hMenu, IDM_REND_GL2, MF_BYCOMMAND | MF_UNCHECKED);
+			CheckMenuItem(hMenu, IDM_REND_GL3, MF_BYCOMMAND | MF_UNCHECKED);
+
+			switch (config.renderer)
+			{
+			case RendererOpenGL1:
+				CheckMenuItem(hMenu, IDM_REND_GL1, MF_BYCOMMAND | MF_CHECKED);
+				break;
+
+			case RendererOpenGL2:
+				CheckMenuItem(hMenu, IDM_REND_GL2, MF_BYCOMMAND | MF_CHECKED);
+				break;
+
+			case RendererOpenGL3:
+				CheckMenuItem(hMenu, IDM_REND_GL3, MF_BYCOMMAND | MF_CHECKED);
+				break;
+
+			default:
+				CheckMenuItem(hMenu, IDM_REND_AUTO, MF_BYCOMMAND | MF_CHECKED);
+				break;
+			}
+		}
+
 		default:
 			break;
 		}
@@ -290,6 +321,7 @@ namespace Window
 		CheckMenu(hMenu, MenuInterpolate);
 		CheckMenu(hMenu, MenuUpscale);
 		CheckMenu(hMenu, MenuCpu);
+		CheckMenu(hMenu, MenuRenderer);
 	}
 
 	VOID __fastcall CheckMenu(HWND hWnd)
@@ -311,7 +343,7 @@ namespace Window
 
 	VOID __fastcall InterpolationChanged(HWND hWnd, InterpolationFilter filter)
 	{
-		config.image.interpolation = glVersion >= GL_VER_2_0 || filter < InterpolateHermite ? filter : InterpolateLinear;
+		config.image.interpolation = config.gl.version.value >= GL_VER_2_0 || filter < InterpolateHermite ? filter : InterpolateLinear;
 
 		FilterChanged(hWnd, "Interpolation", *(INT*)&config.image.interpolation);
 		CheckMenu(hWnd, MenuInterpolate);
@@ -319,7 +351,7 @@ namespace Window
 
 	VOID __fastcall UpscalingChanged(HWND hWnd, UpscalingFilter filter)
 	{
-		config.image.upscaling = glVersion >= GL_VER_3_0 ? filter : UpscaleNone;
+		config.image.upscaling = config.gl.version.value >= GL_VER_3_0 ? filter : UpscaleNone;
 
 		FilterChanged(hWnd, "Upscaling", *(INT*)&config.image.upscaling);
 		CheckMenu(hWnd, MenuUpscale);
@@ -358,6 +390,21 @@ namespace Window
 		config.image.xBRz = value;
 		Config::Set(CONFIG_WRAPPER, "XBRZ", *(INT*)&config.image.xBRz);
 		UpscalingChanged(hWnd, UpscaleXRBZ);
+	}
+
+	VOID __fastcall SelectRenderer(HWND hWnd, RendererType renderer)
+	{
+		config.renderer = renderer;
+		Config::Set(CONFIG_WRAPPER, "Renderer", *(INT*)&config.renderer);
+
+		CheckMenu(hWnd, MenuRenderer);
+
+		OpenDraw* ddraw = Main::FindOpenDrawByWindow(hWnd);
+		if (ddraw)
+		{
+			ddraw->RenderStop();
+			ddraw->RenderStart();
+		}
 	}
 
 	LRESULT __stdcall KeysHook(INT nCode, WPARAM wParam, LPARAM lParam)
@@ -522,7 +569,8 @@ namespace Window
 
 				MINMAXINFO* mmi = (MINMAXINFO*)lParam;
 				mmi->ptMinTrackSize.x = rect.right - rect.left;
-				mmi->ptMinTrackSize.y = rect.bottom - rect.top;;
+				mmi->ptMinTrackSize.y = rect.bottom - rect.top;
+				;
 
 				return NULL;
 			}
@@ -579,11 +627,11 @@ namespace Window
 						break;
 
 					case InterpolateLinear:
-						InterpolationChanged(hWnd, glVersion >= GL_VER_2_0 ? InterpolateHermite : InterpolateNearest);
+						InterpolationChanged(hWnd, config.gl.version.value >= GL_VER_2_0 ? InterpolateHermite : InterpolateNearest);
 						break;
 
 					case InterpolateHermite:
-						InterpolationChanged(hWnd, glVersion >= GL_VER_2_0 ? InterpolateCubic : InterpolateNearest);
+						InterpolationChanged(hWnd, config.gl.version.value >= GL_VER_2_0 ? InterpolateCubic : InterpolateNearest);
 						break;
 
 					default:
@@ -656,7 +704,7 @@ namespace Window
 
 				Config::Set(CONFIG_WRAPPER, "ColdCPU", config.coldCPU);
 
-				Window::CheckMenu(hWnd, MenuCpu);
+				CheckMenu(hWnd, MenuCpu);
 				return NULL;
 			}
 
@@ -800,6 +848,30 @@ namespace Window
 			case IDM_FILT_XRBZ_6X:
 			{
 				SelectXBRZMode(hWnd, 6);
+				return NULL;
+			}
+
+			case IDM_REND_AUTO:
+			{
+				SelectRenderer(hWnd, RendererAuto);
+				return NULL;
+			}
+
+			case IDM_REND_GL1:
+			{
+				SelectRenderer(hWnd, RendererOpenGL1);
+				return NULL;
+			}
+
+			case IDM_REND_GL2:
+			{
+				SelectRenderer(hWnd, RendererOpenGL2);
+				return NULL;
+			}
+
+			case IDM_REND_GL3:
+			{
+				SelectRenderer(hWnd, RendererOpenGL3);
 				return NULL;
 			}
 

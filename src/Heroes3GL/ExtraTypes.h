@@ -72,6 +72,14 @@ enum WindowState
 	WinStateWindowed
 };
 
+enum RendererType
+{
+	RendererAuto = 0,
+	RendererOpenGL1 = 1,
+	RendererOpenGL2 = 2,
+	RendererOpenGL3 = 3
+};
+
 enum InterpolationFilter : BYTE
 {
 	InterpolateNearest = 0,
@@ -182,6 +190,18 @@ struct ConfigItems
 
 	BOOL singleWindow;
 	BOOL coldCPU;
+	RendererType renderer;
+
+	struct {
+		struct {
+			DWORD real;
+			DWORD value;
+		} version;
+		struct {
+			BOOL clampToEdge;
+			BOOL bgra;
+		} caps;
+	} gl;
 
 	struct {
 		BOOL aspect;
@@ -228,5 +248,6 @@ enum MenuType
 	MenuVSync,
 	MenuInterpolate,
 	MenuUpscale,
-	MenuCpu
+	MenuCpu,
+	MenuRenderer
 };
