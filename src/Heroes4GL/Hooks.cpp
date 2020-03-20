@@ -28,6 +28,7 @@
 #include "Config.h"
 #include "Resource.h"
 #include "Window.h"
+#include "MappedFile.h"
 
 #define STYLE_FULL_OLD (WS_VISIBLE | WS_POPUP)
 #define STYLE_FULL_NEW (WS_VISIBLE | WS_POPUP | WS_SYSMENU | WS_CLIPSIBLINGS)
@@ -277,29 +278,6 @@ namespace Hooks
 					nameThunk = (PIMAGE_THUNK_DATA)(base + imports->OriginalFirstThunk);
 				else
 				{
-					if (!file->hFile)
-					{
-						CHAR filePath[MAX_PATH];
-						GetModuleFileName(file->hModule, filePath, MAX_PATH);
-						file->hFile = CreateFile(filePath, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-						if (!file->hFile)
-							return res;
-					}
-
-					if (!file->hMap)
-					{
-						file->hMap = CreateFileMapping(file->hFile, NULL, PAGE_READONLY, 0, 0, NULL);
-						if (!file->hMap)
-							return res;
-					}
-
-					if (!file->address)
-					{
-						file->address = MapViewOfFile(file->hMap, FILE_MAP_READ, 0, 0, 0);;
-						if (!file->address)
-							return res;
-					}
-
 					headNT = (PIMAGE_NT_HEADERS)((BYTE*)file->address + ((PIMAGE_DOS_HEADER)file->address)->e_lfanew);
 					PIMAGE_SECTION_HEADER sh = (PIMAGE_SECTION_HEADER)((DWORD)&headNT->OptionalHeader + headNT->FileHeader.SizeOfOptionalHeader);
 
@@ -732,46 +710,38 @@ namespace Hooks
 			Config::Load(hModule, hookSpace);
 
 			{
-				MappedFile file = { hModule, NULL, NULL, NULL };
+				MappedFile* file = new MappedFile(hModule);
 				{
-					PatchFunction(&file, "CreateWindowExA", CreateWindowExHook);
-					PatchFunction(&file, "MessageBoxA", MessageBoxHook);
+					PatchFunction(file, "CreateWindowExA", CreateWindowExHook);
+					PatchFunction(file, "MessageBoxA", MessageBoxHook);
 
-					PatchFunction(&file, "LoadMenuA", LoadMenuHook);
-					PatchFunction(&file, "SetMenu", SetMenuHook);
-					PatchFunction(&file, "EnableMenuItem", EnableMenuItemHook);
-					PatchFunction(&file, "PeekMessageA", PeekMessageHook);
+					PatchFunction(file, "LoadMenuA", LoadMenuHook);
+					PatchFunction(file, "SetMenu", SetMenuHook);
+					PatchFunction(file, "EnableMenuItem", EnableMenuItemHook);
+					PatchFunction(file, "PeekMessageA", PeekMessageHook);
 
-					PatchFunction(&file, "RegCreateKeyExA", RegCreateKeyExHook);
-					PatchFunction(&file, "RegOpenKeyExA", RegOpenKeyExHook);
-					PatchFunction(&file, "RegCloseKey", RegCloseKeyHook);
-					PatchFunction(&file, "RegQueryValueExA", RegQueryValueExHook);
-					PatchFunction(&file, "RegSetValueExA", RegSetValueExHook);
+					PatchFunction(file, "RegCreateKeyExA", RegCreateKeyExHook);
+					PatchFunction(file, "RegOpenKeyExA", RegOpenKeyExHook);
+					PatchFunction(file, "RegCloseKey", RegCloseKeyHook);
+					PatchFunction(file, "RegQueryValueExA", RegQueryValueExHook);
+					PatchFunction(file, "RegSetValueExA", RegSetValueExHook);
 
-					PatchFunction(&file, "DirectDrawCreateEx", Main::DirectDrawCreateEx);
+					PatchFunction(file, "DirectDrawCreateEx", Main::DirectDrawCreateEx);
 
 					if (!config.isNoGL)
 					{
-						PatchFunction(&file, "SetWindowLongA", SetWindowLongHook);
-						PatchFunction(&file, "AdjustWindowRectEx", AdjustWindowRectExHook);
-						PatchFunction(&file, "MoveWindow", MoveWindowHook);
+						PatchFunction(file, "SetWindowLongA", SetWindowLongHook);
+						PatchFunction(file, "AdjustWindowRectEx", AdjustWindowRectExHook);
+						PatchFunction(file, "MoveWindow", MoveWindowHook);
 
-						PatchFunction(&file, "GetWindowRect", GetWindowRectHook);
-						PatchFunction(&file, "GetClientRect", GetClientRectHook);
-						PatchFunction(&file, "GetCursorPos", GetCursorPosHook);
+						PatchFunction(file, "GetWindowRect", GetWindowRectHook);
+						PatchFunction(file, "GetClientRect", GetClientRectHook);
+						PatchFunction(file, "GetCursorPos", GetCursorPosHook);
 
-						PatchFunction(&file, "SetActiveWindow", SetActiveWindowHook);
+						PatchFunction(file, "SetActiveWindow", SetActiveWindowHook);
 					}
 				}
-
-				if (file.address)
-					UnmapViewOfFile(file.address);
-
-				if (file.hMap)
-					CloseHandle(file.hMap);
-
-				if (file.hFile)
-					CloseHandle(file.hFile);
+				delete file;
 			}
 
 			// windowed limitations
