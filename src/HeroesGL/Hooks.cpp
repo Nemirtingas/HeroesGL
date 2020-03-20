@@ -32,6 +32,7 @@
 #include "Window.h"
 #include "AdrDevice.h"
 #include "AdrSource.h"
+#include "MappedFile.h"
 
 #define STYLE_FULL_OLD (WS_VISIBLE | WS_CLIPSIBLINGS)
 #define STYLE_FULL_NEW (WS_VISIBLE | WS_CLIPSIBLINGS | WS_SYSMENU | WS_POPUP)
@@ -312,30 +313,6 @@ namespace Hooks
 					nameThunk = (PIMAGE_THUNK_DATA)(base + imports->OriginalFirstThunk);
 				else
 				{
-					if (!file->hFile)
-					{
-						CHAR filePath[MAX_PATH];
-						GetModuleFileName(file->hModule, filePath, MAX_PATH);
-						file->hFile = CreateFile(filePath, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-						if (!file->hFile)
-							return res;
-					}
-
-					if (!file->hMap)
-					{
-						file->hMap = CreateFileMapping(file->hFile, NULL, PAGE_READONLY, 0, 0, NULL);
-						if (!file->hMap)
-							return res;
-					}
-
-					if (!file->address)
-					{
-						file->address = MapViewOfFile(file->hMap, FILE_MAP_READ, 0, 0, 0);
-						;
-						if (!file->address)
-							return res;
-					}
-
 					headNT = (PIMAGE_NT_HEADERS)((BYTE*)file->address + ((PIMAGE_DOS_HEADER)file->address)->e_lfanew);
 					PIMAGE_SECTION_HEADER sh = (PIMAGE_SECTION_HEADER)((DWORD)&headNT->OptionalHeader + headNT->FileHeader.SizeOfOptionalHeader);
 
@@ -1534,7 +1511,7 @@ namespace Hooks
 			return TRUE;
 
 		Sleep(config.coldCPU);
-		
+
 		return FALSE;
 	}
 #pragma endregion
@@ -1570,7 +1547,6 @@ namespace Hooks
 					HMODULE hLibModule = GetModuleHandle(*libName);
 					if (hLibModule)
 					{
-
 						DWORD baseEx;
 						DWORD base = (DWORD)hLibModule;
 						PIMAGE_NT_HEADERS headNT = (PIMAGE_NT_HEADERS)(base + ((PIMAGE_DOS_HEADER)hLibModule)->e_lfanew);
@@ -1709,66 +1685,58 @@ namespace Hooks
 				Config::Load(hModule, hookSpace);
 
 				{
-					MappedFile file = { hModule, NULL, NULL, NULL };
+					MappedFile* file = new MappedFile(hModule);
 					{
-						PatchFunction(&file, "AdjustWindowRect", AdjustWindowRectHook);
-						PatchFunction(&file, "CreateWindowExA", CreateWindowExHook);
-						PatchFunction(&file, "SetWindowLongA", SetWindowLongHook);
+						PatchFunction(file, "AdjustWindowRect", AdjustWindowRectHook);
+						PatchFunction(file, "CreateWindowExA", CreateWindowExHook);
+						PatchFunction(file, "SetWindowLongA", SetWindowLongHook);
 
-						PatchFunction(&file, "MessageBoxA", MessageBoxHook);
-						PatchFunction(&file, "WinHelpA", WinHelpHook);
+						PatchFunction(file, "MessageBoxA", MessageBoxHook);
+						PatchFunction(file, "WinHelpA", WinHelpHook);
 
-						PatchFunction(&file, "LoadMenuA", LoadMenuHook);
-						PatchFunction(&file, "SetMenu", SetMenuHook);
-						PatchFunction(&file, "EnableMenuItem", EnableMenuItemHook);
+						PatchFunction(file, "LoadMenuA", LoadMenuHook);
+						PatchFunction(file, "SetMenu", SetMenuHook);
+						PatchFunction(file, "EnableMenuItem", EnableMenuItemHook);
 
-						PatchFunction(&file, "Sleep", SleepHook);
-						PatchFunction(&file, "DialogBoxParamA", DialogBoxParamHook);
+						PatchFunction(file, "Sleep", SleepHook);
+						PatchFunction(file, "DialogBoxParamA", DialogBoxParamHook);
 
-						PatchFunction(&file, "PeekMessageA", PeekMessageHook);
-						PatchFunction(&file, "RegisterClassA", RegisterClassHook);
+						PatchFunction(file, "PeekMessageA", PeekMessageHook);
+						PatchFunction(file, "RegisterClassA", RegisterClassHook);
 
-						PatchFunction(&file, "RegCreateKeyA", RegCreateKeyHook);
-						PatchFunction(&file, "RegOpenKeyExA", RegOpenKeyExHook);
-						PatchFunction(&file, "RegCloseKey", RegCloseKeyHook);
-						PatchFunction(&file, "RegQueryValueExA", RegQueryValueExHook);
-						PatchFunction(&file, "RegSetValueExA", RegSetValueExHook);
+						PatchFunction(file, "RegCreateKeyA", RegCreateKeyHook);
+						PatchFunction(file, "RegOpenKeyExA", RegOpenKeyExHook);
+						PatchFunction(file, "RegCloseKey", RegCloseKeyHook);
+						PatchFunction(file, "RegQueryValueExA", RegQueryValueExHook);
+						PatchFunction(file, "RegSetValueExA", RegSetValueExHook);
 
-						AudiereOpenDevice = (ADROPENDEVICE)PatchFunction(&file, "_AdrOpenDevice@8", AdrOpenDeviceHook);
-						AudiereOpenSampleSource = (ADROPENSAMPLESOURCE)PatchFunction(&file, "_AdrOpenSampleSource@4", AdrOpenSampleSourceHook);
+						AudiereOpenDevice = (ADROPENDEVICE)PatchFunction(file, "_AdrOpenDevice@8", AdrOpenDeviceHook);
+						AudiereOpenSampleSource = (ADROPENSAMPLESOURCE)PatchFunction(file, "_AdrOpenSampleSource@4", AdrOpenSampleSourceHook);
 
 						if (!config.isNoGL)
 						{
-							PatchFunction(&file, "LoadLibraryA", LoadLibraryHook);
-							PatchFunction(&file, "FreeLibrary", FreeLibraryHook);
-							PatchFunction(&file, "GetProcAddress", GetProcAddressHook);
+							PatchFunction(file, "LoadLibraryA", LoadLibraryHook);
+							PatchFunction(file, "FreeLibrary", FreeLibraryHook);
+							PatchFunction(file, "GetProcAddress", GetProcAddressHook);
 
-							PatchFunction(&file, "ScreenToClient", ScreenToClientHook);
-							PatchFunction(&file, "InvalidateRect", InvalidateRectHook);
-							PatchFunction(&file, "BeginPaint", BeginPaintHook);
+							PatchFunction(file, "ScreenToClient", ScreenToClientHook);
+							PatchFunction(file, "InvalidateRect", InvalidateRectHook);
+							PatchFunction(file, "BeginPaint", BeginPaintHook);
 						}
 
 						if (hookSpace->icons_list && config.pointerFix)
 						{
-							PatchFunction(&file, "CreateBitmapIndirect", CreateBitmapIndirectHook);
-							PatchFunction(&file, "CreateIconIndirect", CreateIconIndirectHook);
+							PatchFunction(file, "CreateBitmapIndirect", CreateBitmapIndirectHook);
+							PatchFunction(file, "CreateIconIndirect", CreateIconIndirectHook);
 
 							if (!config.isNoGL)
 							{
-								PatchFunction(&file, "SetCursor", SetCursorHook);
-								PatchFunction(&file, "ShowCursor", ShowCursorHook);
+								PatchFunction(file, "SetCursor", SetCursorHook);
+								PatchFunction(file, "ShowCursor", ShowCursorHook);
 							}
 						}
 					}
-
-					if (file.address)
-						UnmapViewOfFile(file.address);
-
-					if (file.hMap)
-						CloseHandle(file.hMap);
-
-					if (file.hFile)
-						CloseHandle(file.hFile);
+					delete file;
 				}
 
 				if (hookSpace->fadein_tick && hookSpace->fadein_update_1 && hookSpace->fadein_update_2)

@@ -180,6 +180,7 @@
     <ClCompile Include="IDraw.cpp" />
     <ClCompile Include="IDrawPalette.cpp" />
     <ClCompile Include="IDrawSurface.cpp" />
+    <ClCompile Include="MappedFile.cpp" />
     <ClCompile Include="OpenDraw.cpp" />
     <ClCompile Include="OpenDrawClipper.cpp" />
     <ClCompile Include="OpenDrawPalette.cpp" />
@@ -207,6 +208,7 @@
     <ClInclude Include="IDraw.h" />
     <ClInclude Include="IDrawPalette.h" />
     <ClInclude Include="IDrawSurface.h" />
+    <ClInclude Include="MappedFile.h" />
     <ClInclude Include="OpenDraw.h" />
     <ClInclude Include="OpenDrawClipper.h" />
     <ClInclude Include="OpenDrawPalette.h" />
