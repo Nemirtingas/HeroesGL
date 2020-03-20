@@ -29,6 +29,7 @@
 #include "Config.h"
 #include "Resource.h"
 #include "Window.h"
+#include "MappedFile.h"
 
 #define STYLE_FULL_OLD (WS_VISIBLE | WS_POPUP)
 #define STYLE_FULL_NEW (WS_VISIBLE | WS_POPUP | WS_SYSMENU | WS_CLIPSIBLINGS)
@@ -356,29 +357,6 @@ namespace Hooks
 					nameThunk = (PIMAGE_THUNK_DATA)(base + imports->OriginalFirstThunk);
 				else
 				{
-					if (!file->hFile)
-					{
-						CHAR filePath[MAX_PATH];
-						GetModuleFileName(file->hModule, filePath, MAX_PATH);
-						file->hFile = CreateFile(filePath, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-						if (!file->hFile)
-							return res;
-					}
-
-					if (!file->hMap)
-					{
-						file->hMap = CreateFileMapping(file->hFile, NULL, PAGE_READONLY, 0, 0, NULL);
-						if (!file->hMap)
-							return res;
-					}
-
-					if (!file->address)
-					{
-						file->address = MapViewOfFile(file->hMap, FILE_MAP_READ, 0, 0, 0);;
-						if (!file->address)
-							return res;
-					}
-
 					headNT = (PIMAGE_NT_HEADERS)((BYTE*)file->address + ((PIMAGE_DOS_HEADER)file->address)->e_lfanew);
 					PIMAGE_SECTION_HEADER sh = (PIMAGE_SECTION_HEADER)((DWORD)&headNT->OptionalHeader + headNT->FileHeader.SizeOfOptionalHeader);
 
@@ -1087,55 +1065,47 @@ namespace Hooks
 			Config::Load(hModule, hookSpace);
 
 			{
-				MappedFile file = { hModule, NULL, NULL, NULL };
+				MappedFile* file = new MappedFile(hModule);
 				{
-					PatchFunction(&file, "MessageBoxA", MessageBoxHook);
-					PatchFunction(&file, "WinHelpA", WinHelpHook);
+					PatchFunction(file, "MessageBoxA", MessageBoxHook);
+					PatchFunction(file, "WinHelpA", WinHelpHook);
 
-					PatchFunction(&file, "LoadMenuA", LoadMenuHook);
-					PatchFunction(&file, "SetMenu", SetMenuHook);
-					PatchFunction(&file, "EnableMenuItem", EnableMenuItemHook);
+					PatchFunction(file, "LoadMenuA", LoadMenuHook);
+					PatchFunction(file, "SetMenu", SetMenuHook);
+					PatchFunction(file, "EnableMenuItem", EnableMenuItemHook);
 
-					PatchFunction(&file, "Sleep", SleepHook);
-					PatchFunction(&file, "DialogBoxParamA", DialogBoxParamHook);
-					PatchFunction(&file, "PeekMessageA", PeekMessageHook);
+					PatchFunction(file, "Sleep", SleepHook);
+					PatchFunction(file, "DialogBoxParamA", DialogBoxParamHook);
+					PatchFunction(file, "PeekMessageA", PeekMessageHook);
 
-					PatchFunction(&file, "CreateFileA", CreateFileHook);
+					PatchFunction(file, "CreateFileA", CreateFileHook);
 
-					PatchFunction(&file, "RegCreateKeyA", RegCreateKeyHook);
-					PatchFunction(&file, "RegOpenKeyExA", RegOpenKeyExHook);
-					PatchFunction(&file, "RegCloseKey", RegCloseKeyHook);
-					PatchFunction(&file, "RegQueryValueExA", RegQueryValueExHook);
-					PatchFunction(&file, "RegSetValueExA", RegSetValueExHook);
+					PatchFunction(file, "RegCreateKeyA", RegCreateKeyHook);
+					PatchFunction(file, "RegOpenKeyExA", RegOpenKeyExHook);
+					PatchFunction(file, "RegCloseKey", RegCloseKeyHook);
+					PatchFunction(file, "RegQueryValueExA", RegQueryValueExHook);
+					PatchFunction(file, "RegSetValueExA", RegSetValueExHook);
 
-					PatchFunction(&file, "DirectDrawCreate", Main::DirectDrawCreate);
+					PatchFunction(file, "DirectDrawCreate", Main::DirectDrawCreate);
 
-					AIL_waveOutOpen = (AIL_WAVEOUTOPEN)PatchFunction(&file, "_AIL_waveOutOpen@16", AIL_waveOutOpenHook);
-					AIL_stream_position = (AIL_STREAM_POSITION)PatchFunction(&file, "_AIL_stream_position@4", AIL_stream_positionHook);
-					AIL_open_stream = (AIL_OPEN_STREAM)PatchFunction(&file, "_AIL_open_stream@12", AIL_open_streamHook);
-					AIL_set_stream_position = (AIL_SET_STREAM_POSITION)PatchFunction(&file, "_AIL_set_stream_position@8", AIL_set_stream_positionHook);
+					AIL_waveOutOpen = (AIL_WAVEOUTOPEN)PatchFunction(file, "_AIL_waveOutOpen@16", AIL_waveOutOpenHook);
+					AIL_stream_position = (AIL_STREAM_POSITION)PatchFunction(file, "_AIL_stream_position@4", AIL_stream_positionHook);
+					AIL_open_stream = (AIL_OPEN_STREAM)PatchFunction(file, "_AIL_open_stream@12", AIL_open_streamHook);
+					AIL_set_stream_position = (AIL_SET_STREAM_POSITION)PatchFunction(file, "_AIL_set_stream_position@8", AIL_set_stream_positionHook);
 
 					if (!config.isNoGL)
 					{
-						PatchFunction(&file, "AdjustWindowRect", AdjustWindowRectHook);
-						PatchFunction(&file, "AdjustWindowRectEx", AdjustWindowRectExHook);
-						PatchFunction(&file, "CreateWindowExA", CreateWindowExHook);
-						PatchFunction(&file, "SetWindowLongA", SetWindowLongHook);
+						PatchFunction(file, "AdjustWindowRect", AdjustWindowRectHook);
+						PatchFunction(file, "AdjustWindowRectEx", AdjustWindowRectExHook);
+						PatchFunction(file, "CreateWindowExA", CreateWindowExHook);
+						PatchFunction(file, "SetWindowLongA", SetWindowLongHook);
 
-						PatchFunction(&file, "GetDeviceCaps", GetDeviceCapsHook);
-						PatchFunction(&file, "GetCursorPos", GetCursorPosHook);
-						PatchFunction(&file, "ScreenToClient", ScreenToClientHook);
+						PatchFunction(file, "GetDeviceCaps", GetDeviceCapsHook);
+						PatchFunction(file, "GetCursorPos", GetCursorPosHook);
+						PatchFunction(file, "ScreenToClient", ScreenToClientHook);
 					}
 				}
-
-				if (file.address)
-					UnmapViewOfFile(file.address);
-
-				if (file.hMap)
-					CloseHandle(file.hMap);
-
-				if (file.hFile)
-					CloseHandle(file.hFile);
+				delete file;
 			}
 
 			if (!config.isNoGL)
