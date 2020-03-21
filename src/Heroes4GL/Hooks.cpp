@@ -429,6 +429,15 @@ namespace Hooks
 		{
 			LoadNewMenu(GetMenu(hWnd));
 			Window::SetCaptureWindow(hWnd);
+
+			HDC hDc = GetDC(hWnd);
+			if (hDc)
+			{
+				RECT rc;
+				GetClientRect(hWnd, &rc);
+				FillRect(hDc, &rc, (HBRUSH)GetStockObject(BLACK_BRUSH));
+				ReleaseDC(hWnd, hDc);
+			}
 		}
 
 		return hWnd;

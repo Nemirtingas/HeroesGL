@@ -389,9 +389,6 @@ namespace GL
 								WGLCHOOSEPIXELFORMAT WGLChoosePixelFormat = (WGLCHOOSEPIXELFORMAT)wglGetProcAddress("wglChoosePixelFormatARB");
 								if (WGLChoosePixelFormat)
 								{
-									INT piFormats[128];
-									UINT nNumFormats;
-
 									INT glAttributes[] = {
 										WGL_DRAW_TO_WINDOW_ARB, (pfd->dwFlags & PFD_DRAW_TO_WINDOW) ? GL_TRUE : GL_FALSE,
 										WGL_SUPPORT_OPENGL_ARB, (pfd->dwFlags & PFD_SUPPORT_OPENGL) ? GL_TRUE : GL_FALSE,
@@ -404,8 +401,10 @@ namespace GL
 										0
 									};
 
-									if (WGLChoosePixelFormat(hDc, glAttributes, NULL, sizeof(piFormats) / sizeof(INT), piFormats, &nNumFormats) && nNumFormats)
-										res = piFormats[0];
+									INT piFormat;
+									UINT nNumFormats;
+									if (WGLChoosePixelFormat(hDc, glAttributes, NULL, 1, &piFormat, &nNumFormats) && nNumFormats)
+										res = piFormat;
 								}
 
 								wglMakeCurrent(hDc, NULL);
@@ -427,9 +426,6 @@ namespace GL
 
 	VOID __fastcall ResetPixelFormat()
 	{
-		PIXELFORMATDESCRIPTOR pfd;
-		PreparePixelFormatDescription(&pfd);
-
 		HWND hWnd = CreateWindowEx(
 			WS_EX_APPWINDOW,
 			WC_DRAW,
@@ -447,6 +443,9 @@ namespace GL
 			HDC hDc = GetDC(hWnd);
 			if (hDc)
 			{
+				PIXELFORMATDESCRIPTOR pfd;
+				PreparePixelFormatDescription(&pfd);
+
 				INT res = ::ChoosePixelFormat(hDc, &pfd);
 				if (res)
 					::SetPixelFormat(hDc, res, &pfd);
