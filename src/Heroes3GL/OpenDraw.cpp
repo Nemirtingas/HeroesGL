@@ -2380,9 +2380,7 @@ VOID OpenDraw::RenderStart()
 	this->viewport.refresh = TRUE;
 
 	DWORD threadId;
-	SECURITY_ATTRIBUTES sAttribs;
-	MemoryZero(&sAttribs, sizeof(SECURITY_ATTRIBUTES));
-	sAttribs.nLength = sizeof(SECURITY_ATTRIBUTES);
+	SECURITY_ATTRIBUTES sAttribs = { sizeof(SECURITY_ATTRIBUTES), NULL, FALSE };
 	this->hDrawThread = CreateThread(&sAttribs, NULL, RenderThread, this, NORMAL_PRIORITY_CLASS, &threadId);
 }
 

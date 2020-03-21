@@ -468,10 +468,28 @@ namespace Window
 				MemoryFree(verData);
 			}
 
-			if (GetDlgItemText(hDlg, IDC_LNK_EMAIL, temp, sizeof(temp)))
+			if (GetDlgItemText(hDlg, IDC_COPYRIGHT, temp, sizeof(temp)))
 			{
-				StrPrint(path, "<A HREF=\"mailto:%s\">%s</A>", temp, temp);
+				StrPrint(path, temp, 2020, "Verok");
+				SetDlgItemText(hDlg, IDC_COPYRIGHT, path);
+			}
+
+			if (lParam)
+			{
+				StrPrint(path, "<A HREF=\"mailto:%s\">%s</A>", "verokster@gmail.com", "verokster@gmail.com");
 				SetDlgItemText(hDlg, IDC_LNK_EMAIL, path);
+
+				StrPrint(path, "<A HREF=\"%s\">%s</A>", "https://verokster.blogspot.com/2018/10/heroes-of-might-and-magic-i-iv-gl.html", "https://verokster.blogspot.com");
+				SetDlgItemText(hDlg, IDC_LNK_WEB, path);
+
+				StrPrint(path, "<A HREF=\"%s\">%s</A>", "https://www.patreon.com/join/verok", "https://www.patreon.com/join/verok");
+				SetDlgItemText(hDlg, IDC_LNK_PATRON, path);
+			}
+			else
+			{
+				SetDlgItemText(hDlg, IDC_LNK_EMAIL, "verokster@gmail.com");
+				SetDlgItemText(hDlg, IDC_LNK_WEB, "https://verokster.blogspot.com");
+				SetDlgItemText(hDlg, IDC_LNK_PATRON, "https://www.patreon.com/join/verok");
 			}
 
 			break;
@@ -479,22 +497,25 @@ namespace Window
 
 		case WM_NOTIFY:
 		{
-			if (((NMHDR*)lParam)->code == NM_CLICK && wParam == IDC_LNK_EMAIL)
+			if (((NMHDR*)lParam)->code == NM_CLICK)
 			{
-				NMLINK* pNMLink = (NMLINK*)lParam;
-				LITEM iItem = pNMLink->item;
+				switch (wParam)
+				{
+				case IDC_LNK_EMAIL:
+				case IDC_LNK_WEB:
+				case IDC_LNK_PATRON:
+					SHELLEXECUTEINFOW shExecInfo;
+					MemoryZero(&shExecInfo, sizeof(SHELLEXECUTEINFOW));
+					shExecInfo.cbSize = sizeof(SHELLEXECUTEINFOW);
+					shExecInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
+					shExecInfo.lpFile = ((NMLINK*)lParam)->item.szUrl;
+					shExecInfo.nShow = SW_SHOW;
+					ShellExecuteExW(&shExecInfo);
+					break;
 
-				CHAR url[MAX_PATH];
-				StrToAnsi(url, pNMLink->item.szUrl, sizeof(url) - 1);
-
-				SHELLEXECUTEINFO shExecInfo;
-				MemoryZero(&shExecInfo, sizeof(SHELLEXECUTEINFO));
-				shExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
-				shExecInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
-				shExecInfo.lpFile = url;
-				shExecInfo.nShow = SW_SHOW;
-
-				ShellExecuteEx(&shExecInfo);
+				default:
+					break;
+				}
 			}
 
 			break;
@@ -712,7 +733,7 @@ namespace Window
 				if (hActCtx && hActCtx != INVALID_HANDLE_VALUE && !ActivateActCtxC(hActCtx, &cookie))
 					cookie = NULL;
 
-				res = DialogBoxParam(hDllModule, MAKEINTRESOURCE(config.language == LNG_ENGLISH ? (cookie ? IDD_ENGLISH : IDD_ENGLISH_OLD) : (cookie ? IDD_RUSSIAN : IDD_RUSSIAN_OLD)), hWnd, (DLGPROC)AboutProc, NULL);
+				DialogBoxParam(hDllModule, MAKEINTRESOURCE(config.language == LNG_ENGLISH ? (cookie ? IDD_ENGLISH : IDD_ENGLISH_OLD) : (cookie ? IDD_RUSSIAN : IDD_RUSSIAN_OLD)), hWnd, (DLGPROC)AboutProc, cookie);
 
 				if (cookie)
 					DeactivateActCtxC(0, cookie);
