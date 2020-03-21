@@ -156,6 +156,7 @@ struct AddressSpace
 	DWORD setFullScreenStatus;
 	DWORD ddSetFullScreenStatus;
 	DWORD checkChangeCursor;
+	DWORD moveOffset;
 
 	AppSettings* appSettings;
 	DWORD dispelMagicSwitch;
@@ -204,6 +205,11 @@ struct ConfigItems
 	BOOL pointerFix;
 	BOOL pointerHidden;
 	DWORD pointerIndex;
+
+	struct {
+		RECT rect;
+		POINT* offset;
+	} update;
 
 	struct {
 		struct {

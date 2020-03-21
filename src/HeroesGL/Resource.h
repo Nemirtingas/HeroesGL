@@ -7,9 +7,14 @@
 
 #define LNG_ENGLISH 0
 #define LNG_RUSSIAN 1
+
 #define IDC_BTN_OK 1
-#define IDC_LNK_EMAIL 2
+#define IDC_TITLE 2
 #define IDC_VERSION 3
+#define IDC_COPYRIGHT 4
+#define IDC_LNK_EMAIL 5
+#define IDC_LNK_WEB 6
+#define IDC_LNK_PATRON 7
 
 #define IDR_STENCIL_VERTEX 30
 #define IDR_STENCIL_FRAGMENT 31

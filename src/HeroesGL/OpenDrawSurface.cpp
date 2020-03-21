@@ -26,6 +26,7 @@
 #include "OpenDrawSurface.h"
 #include "OpenDraw.h"
 #include "GLib.h"
+#include "Config.h"
 
 OpenDrawSurface::OpenDrawSurface(IDraw* lpDD, DWORD index)
 {
@@ -90,84 +91,85 @@ ULONG __stdcall OpenDrawSurface::Release()
 	return 0;
 }
 
-HRESULT __stdcall OpenDrawSurface::Blt(LPRECT lpDestRect, LPDIRECTDRAWSURFACE lpDDSrcSurface, LPRECT lpSrcRect, DWORD dwFlags, LPDDBLTFX lpDDBltFx)
+HRESULT __stdcall OpenDrawSurface::Blt(LPRECT, LPDIRECTDRAWSURFACE lpDDSrcSurface, LPRECT, DWORD dwFlags, LPDDBLTFX lpDDBltFx)
 {
-	LONG width = lpSrcRect->right - lpSrcRect->left;
-	LONG height = lpSrcRect->bottom - lpSrcRect->top;
+	OpenDrawSurface* surface = (OpenDrawSurface*)lpDDSrcSurface;
 
-	if (width > 0 && height > 0)
+	RECT* rcDst = &config.update.rect;
+	RECT rcSrc = config.update.rect;
+
+	DWORD offset = config.update.offset->x;
+	if (offset)
 	{
-		if (this->attachedClipper)
-			ScreenToClient(this->attachedClipper->hWnd, (POINT*)&lpDestRect->left);
+		rcSrc.left = offset + 16;
+		rcSrc.right = rcSrc.left + 448;
+	}
 
-		RECT rect;
-		GetClientRect(this->ddraw->hWnd, &rect);
+	offset = config.update.offset->y;
+	if (offset)
+	{
+		rcSrc.top = offset + 16;
+		rcSrc.bottom = rcSrc.top + 448;
+	}
 
-		lpDestRect->left = lpDestRect->left * RES_WIDTH / rect.right;
-		lpDestRect->top = lpDestRect->top * RES_HEIGHT / rect.bottom;
+	BYTE* src = surface->indexBuffer + rcSrc.top * RES_WIDTH + rcSrc.left;
 
-		OpenDrawSurface* surface = (OpenDrawSurface*)lpDDSrcSurface;
+	offset = config.update.rect.top * RES_WIDTH + config.update.rect.left;
+	BYTE* dst = this->indexBuffer + offset;
+	DWORD* pix = this->pixelBuffer + offset;
 
-		BYTE* source = surface->indexBuffer + lpSrcRect->top * RES_WIDTH + lpSrcRect->left;
-		BYTE* destination = this->indexBuffer + lpDestRect->top * RES_WIDTH + lpDestRect->left;
-		DWORD* pixels = this->pixelBuffer + lpDestRect->top * RES_WIDTH + lpDestRect->left;
+	LONG width = rcSrc.right - rcSrc.left;
+	LONG height = rcSrc.bottom - rcSrc.top;
+	DWORD pitch = RES_WIDTH - width;
 
-		LONG copyHeight = height;
+	LONG ch = height;
+	do
+	{
+		LONG cw = width;
 		do
 		{
-			BYTE* src = source;
-			BYTE* dest = destination;
-			DWORD* pix = pixels;
+			BYTE index = *src++;
+			*pix++ = *(DWORD*)&this->attachedPalette->entries[index];
+			*dst++ = index;
+		} while (--cw);
 
-			LONG copyWidth = width;
-			do
-			{
-				BYTE index = *src++;
-				*pix++ = *(DWORD*)&this->attachedPalette->entries[index];
-				*dest++ = index;
-			} while (--copyWidth);
+		src += pitch;
+		pix += pitch;
+		dst += pitch;
+	} while (--ch);
 
-			source += RES_WIDTH;
-			destination += RES_WIDTH;
-			pixels += RES_WIDTH;
-		} while (--copyHeight);
+	this->currentClip->rect = { config.update.rect.left, config.update.rect.top, config.update.rect.left + width, config.update.rect.top + height };
+	this->currentClip->isActive = TRUE;
 
-		this->currentClip->rect.left = lpDestRect->left;
-		this->currentClip->rect.top = lpDestRect->top;
-		this->currentClip->rect.right = lpDestRect->left + width;
-		this->currentClip->rect.bottom = lpDestRect->top + height;
-		this->currentClip->isActive = TRUE;
+	if (width == *(LONG*)&((OpenDraw*)this->ddraw)->width && height == *(LONG*)&((OpenDraw*)this->ddraw)->height)
+		this->poinetrClip = this->currentClip;
+	else
+	{
+		UpdateRect* oldClip = surface->poinetrClip;
+		UpdateRect* currClip = surface->currentClip;
 
-		if (width == *(LONG*)&((OpenDraw*)this->ddraw)->width && height == *(LONG*)&((OpenDraw*)this->ddraw)->height)
-			this->poinetrClip = this->currentClip;
-		else
+		while (oldClip != currClip)
 		{
-			UpdateRect* oldClip = surface->poinetrClip;
-			UpdateRect* currClip = surface->currentClip;
-
-			while (oldClip != currClip)
+			if (oldClip->isActive)
 			{
-				if (oldClip->isActive)
+				if (oldClip->rect.left >= currClip->rect.left && oldClip->rect.top >= currClip->rect.top && oldClip->rect.right <= currClip->rect.right && oldClip->rect.bottom <= currClip->rect.bottom)
+					oldClip->isActive = FALSE;
+				else if (currClip->rect.left >= oldClip->rect.left && currClip->rect.top >= oldClip->rect.top && currClip->rect.right <= oldClip->rect.right && currClip->rect.bottom <= oldClip->rect.bottom)
 				{
-					if (oldClip->rect.left >= currClip->rect.left && oldClip->rect.top >= currClip->rect.top && oldClip->rect.right <= currClip->rect.right && oldClip->rect.bottom <= currClip->rect.bottom)
-						oldClip->isActive = FALSE;
-					else if (currClip->rect.left >= oldClip->rect.left && currClip->rect.top >= oldClip->rect.top && currClip->rect.right <= oldClip->rect.right && currClip->rect.bottom <= oldClip->rect.bottom)
-					{
-						currClip->isActive = FALSE;
-						break;
-					}
+					currClip->isActive = FALSE;
+					break;
 				}
-
-				if (++oldClip == surface->endClip)
-					oldClip = surface->clipsList;
 			}
+
+			if (++oldClip == surface->endClip)
+				oldClip = surface->clipsList;
 		}
-
-		this->currentClip = this->currentClip + 1 != this->endClip ? this->currentClip + 1 : this->clipsList;
-
-		SetEvent(((OpenDraw*)this->ddraw)->hDrawEvent);
-		Sleep(0);
 	}
+
+	this->currentClip = this->currentClip + 1 != this->endClip ? this->currentClip + 1 : this->clipsList;
+
+	SetEvent(((OpenDraw*)this->ddraw)->hDrawEvent);
+	Sleep(0);
 
 	return DD_OK;
 }
