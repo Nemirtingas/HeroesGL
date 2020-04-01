@@ -253,7 +253,10 @@ VOID OpenDraw::RenderOld()
 		GLEnable(GL_TEXTURE_2D);
 		GLClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-		VOID* frameBuffer = MemoryAlloc(maxTexSize * maxTexSize * (config.gl.version.value > GL_VER_1_1 ? sizeof(WORD) : sizeof(DWORD)));
+		VOID* frameBuffer = NULL;
+		BOOL isPixelStore = config.gl.version.value > GL_VER_1_1;
+		if (!isPixelStore)
+			frameBuffer = MemoryAlloc(maxTexSize * maxTexSize * (config.gl.version.value > GL_VER_1_1 ? sizeof(WORD) : sizeof(DWORD)));
 		{
 			BOOL isVSync = config.image.vSync;
 			if (WGLSwapInterval)
@@ -304,7 +307,7 @@ VOID OpenDraw::RenderOld()
 						updateClip->isActive = TRUE;
 					}
 
-					if (config.gl.version.value > GL_VER_1_1)
+					if (isPixelStore)
 						GLPixelStorei(GL_UNPACK_ROW_LENGTH, this->mode->width);
 					{
 						DWORD count = frameCount;
@@ -482,7 +485,7 @@ VOID OpenDraw::RenderOld()
 							++frame;
 						}
 					}
-					if (config.gl.version.value > GL_VER_1_1)
+					if (isPixelStore)
 						GLPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 
 					if (this->isTakeSnapshot)
@@ -534,7 +537,8 @@ VOID OpenDraw::RenderOld()
 				}
 			} while (!this->isFinish);
 		}
-		MemoryFree(frameBuffer);
+		if (!isPixelStore)
+			MemoryFree(frameBuffer);
 
 		frame = frames;
 		DWORD count = frameCount;
