@@ -53,48 +53,41 @@ ULONG __stdcall OpenDrawPalette::Release()
 
 HRESULT __stdcall OpenDrawPalette::SetEntries(DWORD dwFlags, DWORD dwStartingEntry, DWORD dwCount, LPPALETTEENTRY lpEntries)
 {
-	BOOL changed = FALSE;
-
 	DWORD* src = (DWORD*)lpEntries;
-	DWORD* dst = (DWORD*)this->entries + dwStartingEntry;
+	DWORD* dst = this->entries + dwStartingEntry;
+
 	do
 	{
 		if (*dst != *src)
 		{
-			changed = TRUE;
-			*dst++ = *src++;
-			--dwCount;
+			MemoryCopy(dst, src, dwCount *sizeof(PALETTEENTRY));
+
+			IDrawSurface* surfaceEntry = this->ddraw->surfaceEntries;
+			while (surfaceEntry)
+			{
+				if (((OpenDrawSurface*)surfaceEntry)->attachedPalette == this)
+				{
+					BYTE* idx = ((OpenDrawSurface*)surfaceEntry)->indexBuffer;
+					DWORD* pix = ((OpenDrawSurface*)surfaceEntry)->pixelBuffer;
+					DWORD count = RES_WIDTH * RES_HEIGHT;
+					do
+						*pix++ = this->entries[*idx++];
+					while (--count);
+				}
+
+				surfaceEntry = surfaceEntry->last;
+			}
+
+			this->isChanged = TRUE;
+			SetEvent(((OpenDraw*)this->ddraw)->hDrawEvent);
+			Sleep(0);
+
 			break;
 		}
 
 		++dst;
 		++src;
 	} while (--dwCount);
-
-	if (changed)
-	{
-		MemoryCopy(dst, src, dwCount << 2);
-
-		IDrawSurface* surfaceEntry = this->ddraw->surfaceEntries;
-		while (surfaceEntry)
-		{
-			if (((OpenDrawSurface*)surfaceEntry)->attachedPalette == this)
-			{
-				BYTE* idx = ((OpenDrawSurface*)surfaceEntry)->indexBuffer;
-				DWORD* pix = ((OpenDrawSurface*)surfaceEntry)->pixelBuffer;
-				DWORD count = RES_WIDTH * RES_HEIGHT;
-				do
-					*pix++ = *(DWORD*)&this->entries[*idx++];
-				while (--count);
-			}
-
-			surfaceEntry = surfaceEntry->last;
-		}
-
-		this->isChanged = TRUE;
-		SetEvent(((OpenDraw*)this->ddraw)->hDrawEvent);
-		Sleep(0);
-	}
 
 	return DD_OK;
 }

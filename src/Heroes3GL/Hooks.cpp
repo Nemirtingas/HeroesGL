@@ -518,6 +518,10 @@ namespace Hooks
 		return FALSE;
 	}
 
+	INT __stdcall ShowCursorHook(BOOL bShow) { return bShow ? 1 : -1; }
+
+	HCURSOR __stdcall SetCursorHook(HCURSOR hCursor) { return NULL; }
+
 	INT __stdcall MessageBoxHook(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType)
 	{
 		INT res;
@@ -1113,6 +1117,8 @@ namespace Hooks
 						PatchFunction(file, "GetDeviceCaps", GetDeviceCapsHook);
 						PatchFunction(file, "GetCursorPos", GetCursorPosHook);
 						PatchFunction(file, "ScreenToClient", ScreenToClientHook);
+						PatchFunction(file, "ShowCursor", ShowCursorHook);
+						PatchFunction(file, "SetCursor", SetCursorHook);
 					}
 				}
 				delete file;

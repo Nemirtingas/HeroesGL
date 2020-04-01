@@ -126,6 +126,7 @@ namespace Hooks
 	const AddressSpace* hookSpace;
 	HMODULE hModule;
 	INT baseOffset;
+	HWND hWndMain;
 
 #pragma region Hook helpers
 	BOOL __fastcall PatchRedirect(DWORD addr, VOID* hook, BYTE instruction)
@@ -424,23 +425,15 @@ namespace Hooks
 		if (!config.isNoGL)
 			dwStyle = WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SIZEBOX | WS_MAXIMIZEBOX;
 
-		HWND hWnd = CreateWindow(lpClassName, hookSpace->windowName, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
-		if (hWnd)
+		hWndMain = CreateWindow(lpClassName, hookSpace->windowName, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
+		if (hWndMain)
 		{
-			LoadNewMenu(GetMenu(hWnd));
-			Window::SetCaptureWindow(hWnd);
-
-			HDC hDc = GetDC(hWnd);
-			if (hDc)
-			{
-				RECT rc;
-				GetClientRect(hWnd, &rc);
-				FillRect(hDc, &rc, (HBRUSH)GetStockObject(BLACK_BRUSH));
-				ReleaseDC(hWnd, hDc);
-			}
+			LoadNewMenu(GetMenu(hWndMain));
+			Window::SetCaptureWindow(hWndMain);
+			SetTimer(hWndMain, NULL, 10, NULL);
 		}
 
-		return hWnd;
+		return hWndMain;
 	}
 
 	LONG __stdcall SetWindowLongHook(HWND hWnd, INT nIndex, LONG dwNewLong)
@@ -501,19 +494,23 @@ namespace Hooks
 	{
 		if (GetCursorPos(lpPoint))
 		{
-			HWND hWnd = WindowFromPoint(*lpPoint);
-			OpenDraw* ddraw = Main::FindOpenDrawByWindow(hWnd);
+			OpenDraw* ddraw = Main::FindOpenDrawByWindow(hWndMain);
 			if (ddraw && ddraw->mode)
 			{
-				ScreenToClient(hWnd, lpPoint);
+				ScreenToClient(hWndMain, lpPoint);
 				ddraw->ScaleMouse(lpPoint);
-				ClientToScreen(hWnd, lpPoint);
+				ClientToScreen(hWndMain, lpPoint);
 			}
 
 			return TRUE;
 		}
 
 		return FALSE;
+	}
+
+	HWND __stdcall WindowFromPointHook(POINT Point)
+	{
+		return hWndMain;
 	}
 
 	BOOL __stdcall GetWindowRectHook(HWND hWnd, LPRECT lpRect)

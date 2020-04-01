@@ -32,7 +32,7 @@ protected:
 	ULONG refCount;
 
 public:
-	PALETTEENTRY entries[256];
+	DWORD entries[256];
 	BOOL isChanged;
 
 	OpenDrawPalette(IDraw*);

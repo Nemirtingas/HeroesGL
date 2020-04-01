@@ -184,6 +184,7 @@ struct ConfigItems
 {
 	BOOL isNoGL;
 	DWORD language;
+	HCURSOR cursor;
 	HICON icon;
 	HFONT font;
 	UINT msgMenu;

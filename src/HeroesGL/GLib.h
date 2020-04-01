@@ -106,11 +106,11 @@ typedef char GLchar;
 
 typedef HGLRC(__stdcall *WGLCREATECONTEXTATTRIBS)(HDC hDC, HGLRC hshareContext, const DWORD *attribList);
 typedef BOOL(__stdcall *WGLCHOOSEPIXELFORMAT) (HDC hDC, const INT* piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats, INT *piFormats, UINT *nNumFormats);
+typedef const CHAR*(__stdcall* WGLGETEXTENSIONSSTRING)();
 typedef BOOL(__stdcall *WGLSWAPINTERVAL)(INT interval);
 
 typedef const GLubyte* (__stdcall *GLGETSTRING)(GLenum name);
 typedef VOID(__stdcall *GLVERTEX2S)(GLshort x, GLshort y);
-typedef VOID(__stdcall *GLCOLOR4UBV)(const GLubyte* v);
 typedef VOID(__stdcall *GLTEXCOORD2F)(GLfloat s, GLfloat t);
 typedef VOID(__stdcall *GLBEGIN)(GLenum mode);
 typedef VOID(__stdcall *GLEND)();
@@ -189,11 +189,12 @@ typedef VOID(__stdcall *GLRENDERBUFFERSTORAGE)(GLenum target, GLenum internalfor
 typedef VOID(__stdcall *GLFRAMEBUFFERRENDERBUFFER)(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
 
 extern WGLCREATECONTEXTATTRIBS WGLCreateContextAttribs;
+extern WGLCHOOSEPIXELFORMAT WGLChoosePixelFormat;
+extern WGLGETEXTENSIONSSTRING WGLGetExtensionsString;
 extern WGLSWAPINTERVAL WGLSwapInterval;
 
 extern GLGETSTRING GLGetString;
 extern GLVERTEX2S GLVertex2s;
-extern GLCOLOR4UBV GLColor4ubv;
 extern GLTEXCOORD2F GLTexCoord2f;
 extern GLBEGIN GLBegin;
 extern GLEND GLEnd;

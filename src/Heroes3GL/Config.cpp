@@ -44,6 +44,7 @@ namespace Config
 		}
 
 		config.language = hookSpace->resLanguage;
+		config.cursor = LoadCursor(NULL, IDC_ARROW);
 		config.icon = LoadIcon(hModule, MAKEINTRESOURCE(RESOURCE_ICON));
 		config.font = (HFONT)CreateFont(16, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, ANSI_CHARSET,
 			OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,

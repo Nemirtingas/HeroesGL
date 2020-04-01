@@ -162,6 +162,7 @@ struct ConfigItems
 	BOOL isNoGL;
 	DWORD language;
 	DWORD dialog;
+	HCURSOR cursor;
 	HICON icon;
 	HFONT font;
 	UINT msgMenu;

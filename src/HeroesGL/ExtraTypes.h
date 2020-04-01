@@ -104,13 +104,6 @@ struct FilterState {
 	BYTE flags;
 };
 
-enum FpsState
-{
-	FpsDisabled = 0,
-	FpsNormal,
-	FpsBenchmark
-};
-
 struct UpdateRect
 {
 	RECT rect;
@@ -157,6 +150,7 @@ struct AddressSpace
 	DWORD ddSetFullScreenStatus;
 	DWORD checkChangeCursor;
 	DWORD moveOffset;
+	DWORD invalidEsp;
 
 	AppSettings* appSettings;
 	DWORD dispelMagicSwitch;
@@ -202,9 +196,13 @@ struct ConfigItems
 	BOOL coldCPU;
 	RendererType renderer;
 
-	BOOL pointerFix;
-	BOOL pointerHidden;
-	DWORD pointerIndex;
+	struct {
+		HCURSOR default;
+		HCURSOR game;
+		BOOL fix;
+		BOOL hidden;
+		DWORD index;
+	} cursor;
 
 	struct {
 		RECT rect;
@@ -234,7 +232,6 @@ struct ConfigItems
 	} image;
 
 	struct {
-		BYTE fpsCounter;
 		BYTE imageFilter;
 		BYTE windowedMode;
 		BYTE aspectRatio;

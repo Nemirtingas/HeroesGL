@@ -13,9 +13,6 @@
     <ClCompile Include="GLib.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="FpsCounter.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Config.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -85,9 +82,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="GLib.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FpsCounter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Hooks.h">

@@ -39,22 +39,22 @@
 
 const AddressSpace addressArray[] = {
 #pragma region Heroes I Rus
-	0x00442EFF, 1, MAKEINTRESOURCE(109), LNG_RUSSIAN, 0x0046827C, 2, 0x004684AA, TRUE, 0x0046F8EC, 6, 0x0046833C, 0x004677A0, 0x00000000, 0x004A98D0, // Heroes I - Buka
+	0x00442EFF, 1, MAKEINTRESOURCE(109), LNG_RUSSIAN, 0x0046827C, 2, 0x004684AA, TRUE, 0x0046F8EC, 6, 0x0046833C, 0x004677A0, 0x00000000, 0x004A98D0, 0x38, // Heroes I - Buka
 	(AppSettings*)0x004A9440, 0x00000000, 0x00000000,
 	0x004A98EC, 0x0043DE33, 0x004CF438, 0x004CE178, 0x004CE880, 0x004CEF88, 0x004CF0B4, 0x004CF30C, 0x00000000, 0x004463EF, 0x004682F5, 0x0046FB39, 0x0046FB52, 0x0046FBBE, 0x0046FCAE, 0x0046FD2E,
 	"Герои Меча и Магии",
-	0x0040CBFA, 1, MAKEINTRESOURCE(109), LNG_RUSSIAN, 0x0041AFC2, 2, 0x0041B1EA, TRUE, 0x0042170C, 6, 0x0041B082, 0x0041A51D, 0x00000000, 0x004528B0, // Heroes I Editor - Buka
+	0x0040CBFA, 1, MAKEINTRESOURCE(109), LNG_RUSSIAN, 0x0041AFC2, 2, 0x0041B1EA, TRUE, 0x0042170C, 6, 0x0041B082, 0x0041A51D, 0x00000000, 0x004528B0, 0x38, // Heroes I Editor - Buka
 	(AppSettings*)0x00452490, 0x00000000, 0x00000000,
 	0x004528A4, 0x00000000, 0x00454710, 0x00453450, 0x00453B58, 0x00454260, 0x0045438C, 0x004545E4, 0x00000000, 0x00408650, 0x0041B03B, 0x00421959, 0x00421972, 0x004219DE, 0x00421ACE, 0x00421B4E,
 	"Герои Меча и Магии: Редактор",
 #pragma endregion
 
 #pragma region Heroes II Rus
-	0x004710BE, 2, "HEROES", LNG_RUSSIAN, 0x004B193C, 2, 0x004B1BB8, TRUE, 0x004D46A1, 6, 0x004B1A25, 0x004B0E4D, 0x004BD200, 0x00526634, // Heroes II Gold - Buka
+	0x004710BE, 2, "HEROES", LNG_RUSSIAN, 0x004B193C, 2, 0x004B1BB8, TRUE, 0x004D46A1, 6, 0x004B1A25, 0x004B0E4D, 0x004BD200, 0x00526634, 0x38, // Heroes II Gold - Buka
 	(AppSettings*)0x005261FC, 0x00497BD5, 0x00497B38,
 	0x00000000, 0x00000000, 0x00535758, 0x005349D0, 0x00000000, 0x005352D4, 0x00535454, 0x00000000, 0x004BC572, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	"Герои Меча и Магии II: Цена Верности",
-	0x0041535E, 2, "EDITOR", LNG_RUSSIAN, 0x0042CC58, 2, 0x0042CED4, TRUE, 0x00447E81, 6, 0x0042CD41, 0x0042C19D, 0x00431530, 0x004A49F0, // Heroes II Gold Editor - Buka
+	0x0041535E, 2, "EDITOR", LNG_RUSSIAN, 0x0042CC58, 2, 0x0042CED4, TRUE, 0x00447E81, 6, 0x0042CD41, 0x0042C19D, 0x00431530, 0x004A49F0, 0x38, // Heroes II Gold Editor - Buka
 	(AppSettings*)0x004A4670, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x004A6C00, 0x004A5E78, 0x00000000, 0x004A677C, 0x004A68FC, 0x00000000, 0x004308A2, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	"Герои Меча и Магии II: Редактор",
@@ -62,29 +62,29 @@ const AddressSpace addressArray[] = {
 
 #pragma region Heroes I Eng
 	// ----------------------------------------------------------------------------
-	0x0045B9AA, 1, "HEROES", LNG_ENGLISH, 0x00405547, 6, 0x0040583D, FALSE, 0x004734D3, 2, 0x0040566A, 0x0040490E, 0x00000000, 0x00492E08, // Heroes I v1.0
+	0x0045B9AA, 1, "HEROES", LNG_ENGLISH, 0x00405547, 6, 0x0040583D, FALSE, 0x004734D3, 2, 0x0040566A, 0x0040490E, 0x00000000, 0x00492E08, 0x38, // Heroes I v1.0
 	(AppSettings*)0x004C6AC0, 0x00000000, 0x00000000,
 	0x00492E28, 0x00450FE0, 0x004CBF58, 0x004CADB8, 0x004CB720, 0x004CB4C0, 0x004CC538, 0x004CAC88, 0x00000000, 0x004644E7, 0x004682F5, 0x004736D4, 0x004736E9, 0x0047372C, 0x004737C1, 0x004737FE,
 	"Heroes of Might and Magic: A Strategic Quest",
-	0x0041C62A, 1, "EDITOR", LNG_ENGLISH, 0x0041BF70, 6, 0x0041C266, FALSE, 0x00421743, 2, 0x0041C093, 0x0041B398, 0x00000000, 0x00436E6C, // Heroes I Editor v1.0
+	0x0041C62A, 1, "EDITOR", LNG_ENGLISH, 0x0041BF70, 6, 0x0041C266, FALSE, 0x00421743, 2, 0x0041C093, 0x0041B398, 0x00000000, 0x00436E6C, 0x38, // Heroes I Editor v1.0
 	(AppSettings*)0x004480C0, 0x00000000, 0x00000000,
 	0x00436E60, 0x00000000, 0x0044A6C8, 0x00449528, 0x00449E90, 0x00449C30, 0x0044ACA8, 0x004493F8, 0x00000000, 0x00409ADC, 0x0041C028, 0x00421964, 0x00421979, 0x004219BC, 0x00421A51, 0x00421A8E,
 	"Heroes of Might and Magic: Editor",
 
-	0x0045BAAA, 1, "HEROES", LNG_ENGLISH, 0x00405547, 6, 0x0040583D, FALSE, 0x00473AA3, 2, 0x0040566A, 0x0040490E, 0x00000000, 0x00492E08, // Heroes I v1.1
+	0x0045BAAA, 1, "HEROES", LNG_ENGLISH, 0x00405547, 6, 0x0040583D, FALSE, 0x00473AA3, 2, 0x0040566A, 0x0040490E, 0x00000000, 0x00492E08, 0x38, // Heroes I v1.1
 	(AppSettings*)0x004C6F70, 0x00000000, 0x00000000,
 	0x00492E28, 0x004510E1, 0x004CC408, 0x004CB268, 0x004CBBD0, 0x004CB970, 0x004CC9E8, 0x004CB138, 0x00000000, 0x00464607, 0x004055FF, 0x00473CA4, 0x00473CB9, 0x00473CFC, 0x00473D91, 0x00473DCE,
 	"Heroes of Might and Magic: A Strategic Quest",
-	0x0041C64A, 1, "EDITOR", LNG_ENGLISH, 0x0041BF90, 6, 0x0041C286, FALSE, 0x00421773, 2, 0x0041C0B3, 0x0041B3B8, 0x00000000, 0x00436E6C, // Heroes I Editor v1.1
+	0x0041C64A, 1, "EDITOR", LNG_ENGLISH, 0x0041BF90, 6, 0x0041C286, FALSE, 0x00421773, 2, 0x0041C0B3, 0x0041B3B8, 0x00000000, 0x00436E6C, 0x38, // Heroes I Editor v1.1
 	(AppSettings*)0x004482A0, 0x00000000, 0x00000000,
 	0x00436E60, 0x00000000, 0x0044A8A8, 0x00449708, 0x0044A070, 0x00449E10, 0x0044AE88, 0x004495D8, 0x00000000, 0x00409AEC, 0x0041C048, 0x00421994, 0x004219A9, 0x004219EC, 0x00421A81, 0x00421ABE,
 	"Heroes of Might and Magic: Editor",
 
-	0x00432B2A, 1, "HEROES", LNG_ENGLISH, 0x00436E67, 6, 0x0043715D, FALSE, 0x00475CC3, 2, 0x00436F8A, 0x0043622E, 0x00000000, 0x00492C20, // Heroes I v1.2
+	0x00432B2A, 1, "HEROES", LNG_ENGLISH, 0x00436E67, 6, 0x0043715D, FALSE, 0x00475CC3, 2, 0x00436F8A, 0x0043622E, 0x00000000, 0x00492C20, 0x38, // Heroes I v1.2
 	(AppSettings*)0x004A9B88, 0x00000000, 0x00000000,
 	0x00492C40, 0x00422571, 0x004CEB30, 0x004CD860, 0x004CDF68, 0x004CE670, 0x004CE7A0, 0x004CEA00, 0x00000000, 0x00439EA7, 0x00436F1F, 0x00475EC4, 0x00475ED9, 0x00475F1C, 0x00475FB1, 0x00475FEE,
 	"Heroes of Might and Magic: A Strategic Quest",
-	0x004012BA, 1, "EDITOR", LNG_ENGLISH, 0x004113AF, 6, 0x004116A5, FALSE, 0x00420CD3, 2, 0x004114D2, 0x004107D8, 0x00000000, 0x0043967C, // Heroes I Editor v1.2
+	0x004012BA, 1, "EDITOR", LNG_ENGLISH, 0x004113AF, 6, 0x004116A5, FALSE, 0x00420CD3, 2, 0x004114D2, 0x004107D8, 0x00000000, 0x0043967C, 0x38, // Heroes I Editor v1.2
 	(AppSettings*)0x0044A8B8, 0x00000000, 0x00000000,
 	0x00439670, 0x00000000, 0x0044C2F0, 0x0044B020, 0x0044B728, 0x0044BE30, 0x0044BF60, 0x0044C1C0, 0x00000000, 0x0041AD4C, 0x00411467, 0x00420EF4, 0x00420F09, 0x00420F4C, 0x00420FE1, 0x0042101E,
 	"Heroes of Might and Magic: Editor",
@@ -92,52 +92,52 @@ const AddressSpace addressArray[] = {
 
 #pragma region Heroes II Eng
 	// ----------------------------------------------------------------------------
-	0x00409017, 2, "HEROES", LNG_ENGLISH, 0x004B32A0, 6, 0x004B35F5, FALSE, 0x004CDFAC, 2, 0x004B33E8, 0x004B262A, 0x004BF5A0, 0x004F1FD0, // Heroes II v1.0
+	0x00409017, 2, "HEROES", LNG_ENGLISH, 0x004B32A0, 6, 0x004B35F5, FALSE, 0x004CDFAC, 2, 0x004B33E8, 0x004B262A, 0x004BF5A0, 0x004F1FD0, 0x3C, // Heroes II v1.0
 	(AppSettings*)0x0051F344, 0x00472D87, 0x00472D33,
 	0x00000000, 0x00000000, 0x00522650, 0x005218C8, 0x00000000, 0x005221C8, 0x00522350, 0x00000000, 0x004BEBF4, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	"Heroes of Might and Magic II: The Succession Wars",
-	0x004028B7, 2, "EDITOR", LNG_ENGLISH, 0x00422160, 6, 0x004224AF, FALSE, 0x0043914C, 2, 0x004222A8, 0x00421546, 0x00432040, 0x00446D9C, // Heroes II Editor v1.0
+	0x004028B7, 2, "EDITOR", LNG_ENGLISH, 0x00422160, 6, 0x004224AF, FALSE, 0x0043914C, 2, 0x004222A8, 0x00421546, 0x00432040, 0x00446D9C, 0x3C, // Heroes II Editor v1.0
 	(AppSettings*)0x00481740, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00487E10, 0x00487088, 0x00000000, 0x00487988, 0x00487B10, 0x00000000, 0x004316B4, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	"Heroes of Might and Magic II: Editor",
 
-	0x00408FE7, 2, "HEROES", LNG_ENGLISH, 0x004B398B, 6, 0x004B3CF2, FALSE, 0x004CE8CC, 2, 0x004B3AD3, 0x004B2D00, 0x004BFD70, 0x004EFE10, // Heroes II v1.1
+	0x00408FE7, 2, "HEROES", LNG_ENGLISH, 0x004B398B, 6, 0x004B3CF2, FALSE, 0x004CE8CC, 2, 0x004B3AD3, 0x004B2D00, 0x004BFD70, 0x004EFE10, 0x3C, // Heroes II v1.1
 	(AppSettings*)0x0051C2AC, 0x0047300C, 0x00472FB8,
 	0x00000000, 0x00000000, 0x00520520, 0x0051F780, 0x00000000, 0x00520098, 0x00520CA0, 0x00000000, 0x004BF3C4, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	"Heroes of Might and Magic II: The Succession Wars",
-	0x00402987, 2, "EDITOR", LNG_ENGLISH, 0x0042213B, 6, 0x0042249B, FALSE, 0x0043CF6C, 2, 0x00422283, 0x0042150C, 0x00435F00, 0x00449D9C, // Heroes II Editor v1.1
+	0x00402987, 2, "EDITOR", LNG_ENGLISH, 0x0042213B, 6, 0x0042249B, FALSE, 0x0043CF6C, 2, 0x00422283, 0x0042150C, 0x00435F00, 0x00449D9C, 0x3C, // Heroes II Editor v1.1
 	(AppSettings*)0x00484290, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x0048AF80, 0x0048A1E0, 0x00000000, 0x0048AAF8, 0x0048B700, 0x00000000, 0x00435574, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	"Heroes of Might and Magic II: Editor",
 
-	0x0045DE87, 2, "HEROES", LNG_ENGLISH, 0x004A39EB, 6, 0x004A3D52, FALSE, 0x004D2C7C, 2, 0x004A3B33, 0x004A2D60, 0x004C3440, 0x004EE960, // Heroes II v1.2
+	0x0045DE87, 2, "HEROES", LNG_ENGLISH, 0x004A39EB, 6, 0x004A3D52, FALSE, 0x004D2C7C, 2, 0x004A3B33, 0x004A2D60, 0x004C3440, 0x004EE960, 0x3C, // Heroes II v1.2
 	(AppSettings*)0x0051B464, 0x0042017C, 0x00420128,
 	0x00000000, 0x00000000, 0x00520360, 0x0051F5C0, 0x00000000, 0x0051FED8, 0x00520AE0, 0x00000000, 0x004C2A94, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	"Heroes of Might and Magic II: The Succession Wars",
-	0x00426667, 2, "EDITOR", LNG_ENGLISH, 0x0042194B, 6, 0x00421CAC, FALSE, 0x0043CA5C, 2, 0x00421A93, 0x00420D1C, 0x004368F0, 0x0046753C, // Heroes II Editor v1.2 - v1.3
+	0x00426667, 2, "EDITOR", LNG_ENGLISH, 0x0042194B, 6, 0x00421CAC, FALSE, 0x0043CA5C, 2, 0x00421A93, 0x00420D1C, 0x004368F0, 0x0046753C, 0x3C, // Heroes II Editor v1.2 - v1.3
 	(AppSettings*)0x00488720, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x0048AEE0, 0x0048A140, 0x00000000, 0x0048AA58, 0x0048B660, 0x00000000, 0x00435F64, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	"Heroes of Might and Magic II: Editor",
 
-	0x00434317, 2, "HEROES", LNG_ENGLISH, 0x00437447, 6, 0x004377AE, FALSE, 0x004CF75C, 2, 0x0043758F, 0x004367BA, 0x004C5AF0, 0x004F1F38, // Heroes II v1.3
+	0x00434317, 2, "HEROES", LNG_ENGLISH, 0x00437447, 6, 0x004377AE, FALSE, 0x004CF75C, 2, 0x0043758F, 0x004367BA, 0x004C5AF0, 0x004F1F38, 0x3C, // Heroes II v1.3
 	(AppSettings*)0x00520E84, 0x00000000, 0x004B9AF1,
 	0x00000000, 0x00000000, 0x00522458, 0x005216D0, 0x00000000, 0x00521FD0, 0x00522158, 0x00000000, 0x004C5144, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	"Heroes of Might and Magic II: The Succession Wars",
 
-	0x0041BFB7, 2, "HEROES", LNG_ENGLISH, 0x0043733B, 6, 0x004376A2, FALSE, 0x004D85DC, 2, 0x00437483, 0x004366B0, 0x004CE990, 0x004FBB30, // Heroes II v2.0
+	0x0041BFB7, 2, "HEROES", LNG_ENGLISH, 0x0043733B, 6, 0x004376A2, FALSE, 0x004D85DC, 2, 0x00437483, 0x004366B0, 0x004CE990, 0x004FBB30, 0x3C, // Heroes II v2.0
 	(AppSettings*)0x00528D3C, 0x00488B3F, 0x00488AEB,
 	0x00000000, 0x00000000, 0x00533FE0, 0x00533240, 0x00000000, 0x00533B58, 0x00534760, 0x00000000, 0x004CDFD4, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	"Heroes of Might and Magic II: The Price of Loyalty",
-	0x0040FCD7, 2, "EDITOR", LNG_ENGLISH, 0x0042CA64, 6, 0x0042CDB2, FALSE, 0x00439E6C, 2, 0x0042CBAC, 0x0042BE4C, 0x00434350, 0x0046C29C, // Heroes II Editor v2.0
+	0x0040FCD7, 2, "EDITOR", LNG_ENGLISH, 0x0042CA64, 6, 0x0042CDB2, FALSE, 0x00439E6C, 2, 0x0042CBAC, 0x0042BE4C, 0x00434350, 0x0046C29C, 0x3C, // Heroes II Editor v2.0
 	(AppSettings*)0x0048EA28, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00490288, 0x0048F4E8, 0x00000000, 0x0048FE00, 0x00490A08, 0x00000000, 0x004339C4, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	"Heroes of Might and Magic II: Editor",
 
-	0x00484DC1, 2, "HEROES", LNG_ENGLISH, 0x0049CEC3, 6, 0x0049D26D, FALSE, 0x004D88CC, 2, 0x0049D030, 0x0049C1E0, 0x004D1480, 0x004F2E78, // Heroes II v2.1
+	0x00484DC1, 2, "HEROES", LNG_ENGLISH, 0x0049CEC3, 6, 0x0049D26D, FALSE, 0x004D88CC, 2, 0x0049D030, 0x0049C1E0, 0x004D1480, 0x004F2E78, 0x3C, // Heroes II v2.1
 	(AppSettings*)0x0052485C, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00533E40, 0x005330B8, 0x00000000, 0x005339B8, 0x00533B40, 0x00000000, 0x004D0AD4, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	"Heroes of Might and Magic II: The Price of Loyalty",
-	0x00423EF7, 2, "EDITOR", LNG_ENGLISH, 0x004187CE, 6, 0x00418B1D, FALSE, 0x0043F20C, 2, 0x00418916, 0x00417BB6, 0x00437C90, 0x0046AE2C, // Heroes II Editor v2.1
+	0x00423EF7, 2, "EDITOR", LNG_ENGLISH, 0x004187CE, 6, 0x00418B1D, FALSE, 0x0043F20C, 2, 0x00418916, 0x00417BB6, 0x00437C90, 0x0046AE2C, 0x3C, // Heroes II Editor v2.1
 	(AppSettings*)0x0048EE40, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00491040, 0x004902B8, 0x00000000, 0x00490BB8, 0x00490D40, 0x00000000, 0x00437304, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	"Heroes of Might and Magic II: Editor"
@@ -158,7 +158,6 @@ namespace Hooks
 	const AddressSpace* hookSpace;
 	HMODULE hModule;
 	INT baseOffset;
-	RECT rcPaint;
 	HWND hWnd;
 
 #pragma region Hook helpers
@@ -353,26 +352,23 @@ namespace Hooks
 #pragma endregion
 
 #pragma region Fix paint rectangle on VM
-	BOOL __stdcall InvalidateRectHook(HWND hWnd, const RECT* lpRect, BOOL erace)
+	RECT rcPaint;
+
+	VOID __stdcall CopyInvalidRect(DWORD* src)
 	{
-		rcPaint = *lpRect;
-		return InvalidateRect(hWnd, lpRect, erace);
+		rcPaint = { (LONG)src[2], (LONG)src[3], LONG(src[2] + src[0]), LONG(src[3] + src[1]) };
+
+		RECT rc = { 0, 0, 1, 1 };
+		InvalidateRect(hWnd, &rc, FALSE);
 	}
 
-	VOID __stdcall CopyInvalidRect(HWND hWnd, DWORD* src)
-	{
-		RECT rc = { src[2], src[3], src[2] + src[0], src[3] + src[1] };
-		InvalidateRectHook(hWnd, &rc, FALSE);
-	}
-
+	DWORD invalidEsp;
 	BOOL __declspec(naked) hook_InvalidateRect()
 	{
 		_asm {
-			LEA EAX, [EBP+0x14]
-			MOV ECX, [ESP+0x4]
-
+			MOV ECX, invalidEsp
+			LEA EAX, [ESP+ECX]
 			PUSH EAX
-			PUSH ECX
 			CALL CopyInvalidRect
 
 			RETN 0xC
@@ -394,7 +390,8 @@ namespace Hooks
 			config.update.rect.bottom = RES_HEIGHT;
 
 		HDC hDc = BeginPaint(hWnd, lpPaint);
-		lpPaint->rcPaint = config.update.rect;
+		//lpPaint->rcPaint = config.update.rect;
+		lpPaint->rcPaint = { 0, 0, 1, 1 };
 		return hDc;
 	}
 #pragma endregion
@@ -402,9 +399,11 @@ namespace Hooks
 #pragma region Set Full Screen
 	VOID __fastcall RepaintWindow()
 	{
-		RECT rc = { 0, 0, RES_WIDTH, RES_HEIGHT };
+		rcPaint = { 0, 0, RES_WIDTH, RES_HEIGHT };
 
-		InvalidateRectHook(hWnd, &rc, FALSE);
+		RECT rc = { 0, 0, 1, 1 };
+		InvalidateRect(hWnd, &rc, FALSE);
+
 		UpdateWindow(hWnd);
 	}
 
@@ -451,7 +450,7 @@ namespace Hooks
 
 	BOOL __stdcall AdjustWindowRectHook(LPRECT lpRect, DWORD dwStyle, BOOL bMenu)
 	{
-		if (config.pointerFix && !config.isNoGL)
+		if (config.cursor.fix && !config.isNoGL)
 			Hooks::ScalePointer((FLOAT)(lpRect->right - lpRect->left + 1) / (FLOAT)RES_WIDTH, (FLOAT)(lpRect->bottom - lpRect->top + 1) / (FLOAT)RES_HEIGHT);
 
 		if (dwStyle == STYLE_FULL_OLD)
@@ -496,7 +495,7 @@ namespace Hooks
 		if (ScreenToClient(hWnd, lpPoint))
 		{
 			OpenDraw* ddraw = Main::FindOpenDrawByWindow(hWnd);
-			if (ddraw && config.image.aspect)
+			if (ddraw)
 				ddraw->ScaleMouse(lpPoint);
 
 			return TRUE;
@@ -1324,19 +1323,26 @@ namespace Hooks
 			DWORD index = ((DWORD)hCursor - hookSpace->icons_info) / sizeof(ICONINFO);
 			if (index >= 0 && index < (hookSpace->game_version == 1 ? 75u : 96u))
 			{
-				config.pointerIndex = index + 1;
-				return SetCursor(NULL);
+				config.cursor.index = index + 1;
+				config.cursor.game = NULL;
+				return NULL;
 			}
 		}
 
-		config.pointerIndex = 0;
-		return SetCursor(hCursor);
+		config.cursor.index = 0;
+		config.cursor.game = hCursor;
+		return NULL;
 	}
 
 	INT __stdcall ShowCursorHook(BOOL bShow)
 	{
-		config.pointerHidden = !bShow;
-		return ShowCursor(bShow);
+		config.cursor.hidden = !bShow;
+		return bShow ? 1 : -1;
+	}
+
+	HCURSOR __stdcall LoadCursorHook(HINSTANCE hInstance, LPCSTR lpCursorName)
+	{
+		return NULL;
 	}
 
 #pragma endregion
@@ -1756,18 +1762,27 @@ namespace Hooks
 							PatchFunction(file, "ScreenToClient", ScreenToClientHook);
 							PatchFunction(file, "InvalidateRect", hook_InvalidateRect);
 							PatchFunction(file, "BeginPaint", BeginPaintHook);
+
 						}
 
-						if (hookSpace->icons_list && config.pointerFix)
+						if (config.cursor.fix)
 						{
-							PatchFunction(file, "CreateBitmapIndirect", CreateBitmapIndirectHook);
-							PatchFunction(file, "CreateIconIndirect", CreateIconIndirectHook);
-
-							if (!config.isNoGL)
+							if (hookSpace->icons_list)
 							{
-								PatchFunction(file, "SetCursor", SetCursorHook);
-								PatchFunction(file, "ShowCursor", ShowCursorHook);
+								PatchFunction(file, "CreateBitmapIndirect", CreateBitmapIndirectHook);
+								PatchFunction(file, "CreateIconIndirect", CreateIconIndirectHook);
+
+								if (!config.isNoGL)
+								{
+									PatchFunction(file, "SetCursor", SetCursorHook);
+									PatchFunction(file, "ShowCursor", ShowCursorHook);
+									PatchFunction(file, "LoadCursorA", LoadCursorHook);
+								}
+								else
+									config.cursor.fix = FALSE;
 							}
+							else
+								config.cursor.fix = FALSE;
 						}
 					}
 					delete file;
@@ -1800,9 +1815,10 @@ namespace Hooks
 					checkChangeCursor = hookSpace->checkChangeCursor + baseOffset;
 
 					config.update.offset = (POINT*)(hookSpace->moveOffset + baseOffset);
+					invalidEsp = hookSpace->invalidEsp;
 				}
 
-				if (hookSpace->icons_list && hookSpace->color_pointer && config.pointerFix)
+				if (hookSpace->icons_list && hookSpace->color_pointer && config.cursor.fix)
 				{
 					PatchDWord(hookSpace->color_pointer, TRUE);
 					if (hookSpace->color_pointer_nop)

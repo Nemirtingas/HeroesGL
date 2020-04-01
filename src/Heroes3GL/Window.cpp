@@ -32,7 +32,6 @@
 #include "Main.h"
 #include "Config.h"
 #include "Hooks.h"
-#include "FpsCounter.h"
 #include "OpenDraw.h"
 
 namespace Window
@@ -620,28 +619,7 @@ namespace Window
 		{
 			if (!(HIWORD(lParam) & KF_ALTDOWN))
 			{
-				if (config.keys.fpsCounter && config.keys.fpsCounter + VK_F1 - 1 == wParam)
-				{
-					switch (fpsState)
-					{
-					case FpsNormal:
-						fpsState = FpsBenchmark;
-						break;
-					case FpsBenchmark:
-						fpsState = FpsDisabled;
-						break;
-					default:
-						fpsState = FpsNormal;
-						break;
-					}
-
-					isFpsChanged = TRUE;
-					OpenDraw* ddraw = Main::FindOpenDrawByWindow(hWnd);
-					if (ddraw)
-						SetEvent(ddraw->hDrawEvent);
-					return NULL;
-				}
-				else if (config.keys.imageFilter && config.keys.imageFilter + VK_F1 - 1 == wParam)
+				if (config.keys.imageFilter && config.keys.imageFilter + VK_F1 - 1 == wParam)
 				{
 					switch (config.image.interpolation)
 					{
@@ -687,14 +665,22 @@ namespace Window
 		}
 
 		case WM_LBUTTONDOWN:
-		case WM_RBUTTONDOWN:
 		case WM_LBUTTONUP:
-		case WM_RBUTTONUP:
 		case WM_LBUTTONDBLCLK:
+
+		case WM_RBUTTONDOWN:
+		case WM_RBUTTONUP:
+		case WM_RBUTTONDBLCLK:
+
 		case WM_MBUTTONDOWN:
 		case WM_MBUTTONUP:
 		case WM_MBUTTONDBLCLK:
-		case WM_RBUTTONDBLCLK:
+
+		case WM_XBUTTONDOWN:
+		case WM_XBUTTONUP:
+		case WM_XBUTTONDBLCLK:
+
+		case WM_MOUSEWHEEL:
 		case WM_MOUSEMOVE:
 		{
 			OpenDraw* ddraw = Main::FindOpenDrawByWindow(hWnd);
@@ -728,7 +714,6 @@ namespace Window
 
 			case IDM_HELP_WRAPPER:
 			{
-				INT_PTR res;
 				ULONG_PTR cookie = NULL;
 				if (hActCtx && hActCtx != INVALID_HANDLE_VALUE && !ActivateActCtxC(hActCtx, &cookie))
 					cookie = NULL;
@@ -898,6 +883,33 @@ namespace Window
 			}
 		}
 
+		case WM_SETCURSOR: {
+			if (LOWORD(lParam) == HTCLIENT)
+			{
+				OpenDraw* ddraw = Main::FindOpenDrawByWindow(hWnd);
+				if (ddraw)
+				{
+					if (ddraw->windowState != WinStateWindowed || !config.image.aspect)
+						SetCursor(NULL);
+					else
+					{
+						POINT p;
+						GetCursorPos(&p);
+						ScreenToClient(hWnd, &p);
+
+						if (p.x >= ddraw->viewport.rectangle.x && p.x < ddraw->viewport.rectangle.x + ddraw->viewport.rectangle.width && p.y >= ddraw->viewport.rectangle.y && p.y < ddraw->viewport.rectangle.y + ddraw->viewport.rectangle.height)
+							SetCursor(NULL);
+						else
+							SetCursor(config.cursor);
+					}
+
+					return TRUE;
+				}
+			}
+
+			return DefWindowProc(hWnd, uMsg, wParam, lParam);
+		}
+
 		default:
 			if (uMsg == config.msgMenu)
 			{
@@ -913,6 +925,7 @@ namespace Window
 	{
 		switch (uMsg)
 		{
+		case WM_MOUSEWHEEL:
 		case WM_MOUSEMOVE:
 		case WM_LBUTTONDOWN:
 		case WM_LBUTTONUP:
@@ -923,12 +936,16 @@ namespace Window
 		case WM_MBUTTONDOWN:
 		case WM_MBUTTONUP:
 		case WM_MBUTTONDBLCLK:
+		case WM_XBUTTONDOWN:
+		case WM_XBUTTONUP:
+		case WM_XBUTTONDBLCLK:
 		case WM_SYSCOMMAND:
 		case WM_SYSKEYDOWN:
 		case WM_SYSKEYUP:
 		case WM_KEYDOWN:
 		case WM_KEYUP:
 		case WM_CHAR:
+		case WM_SETCURSOR:
 			return WindowProc(GetParent(hWnd), uMsg, wParam, lParam);
 
 		default:

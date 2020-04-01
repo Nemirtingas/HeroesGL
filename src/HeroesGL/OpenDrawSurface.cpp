@@ -129,7 +129,7 @@ HRESULT __stdcall OpenDrawSurface::Blt(LPRECT, LPDIRECTDRAWSURFACE lpDDSrcSurfac
 		do
 		{
 			BYTE index = *src++;
-			*pix++ = *(DWORD*)&this->attachedPalette->entries[index];
+			*pix++ = this->attachedPalette->entries[index];
 			*dst++ = index;
 		} while (--cw);
 

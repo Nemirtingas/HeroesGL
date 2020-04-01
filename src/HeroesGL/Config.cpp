@@ -44,6 +44,7 @@ namespace Config
 		}
 
 		config.language = hookSpace->resLanguage;
+		config.cursor.default = LoadCursor(NULL, IDC_ARROW);
 		config.icon = LoadIcon(hModule, hookSpace->icon);
 		config.font = (HFONT)CreateFont(16, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, ANSI_CHARSET,
 			OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
@@ -80,8 +81,8 @@ namespace Config
 			config.coldCPU = FALSE;
 			Config::Set(CONFIG_WRAPPER, "ColdCPU", config.coldCPU);
 
-			config.pointerFix = TRUE;
-			Config::Set(CONFIG_WRAPPER, "PointerFix", config.pointerFix);
+			config.cursor.fix = TRUE;
+			Config::Set(CONFIG_WRAPPER, "PointerFix", config.cursor.fix);
 
 			config.image.aspect = TRUE;
 			Config::Set(CONFIG_WRAPPER, "ImageAspect", config.image.aspect);
@@ -110,8 +111,6 @@ namespace Config
 			config.image.xBRz = 2;
 			Config::Set(CONFIG_WRAPPER, "XBRZ", config.image.xBRz);
 
-			Config::Set(CONFIG_KEYS, "FpsCounter", "");
-
 			config.keys.imageFilter = 3;
 			Config::Set(CONFIG_KEYS, "ImageFilter", config.keys.imageFilter);
 
@@ -124,7 +123,7 @@ namespace Config
 		else
 		{
 			config.coldCPU = (BOOL)Config::Get(CONFIG_WRAPPER, "ColdCPU", FALSE);
-			config.pointerFix = (BOOL)Config::Get(CONFIG_WRAPPER, "PointerFix", TRUE);
+			config.cursor.fix = (BOOL)Config::Get(CONFIG_WRAPPER, "PointerFix", TRUE);
 		}
 
 		if (!config.isNoGL)
@@ -170,14 +169,6 @@ namespace Config
 					config.image.xBRz = 6;
 
 				CHAR buffer[20];
-				if (Config::Get(CONFIG_KEYS, "FpsCounter", "", buffer, sizeof(buffer)))
-				{
-					value = Config::Get(CONFIG_KEYS, "FpsCounter", 0);
-					config.keys.fpsCounter = LOBYTE(value);
-					if (config.keys.fpsCounter > 24)
-						config.keys.fpsCounter = 0;
-				}
-
 				if (Config::Get(CONFIG_KEYS, "ImageFilter", "", buffer, sizeof(buffer)))
 				{
 					value = Config::Get(CONFIG_KEYS, "ImageFilter", 0);
@@ -226,7 +217,6 @@ namespace Config
 			config.image.scaleHQ = 2;
 			config.image.xBRz = 2;
 
-			config.keys.fpsCounter = 2;
 			config.keys.imageFilter = 3;
 			config.keys.windowedMode = 4;
 			config.keys.aspectRatio = 5;
