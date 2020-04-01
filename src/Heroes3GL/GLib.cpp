@@ -63,6 +63,7 @@ GLCLEARCOLOR GLClearColor;
 GLCOLORMASK GLColorMask;
 GLSTENCILFUNC GLStencilFunc;
 GLSTENCILOP GLStencilOp;
+GLPIXELSTOREI GLPixelStorei;
 
 #ifdef _DEBUG
 GLGETERROR GLGetError;
@@ -217,6 +218,7 @@ namespace GL
 		LoadFunction(buffer, PREFIX_GL, "ColorMask", (PROC*)&GLColorMask);
 		LoadFunction(buffer, PREFIX_GL, "StencilFunc", (PROC*)&GLStencilFunc);
 		LoadFunction(buffer, PREFIX_GL, "StencilOp", (PROC*)&GLStencilOp);
+		LoadFunction(buffer, PREFIX_GL, "PixelStorei", (PROC*)&GLPixelStorei);
 
 #ifdef _DEBUG
 		LoadFunction(buffer, PREFIX_GL, "GetError", (PROC*)&GLGetError);

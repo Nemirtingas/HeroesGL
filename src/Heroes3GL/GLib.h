@@ -136,6 +136,7 @@ typedef VOID(__stdcall *GLCLEARCOLOR)(GLclampf red, GLclampf green, GLclampf blu
 typedef VOID(__stdcall *GLCOLORMASK)(GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha);
 typedef VOID(__stdcall *GLSTENCILFUNC)(GLenum func, GLint ref, GLuint mask);
 typedef VOID(__stdcall *GLSTENCILOP)(GLenum fail, GLenum zfail, GLenum zpass);
+typedef VOID(__stdcall* GLPIXELSTOREI)(GLenum pname, GLint param);
 
 #ifdef _DEBUG
 typedef GLenum(__stdcall *GLGETERROR)();
@@ -220,6 +221,7 @@ extern GLCLEARCOLOR GLClearColor;
 extern GLCOLORMASK GLColorMask;
 extern GLSTENCILFUNC GLStencilFunc;
 extern GLSTENCILOP GLStencilOp;
+extern GLPIXELSTOREI GLPixelStorei;
 
 #ifdef _DEBUG
 extern GLGETERROR GLGetError;

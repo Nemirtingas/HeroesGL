@@ -317,322 +317,280 @@ VOID OpenDraw::RenderOld()
 					}
 
 					BOOL isDouble = currScale != 1.0f;
-					DWORD frameWidth = isDouble ? DWORD(currScale * this->mode.width) : this->mode.width;
-					DWORD count = frameCount;
-					frame = frames;
-					while (count--)
+					if (this->mode.bpp == 32 && config.gl.caps.bgra || this->mode.bpp == 16 && config.gl.version.value > GL_VER_1_1)
+						GLPixelStorei(GL_UNPACK_ROW_LENGTH, this->mode.width);
 					{
-						if (frameCount == 1)
+						DWORD frameWidth = isDouble ? DWORD(currScale * this->mode.width) : this->mode.width;
+						DWORD count = frameCount;
+						frame = frames;
+						while (count--)
 						{
-							if (glFilter)
+							if (frameCount == 1)
 							{
-								GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glFilter);
-								GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, glFilter);
-							}
-
-							while (updateClip != finClip)
-							{
-								if (updateClip->isActive)
+								if (glFilter)
 								{
-									RECT update = updateClip->rect;
-									DWORD texWidth = update.right - update.left;
-									DWORD texHeight = update.bottom - update.top;
-									if (isDouble)
-									{
-										update.left = DWORD(currScale * update.left);
-										update.top = DWORD(currScale * update.top);
-										update.right = DWORD(currScale * update.right);
-										update.bottom = DWORD(currScale * update.bottom);
-
-										texWidth = DWORD(currScale * texWidth);
-										texHeight = DWORD(currScale * texHeight);
-									}
-
-									if (texWidth == frameWidth)
-									{
-										if (this->mode.bpp == 32)
-										{
-											if (config.gl.caps.bgra)
-												GLTexSubImage2D(GL_TEXTURE_2D, 0, 0, update.top, texWidth, texHeight, GL_BGRA_EXT, GL_UNSIGNED_BYTE, (DWORD*)surface->indexBuffer + update.top * texWidth);
-											else
-											{
-												DWORD* source = (DWORD*)surface->indexBuffer + update.top * texWidth;
-												DWORD* dest = (DWORD*)frameBuffer;
-												DWORD copyWidth = texWidth;
-												DWORD copyHeight = texHeight;
-												do
-												{
-													DWORD* src = source;
-													source += frameWidth;
-
-													DWORD count = copyWidth;
-													do
-														*dest++ = _byteswap_ulong(_rotl(*src++, 8));
-													while (--count);
-												} while (--copyHeight);
-
-												GLTexSubImage2D(GL_TEXTURE_2D, 0, 0, update.top, texWidth, texHeight, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
-											}
-										}
-										else
-										{
-											if (config.gl.version.value > GL_VER_1_1)
-												GLTexSubImage2D(GL_TEXTURE_2D, 0, 0, update.top, texWidth, texHeight, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, (WORD*)surface->indexBuffer + update.top * texWidth);
-											else
-											{
-												WORD* source = (WORD*)surface->indexBuffer + update.top * texWidth;
-												DWORD* dest = (DWORD*)frameBuffer;
-												DWORD copyWidth = texWidth;
-												DWORD copyHeight = texHeight;
-												do
-												{
-													WORD* src = source;
-													source += frameWidth;
-
-													DWORD count = copyWidth;
-													do
-													{
-														WORD px = *src++;
-														*dest++ = ((px & 0xF800) >> 8) | ((px & 0x07E0) << 5) | ((px & 0x001F) << 19);
-													} while (--count);
-												} while (--copyHeight);
-
-												GLTexSubImage2D(GL_TEXTURE_2D, 0, 0, update.top, texWidth, texHeight, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
-											}
-										}
-									}
-									else
-									{
-										if (this->mode.bpp == 32)
-										{
-											if (config.gl.caps.bgra)
-											{
-												DWORD* source = (DWORD*)surface->indexBuffer + update.top * frameWidth + update.left;
-												DWORD* dest = (DWORD*)frameBuffer;
-												DWORD copyHeight = texHeight;
-												do
-												{
-													MemoryCopy(dest, source, texWidth << 2);
-													source += frameWidth;
-													dest += texWidth;
-												} while (--copyHeight);
-
-												GLTexSubImage2D(GL_TEXTURE_2D, 0, update.left, update.top, texWidth, texHeight, GL_BGRA_EXT, GL_UNSIGNED_BYTE, frameBuffer);
-											}
-											else
-											{
-												DWORD* source = (DWORD*)surface->indexBuffer + update.top * frameWidth + update.left;
-												DWORD* dest = (DWORD*)frameBuffer;
-												DWORD copyWidth = texWidth;
-												DWORD copyHeight = texHeight;
-												do
-												{
-													DWORD* src = source;
-													source += frameWidth;
-
-													DWORD count = copyWidth;
-													do
-														*dest++ = _byteswap_ulong(_rotl(*src++, 8));
-													while (--count);
-												} while (--copyHeight);
-
-												GLTexSubImage2D(GL_TEXTURE_2D, 0, update.left, update.top, texWidth, texHeight, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
-											}
-										}
-										else
-										{
-											if (texWidth & 1)
-											{
-												++texWidth;
-												if (update.left)
-													--update.left;
-												else
-													++update.right;
-											}
-
-											if (config.gl.version.value > GL_VER_1_1)
-											{
-												WORD* source = (WORD*)surface->indexBuffer + update.top * frameWidth + update.left;
-												WORD* dest = (WORD*)frameBuffer;
-												DWORD copyHeight = texHeight;
-												do
-												{
-													MemoryCopy(dest, source, texWidth << 1);
-													source += frameWidth;
-													dest += texWidth;
-												} while (--copyHeight);
-
-												GLTexSubImage2D(GL_TEXTURE_2D, 0, update.left, update.top, texWidth, texHeight, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, frameBuffer);
-											}
-											else
-											{
-												WORD* source = (WORD*)surface->indexBuffer + update.top * frameWidth + update.left;
-												DWORD* dest = (DWORD*)frameBuffer;
-												DWORD copyWidth = texWidth;
-												DWORD copyHeight = texHeight;
-												do
-												{
-													WORD* src = source;
-													source += frameWidth;
-
-													DWORD count = copyWidth;
-													do
-													{
-														WORD px = *src++;
-														*dest++ = ((px & 0xF800) >> 8) | ((px & 0x07E0) << 5) | ((px & 0x001F) << 19);
-													} while (--count);
-												} while (--copyHeight);
-
-												GLTexSubImage2D(GL_TEXTURE_2D, 0, update.left, update.top, texWidth, texHeight, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
-											}
-										}
-									}
+									GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glFilter);
+									GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, glFilter);
 								}
 
-								if (++updateClip == surface->endClip)
-									updateClip = surface->clipsList;
-							}
-						}
-						else
-						{
-							GLBindTexture(GL_TEXTURE_2D, frame->id);
-
-							if (glFilter)
-							{
-								GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glFilter);
-								GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, glFilter);
-							}
-
-							INT rect_right = frame->rect.x + frame->rect.width;
-							INT rect_bottom = frame->rect.y + frame->rect.height;
-
-							UpdateRect* update = updateClip;
-							while (update != finClip)
-							{
-								if (update->isActive)
+								while (updateClip != finClip)
 								{
-									RECT clip = {
-										frame->rect.x > update->rect.left ? frame->rect.x : update->rect.left,
-										frame->rect.y > update->rect.top ? frame->rect.y : update->rect.top,
-										rect_right < update->rect.right ? rect_right : update->rect.right,
-										rect_bottom < update->rect.bottom ? rect_bottom : update->rect.bottom
-									};
-
-									INT clipWidth = clip.right - clip.left;
-									INT clipHeight = clip.bottom - clip.top;
-									if (clipWidth > 0 && clipHeight > 0)
+									if (updateClip->isActive)
 									{
-										if (this->mode.bpp == 32)
+										RECT update = updateClip->rect;
+										DWORD texWidth = update.right - update.left;
+										DWORD texHeight = update.bottom - update.top;
+										if (isDouble)
 										{
-											if (config.gl.caps.bgra)
-											{
-												DWORD* source = (DWORD*)surface->indexBuffer + clip.top * frameWidth + clip.left;
-												DWORD* dest = (DWORD*)frameBuffer;
-												DWORD copyHeight = clipHeight;
-												do
-												{
-													MemoryCopy(dest, source, clipWidth << 2);
-													source += frameWidth;
-													dest += clipWidth;
-												} while (--copyHeight);
+											update.left = DWORD(currScale * update.left);
+											update.top = DWORD(currScale * update.top);
+											update.right = DWORD(currScale * update.right);
+											update.bottom = DWORD(currScale * update.bottom);
 
-												GLTexSubImage2D(GL_TEXTURE_2D, 0, clip.left - frame->rect.x, clip.top - frame->rect.y, clipWidth, clipHeight, GL_BGRA_EXT, GL_UNSIGNED_BYTE, frameBuffer);
+											texWidth = DWORD(currScale * texWidth);
+											texHeight = DWORD(currScale * texHeight);
+										}
+
+										if (texWidth == frameWidth)
+										{
+											if (this->mode.bpp == 32)
+											{
+												if (config.gl.caps.bgra)
+													GLTexSubImage2D(GL_TEXTURE_2D, 0, 0, update.top, texWidth, texHeight, GL_BGRA_EXT, GL_UNSIGNED_BYTE, (DWORD*)surface->indexBuffer + update.top * texWidth);
+												else
+												{
+													DWORD* source = (DWORD*)surface->indexBuffer + update.top * texWidth;
+													DWORD* dest = (DWORD*)frameBuffer;
+													DWORD copyWidth = texWidth;
+													DWORD copyHeight = texHeight;
+													do
+													{
+														DWORD* src = source;
+														source += frameWidth;
+
+														DWORD count = copyWidth;
+														do
+															*dest++ = _byteswap_ulong(_rotl(*src++, 8));
+														while (--count);
+													} while (--copyHeight);
+
+													GLTexSubImage2D(GL_TEXTURE_2D, 0, 0, update.top, texWidth, texHeight, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
+												}
 											}
 											else
 											{
-												DWORD* source = (DWORD*)surface->indexBuffer + clip.top * frameWidth + clip.left;
-												DWORD* dest = (DWORD*)frameBuffer;
-												DWORD copyWidth = clipWidth;
-												DWORD copyHeight = clipHeight;
-												do
+												if (config.gl.version.value > GL_VER_1_1)
+													GLTexSubImage2D(GL_TEXTURE_2D, 0, 0, update.top, texWidth, texHeight, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, (WORD*)surface->indexBuffer + update.top * texWidth);
+												else
 												{
-													DWORD* src = source;
-													source += frameWidth;
-
-													DWORD count = copyWidth;
+													WORD* source = (WORD*)surface->indexBuffer + update.top * texWidth;
+													DWORD* dest = (DWORD*)frameBuffer;
+													DWORD copyWidth = texWidth;
+													DWORD copyHeight = texHeight;
 													do
-														*dest++ = _byteswap_ulong(_rotl(*src++, 8));
-													while (--count);
-												} while (--copyHeight);
+													{
+														WORD* src = source;
+														source += frameWidth;
 
-												GLTexSubImage2D(GL_TEXTURE_2D, 0, clip.left - frame->rect.x, clip.top - frame->rect.y, clipWidth, clipHeight, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
+														DWORD count = copyWidth;
+														do
+														{
+															WORD px = *src++;
+															*dest++ = ((px & 0xF800) >> 8) | ((px & 0x07E0) << 5) | ((px & 0x001F) << 19);
+														} while (--count);
+													} while (--copyHeight);
+
+													GLTexSubImage2D(GL_TEXTURE_2D, 0, 0, update.top, texWidth, texHeight, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
+												}
 											}
 										}
 										else
 										{
-											if (clipWidth & 1)
+											if (this->mode.bpp == 32)
 											{
-												++clipWidth;
-												if (clip.left != frame->rect.x)
-													--clip.left;
+												if (config.gl.caps.bgra)
+													GLTexSubImage2D(GL_TEXTURE_2D, 0, update.left, update.top, texWidth, texHeight, GL_BGRA_EXT, GL_UNSIGNED_BYTE, (DWORD*)surface->indexBuffer + update.top * frameWidth + update.left);
 												else
-													++clip.right;
-											}
-
-											if (config.gl.version.value > GL_VER_1_1)
-											{
-												WORD* source = (WORD*)surface->indexBuffer + clip.top * frameWidth + clip.left;
-												WORD* dest = (WORD*)frameBuffer;
-												DWORD copyHeight = clipHeight;
-												do
 												{
-													MemoryCopy(dest, source, clipWidth << 1);
-													source += frameWidth;
-													dest += clipWidth;
-												} while (--copyHeight);
+													DWORD* source = (DWORD*)surface->indexBuffer + update.top * frameWidth + update.left;
+													DWORD* dest = (DWORD*)frameBuffer;
+													DWORD copyWidth = texWidth;
+													DWORD copyHeight = texHeight;
+													do
+													{
+														DWORD* src = source;
+														source += frameWidth;
 
-												GLTexSubImage2D(GL_TEXTURE_2D, 0, clip.left - frame->rect.x, clip.top - frame->rect.y, clipWidth, clipHeight, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, frameBuffer);
+														DWORD count = copyWidth;
+														do
+															*dest++ = _byteswap_ulong(_rotl(*src++, 8));
+														while (--count);
+													} while (--copyHeight);
+
+													GLTexSubImage2D(GL_TEXTURE_2D, 0, update.left, update.top, texWidth, texHeight, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
+												}
 											}
 											else
 											{
-												WORD* source = (WORD*)surface->indexBuffer + clip.top * frameWidth + clip.left;
-												DWORD* dest = (DWORD*)frameBuffer;
-												DWORD copyWidth = clipWidth;
-												DWORD copyHeight = clipHeight;
-												do
+												if (texWidth & 1)
 												{
-													WORD* src = source;
-													source += frameWidth;
+													++texWidth;
+													if (update.left)
+														--update.left;
+													else
+														++update.right;
+												}
 
-													DWORD count = copyWidth;
+												if (config.gl.version.value > GL_VER_1_1)
+													GLTexSubImage2D(GL_TEXTURE_2D, 0, update.left, update.top, texWidth, texHeight, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, (WORD*)surface->indexBuffer + update.top * frameWidth + update.left);
+												else
+												{
+													WORD* source = (WORD*)surface->indexBuffer + update.top * frameWidth + update.left;
+													DWORD* dest = (DWORD*)frameBuffer;
+													DWORD copyWidth = texWidth;
+													DWORD copyHeight = texHeight;
 													do
 													{
-														WORD px = *src++;
-														*dest++ = ((px & 0xF800) >> 8) | ((px & 0x07E0) << 5) | ((px & 0x001F) << 19);
-													} while (--count);
-												} while (--copyHeight);
+														WORD* src = source;
+														source += frameWidth;
 
-												GLTexSubImage2D(GL_TEXTURE_2D, 0, clip.left - frame->rect.x, clip.top - frame->rect.y, clipWidth, clipHeight, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
+														DWORD count = copyWidth;
+														do
+														{
+															WORD px = *src++;
+															*dest++ = ((px & 0xF800) >> 8) | ((px & 0x07E0) << 5) | ((px & 0x001F) << 19);
+														} while (--count);
+													} while (--copyHeight);
+
+													GLTexSubImage2D(GL_TEXTURE_2D, 0, update.left, update.top, texWidth, texHeight, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
+												}
 											}
 										}
 									}
+
+									if (++updateClip == surface->endClip)
+										updateClip = surface->clipsList;
+								}
+							}
+							else
+							{
+								GLBindTexture(GL_TEXTURE_2D, frame->id);
+
+								if (glFilter)
+								{
+									GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glFilter);
+									GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, glFilter);
 								}
 
-								if (++update == surface->endClip)
-									update = surface->clipsList;
+								INT rect_right = frame->rect.x + frame->rect.width;
+								INT rect_bottom = frame->rect.y + frame->rect.height;
+
+								UpdateRect* update = updateClip;
+								while (update != finClip)
+								{
+									if (update->isActive)
+									{
+										RECT clip = {
+											frame->rect.x > update->rect.left ? frame->rect.x : update->rect.left,
+											frame->rect.y > update->rect.top ? frame->rect.y : update->rect.top,
+											rect_right < update->rect.right ? rect_right : update->rect.right,
+											rect_bottom < update->rect.bottom ? rect_bottom : update->rect.bottom
+										};
+
+										INT clipWidth = clip.right - clip.left;
+										INT clipHeight = clip.bottom - clip.top;
+										if (clipWidth > 0 && clipHeight > 0)
+										{
+											if (this->mode.bpp == 32)
+											{
+												if (config.gl.caps.bgra)
+													GLTexSubImage2D(GL_TEXTURE_2D, 0, clip.left - frame->rect.x, clip.top - frame->rect.y, clipWidth, clipHeight, GL_BGRA_EXT, GL_UNSIGNED_BYTE, (DWORD*)surface->indexBuffer + clip.top * frameWidth + clip.left);
+												else
+												{
+													DWORD* source = (DWORD*)surface->indexBuffer + clip.top * frameWidth + clip.left;
+													DWORD* dest = (DWORD*)frameBuffer;
+													DWORD copyWidth = clipWidth;
+													DWORD copyHeight = clipHeight;
+													do
+													{
+														DWORD* src = source;
+														source += frameWidth;
+
+														DWORD count = copyWidth;
+														do
+															*dest++ = _byteswap_ulong(_rotl(*src++, 8));
+														while (--count);
+													} while (--copyHeight);
+
+													GLTexSubImage2D(GL_TEXTURE_2D, 0, clip.left - frame->rect.x, clip.top - frame->rect.y, clipWidth, clipHeight, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
+												}
+											}
+											else
+											{
+												if (clipWidth & 1)
+												{
+													++clipWidth;
+													if (clip.left != frame->rect.x)
+														--clip.left;
+													else
+														++clip.right;
+												}
+
+												if (config.gl.version.value > GL_VER_1_1)
+													GLTexSubImage2D(GL_TEXTURE_2D, 0, clip.left - frame->rect.x, clip.top - frame->rect.y, clipWidth, clipHeight, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, (WORD*)surface->indexBuffer + clip.top * frameWidth + clip.left);
+												else
+												{
+													WORD* source = (WORD*)surface->indexBuffer + clip.top * frameWidth + clip.left;
+													DWORD* dest = (DWORD*)frameBuffer;
+													DWORD copyWidth = clipWidth;
+													DWORD copyHeight = clipHeight;
+													do
+													{
+														WORD* src = source;
+														source += frameWidth;
+
+														DWORD count = copyWidth;
+														do
+														{
+															WORD px = *src++;
+															*dest++ = ((px & 0xF800) >> 8) | ((px & 0x07E0) << 5) | ((px & 0x001F) << 19);
+														} while (--count);
+													} while (--copyHeight);
+
+													GLTexSubImage2D(GL_TEXTURE_2D, 0, clip.left - frame->rect.x, clip.top - frame->rect.y, clipWidth, clipHeight, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
+												}
+											}
+										}
+									}
+
+									if (++update == surface->endClip)
+										update = surface->clipsList;
+								}
 							}
+
+							GLBegin(GL_TRIANGLE_FAN);
+							{
+								FLOAT texX = frame->tSize.width * currScale;
+								FLOAT texY = frame->tSize.height * currScale;
+
+								GLTexCoord2f(0.0f, 0.0f);
+								GLVertex2s((SHORT)frame->point.x, (SHORT)frame->point.y);
+
+								GLTexCoord2f(texX, 0.0f);
+								GLVertex2s(frame->vSize.width, (SHORT)frame->point.y);
+
+								GLTexCoord2f(texX, texY);
+								GLVertex2s(frame->vSize.width, frame->vSize.height);
+
+								GLTexCoord2f(0.0f, texY);
+								GLVertex2s((SHORT)frame->point.x, frame->vSize.height);
+							}
+							GLEnd();
+							++frame;
 						}
-
-						GLBegin(GL_TRIANGLE_FAN);
-						{
-							FLOAT texX = frame->tSize.width * currScale;
-							FLOAT texY = frame->tSize.height * currScale;
-
-							GLTexCoord2f(0.0f, 0.0f);
-							GLVertex2s((SHORT)frame->point.x, (SHORT)frame->point.y);
-
-							GLTexCoord2f(texX, 0.0f);
-							GLVertex2s(frame->vSize.width, (SHORT)frame->point.y);
-
-							GLTexCoord2f(texX, texY);
-							GLVertex2s(frame->vSize.width, frame->vSize.height);
-
-							GLTexCoord2f(0.0f, texY);
-							GLVertex2s((SHORT)frame->point.x, frame->vSize.height);
-						}
-						GLEnd();
-						++frame;
 					}
+					if (this->mode.bpp == 32 && config.gl.caps.bgra || this->mode.bpp == 16 && config.gl.version.value > GL_VER_1_1)
+						GLPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 
 					if (this->isTakeSnapshot)
 					{
@@ -859,6 +817,7 @@ VOID OpenDraw::RenderMid()
 								// NEXT UNCHANGED
 								{
 									// Update texture
+									GLPixelStorei(GL_UNPACK_ROW_LENGTH, this->mode.width);
 									DWORD frameWidth = isDouble ? DWORD(currScale * this->mode.width) : this->mode.width;
 									while (updateClip != finClip)
 									{
@@ -888,19 +847,7 @@ VOID OpenDraw::RenderMid()
 											else
 											{
 												if (this->mode.bpp == 32)
-												{
-													DWORD* source = (DWORD*)surface->indexBuffer + update.top * frameWidth + update.left;
-													DWORD* dest = (DWORD*)frameBuffer;
-													DWORD copyHeight = texHeight;
-													do
-													{
-														MemoryCopy(dest, source, texWidth << 2);
-														source += frameWidth;
-														dest += texWidth;
-													} while (--copyHeight);
-
-													GLTexSubImage2D(GL_TEXTURE_2D, 0, update.left, update.top, texWidth, texHeight, GL_BGRA_EXT, GL_UNSIGNED_BYTE, frameBuffer);
-												}
+													GLTexSubImage2D(GL_TEXTURE_2D, 0, update.left, update.top, texWidth, texHeight, GL_BGRA_EXT, GL_UNSIGNED_BYTE, (DWORD*)surface->indexBuffer + update.top * frameWidth + update.left);
 												else
 												{
 													if (texWidth & 1)
@@ -912,17 +859,7 @@ VOID OpenDraw::RenderMid()
 															++update.right;
 													}
 
-													WORD* source = (WORD*)surface->indexBuffer + update.top * frameWidth + update.left;
-													WORD* dest = (WORD*)frameBuffer;
-													DWORD copyHeight = texHeight;
-													do
-													{
-														MemoryCopy(dest, source, texWidth << 1);
-														source += frameWidth;
-														dest += texWidth;
-													} while (--copyHeight);
-
-													GLTexSubImage2D(GL_TEXTURE_2D, 0, update.left, update.top, texWidth, texHeight, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, frameBuffer);
+													GLTexSubImage2D(GL_TEXTURE_2D, 0, update.left, update.top, texWidth, texHeight, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, (WORD*)surface->indexBuffer + update.top * frameWidth + update.left);
 												}
 											}
 										}
@@ -930,6 +867,7 @@ VOID OpenDraw::RenderMid()
 										if (++updateClip == surface->endClip)
 											updateClip = surface->clipsList;
 									}
+									GLPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 
 									if (oldScale != currScale)
 									{
@@ -1445,6 +1383,7 @@ VOID OpenDraw::RenderNew()
 												// NEXT UNCHANGED
 												{
 													// Update texture
+													GLPixelStorei(GL_UNPACK_ROW_LENGTH, this->mode.width);
 													DWORD frameWidth = isDouble ? DWORD(currScale * this->mode.width) : this->mode.width;
 													while (updateClip != finClip)
 													{
@@ -1474,19 +1413,7 @@ VOID OpenDraw::RenderNew()
 															else
 															{
 																if (this->mode.bpp == 32)
-																{
-																	DWORD* source = (DWORD*)surface->indexBuffer + update.top * frameWidth + update.left;
-																	DWORD* dest = (DWORD*)frameBuffer;
-																	DWORD copyHeight = texHeight;
-																	do
-																	{
-																		MemoryCopy(dest, source, texWidth << 2);
-																		source += frameWidth;
-																		dest += texWidth;
-																	} while (--copyHeight);
-
-																	GLTexSubImage2D(GL_TEXTURE_2D, 0, update.left, update.top, texWidth, texHeight, GL_BGRA_EXT, GL_UNSIGNED_BYTE, frameBuffer);
-																}
+																	GLTexSubImage2D(GL_TEXTURE_2D, 0, update.left, update.top, texWidth, texHeight, GL_BGRA_EXT, GL_UNSIGNED_BYTE, (DWORD*)surface->indexBuffer + update.top * frameWidth + update.left);
 																else
 																{
 																	if (texWidth & 1)
@@ -1498,17 +1425,7 @@ VOID OpenDraw::RenderNew()
 																			++update.right;
 																	}
 
-																	WORD* source = (WORD*)surface->indexBuffer + update.top * frameWidth + update.left;
-																	WORD* dest = (WORD*)frameBuffer;
-																	DWORD copyHeight = texHeight;
-																	do
-																	{
-																		MemoryCopy(dest, source, texWidth << 1);
-																		source += frameWidth;
-																		dest += texWidth;
-																	} while (--copyHeight);
-
-																	GLTexSubImage2D(GL_TEXTURE_2D, 0, update.left, update.top, texWidth, texHeight, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, frameBuffer);
+																	GLTexSubImage2D(GL_TEXTURE_2D, 0, update.left, update.top, texWidth, texHeight, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, (WORD*)surface->indexBuffer + update.top * frameWidth + update.left);
 																}
 															}
 														}
@@ -1516,6 +1433,7 @@ VOID OpenDraw::RenderNew()
 														if (++updateClip == surface->endClip)
 															updateClip = surface->clipsList;
 													}
+													GLPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 
 													if (oldScale != currScale)
 													{
