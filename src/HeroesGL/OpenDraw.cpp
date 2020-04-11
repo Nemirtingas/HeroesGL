@@ -2341,7 +2341,7 @@ VOID OpenDraw::RenderStart()
 				WS_EX_CONTROLPARENT | WS_EX_TOPMOST,
 				WC_DRAW,
 				NULL,
-				WS_VISIBLE | WS_POPUP | WS_MAXIMIZE,
+				WS_VISIBLE | WS_POPUP,
 				0, 0,
 				rect.right, rect.bottom,
 				this->hWnd,
@@ -2395,7 +2395,7 @@ VOID OpenDraw::RenderStop()
 	if (this->hDraw != this->hWnd)
 	{
 		DestroyWindow(this->hDraw);
-		GL::ResetPixelFormat();
+		GL::ResetPixelFormat(this->hWnd);
 	}
 
 	this->hDraw = NULL;

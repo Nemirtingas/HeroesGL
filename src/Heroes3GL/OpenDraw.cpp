@@ -320,10 +320,10 @@ VOID OpenDraw::RenderOld()
 					}
 
 					BOOL isDouble = currScale != 1.0f;
+					DWORD frameWidth = isDouble ? DWORD(currScale * this->mode.width) : this->mode.width;
 					if (isPixelStore)
-						GLPixelStorei(GL_UNPACK_ROW_LENGTH, this->mode.width);
+						GLPixelStorei(GL_UNPACK_ROW_LENGTH, frameWidth);
 					{
-						DWORD frameWidth = isDouble ? DWORD(currScale * this->mode.width) : this->mode.width;
 						DWORD count = frameCount;
 						frame = frames;
 						while (count--)
@@ -819,8 +819,8 @@ VOID OpenDraw::RenderMid()
 							// NEXT UNCHANGED
 							{
 								// Update texture
-								GLPixelStorei(GL_UNPACK_ROW_LENGTH, this->mode.width);
 								DWORD frameWidth = isDouble ? DWORD(currScale * this->mode.width) : this->mode.width;
+								GLPixelStorei(GL_UNPACK_ROW_LENGTH, frameWidth);
 								while (updateClip != finClip)
 								{
 									if (updateClip->isActive)
@@ -1381,8 +1381,8 @@ VOID OpenDraw::RenderNew()
 											// NEXT UNCHANGED
 											{
 												// Update texture
-												GLPixelStorei(GL_UNPACK_ROW_LENGTH, this->mode.width);
 												DWORD frameWidth = isDouble ? DWORD(currScale * this->mode.width) : this->mode.width;
+												GLPixelStorei(GL_UNPACK_ROW_LENGTH, frameWidth);
 												while (updateClip != finClip)
 												{
 													if (updateClip->isActive)
@@ -1685,7 +1685,7 @@ VOID OpenDraw::RenderStart()
 				WS_EX_CONTROLPARENT | WS_EX_TOPMOST,
 				WC_DRAW,
 				NULL,
-				WS_VISIBLE | WS_POPUP | WS_MAXIMIZE,
+				WS_VISIBLE | WS_POPUP,
 				0, 0,
 				rect.right, rect.bottom,
 				this->hWnd,
@@ -1739,7 +1739,7 @@ VOID OpenDraw::RenderStop()
 	if (this->hDraw != this->hWnd)
 	{
 		DestroyWindow(this->hDraw);
-		GL::ResetPixelFormat();
+		GL::ResetPixelFormat(this->hWnd);
 	}
 
 	this->hDraw = NULL;

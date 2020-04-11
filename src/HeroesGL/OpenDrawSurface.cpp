@@ -93,11 +93,10 @@ ULONG __stdcall OpenDrawSurface::Release()
 
 HRESULT __stdcall OpenDrawSurface::Blt(LPRECT, LPDIRECTDRAWSURFACE lpDDSrcSurface, LPRECT, DWORD dwFlags, LPDDBLTFX lpDDBltFx)
 {
-	OpenDrawSurface* surface = (OpenDrawSurface*)lpDDSrcSurface;
+	if (!config.update.rect.right || !config.update.rect.bottom)
+		return DD_OK;
 
-	RECT* rcDst = &config.update.rect;
 	RECT rcSrc = config.update.rect;
-
 	DWORD offset = config.update.offset->x;
 	if (offset)
 	{
@@ -112,6 +111,7 @@ HRESULT __stdcall OpenDrawSurface::Blt(LPRECT, LPDIRECTDRAWSURFACE lpDDSrcSurfac
 		rcSrc.bottom = rcSrc.top + 448;
 	}
 
+	OpenDrawSurface* surface = (OpenDrawSurface*)lpDDSrcSurface;
 	BYTE* src = surface->indexBuffer + rcSrc.top * RES_WIDTH + rcSrc.left;
 
 	offset = config.update.rect.top * RES_WIDTH + config.update.rect.left;

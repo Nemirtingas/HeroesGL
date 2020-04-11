@@ -141,16 +141,13 @@ struct AddressSpace
 	CHAR* icon;
 	BYTE resLanguage;
 	DWORD method2_nop;
-	DWORD method2_nop_size;
 	DWORD method2_jmp;
-	BYTE method2_jmp_short;
-	DWORD mode_nop;
-	BYTE mode_nop_size;
 	DWORD setFullScreenStatus;
 	DWORD ddSetFullScreenStatus;
 	DWORD checkChangeCursor;
 	DWORD moveOffset;
-	DWORD invalidEsp;
+	DWORD invalid_jmp;
+	DWORD invalid_esp;
 
 	AppSettings* appSettings;
 	DWORD dispelMagicSwitch;

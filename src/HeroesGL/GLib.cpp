@@ -419,16 +419,19 @@ namespace GL
 		return res;
 	}
 
-	VOID __fastcall ResetPixelFormat()
+	VOID __fastcall ResetPixelFormat(HWND hParent)
 	{
+		RECT rc;
+		GetClientRect(hParent, &rc);
+
 		HWND hWnd = CreateWindowEx(
-			WS_EX_APPWINDOW,
+			WS_EX_CONTROLPARENT,
 			WC_DRAW,
 			NULL,
-			WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
+			WS_VISIBLE | WS_CHILD,
 			0, 0,
-			1, 1,
-			NULL,
+			rc.right, rc.bottom,
+			hParent,
 			NULL,
 			hDllModule,
 			NULL);

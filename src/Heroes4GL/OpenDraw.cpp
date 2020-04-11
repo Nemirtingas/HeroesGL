@@ -1538,9 +1538,10 @@ VOID OpenDraw::RenderStop()
 	this->hDrawThread = NULL;
 
 	if (this->hDraw != this->hWnd)
+	{
 		DestroyWindow(this->hDraw);
-
-	GL::ResetPixelFormat();
+		GL::ResetPixelFormat(this->hWnd);
+	}
 
 	this->hDraw = NULL;
 
