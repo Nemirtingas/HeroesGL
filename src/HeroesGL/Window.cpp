@@ -727,7 +727,7 @@ namespace Window
 				else
 					id = cookie ? IDD_ENGLISH : IDD_ENGLISH_OLD;
 
-				DialogBoxParam(hDllModule, MAKEINTRESOURCE(config.language == LNG_ENGLISH ? (cookie ? IDD_ENGLISH : IDD_ENGLISH_OLD) : (cookie ? IDD_RUSSIAN : IDD_RUSSIAN_OLD)), hWnd, (DLGPROC)AboutProc, cookie);
+				DialogBoxParam(hDllModule, MAKEINTRESOURCE(id), hWnd, (DLGPROC)AboutProc, cookie);
 
 				if (cookie)
 					DeactivateActCtxC(0, cookie);

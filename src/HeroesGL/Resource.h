@@ -7,6 +7,7 @@
 
 #define LNG_ENGLISH 0
 #define LNG_RUSSIAN 1
+#define LNG_POLISH 2
 
 #define IDC_BTN_OK 1
 #define IDC_TITLE 2

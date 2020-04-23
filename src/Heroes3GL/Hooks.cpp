@@ -168,7 +168,16 @@ const AddressSpace addressArray[] = {
 
 	// === POL ======================================================================================================================================
 #pragma region POL
+	0x004F5723, 0x005FED57, 0x00000000, 0x00000000, 0x006000B6, 0x0050AFAF, 0x0050B01B, 0x0050B020, 0x0063C68C, 0x0063C678, 0x0047FDAE, 0x005FFD9D, 0x006818F0, 141, LNG_ENGLISH, // Heroes III Armageddon - v2.1
+	"Heroes of Might and Magic III: Armageddon’s Blade",
+
+	0x004F7AF3, 0x00600ED7, 0x00000000, 0x00000000, 0x00602236, 0x0050D66F, 0x0050D6DB, 0x0050D6E0, 0x0063E6EC, 0x0063E6D8, 0x0047FF5E, 0x00601F1D, 0x00684A20, 141, LNG_ENGLISH, // Heroes III Shadow - v3.1
+	"Heroes of Might and Magic III: The Shadow of Death",
+
 	0x004F78D3, 0x00602179, 0x00000000, 0x00000000, 0x00601E66, 0x0050D50F, 0x0050D57B, 0x0050D580, 0x0063E6EC, 0x0063E6D8, 0x0047FD2E, 0x00601B4D, 0x00684A18, 141, LNG_ENGLISH, // Heroes III Shadow - v3.2
+	"Heroes of Might and Magic III: The Shadow of Death",
+
+	0x004F5993, 0x005FE337, 0x00000000, 0x00000000, 0x005FF696, 0x0050B70F, 0x0050B77B, 0x0050B780, 0x0063B68C, 0x0063B678, 0x0047FD8E, 0x005FF37D, 0x00680900, 141, LNG_ENGLISH, // Heroes III Shadow - v3.2 / Armageddon - v2.2
 	"Heroes of Might and Magic III: The Shadow of Death",
 #pragma endregion
 
@@ -913,7 +922,7 @@ namespace Hooks
 			if (p && !StrCompareInsensitive(p, ".vid"))
 			{
 				DWORD countInFile, readed;
-				if (ReadFile(hFile, &countInFile, sizeof(DWORD), &readed, NULL))
+				if (ReadFile(hFile, &countInFile, sizeof(DWORD), &readed, NULL) && readed)
 				{
 					VideoFile* infoList = (VideoFile*)MemoryAlloc(sizeof(VideoFile) * countInFile);
 					if (ReadFile(hFile, infoList, sizeof(VideoFile) * countInFile, &readed, NULL))

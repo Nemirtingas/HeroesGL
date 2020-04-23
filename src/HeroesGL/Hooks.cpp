@@ -60,31 +60,55 @@ const AddressSpace addressArray[] = {
 	"Герои Меча и Магии II: Редактор",
 #pragma endregion
 
+#pragma region Heroes I Pol
+	// ----------------------------------------------------------------------------
+	0x004436E6, 1, "HEROES", LNG_POLISH, 0x00468A69, 0x00468C97, 0x00468B29, 0x00467F8D, 0x00000000, 0x004A4FD8, 0x00470CDC, 0x38, // Heroes I v1.1
+	(AppSettings*)0x004A4B40, 0x00000000, 0x00000000,
+	0x004A4FF4, 0x0043E78A, 0x004C9E78, 0x004C8BB8, 0x004C92C0, 0x004C99C8, 0x004C9AF4, 0x004C9D4C, 0x00000000, 0x00446F0F, 0x00468AE2, 0x00470F4B, 0x00470F64, 0x00470FD0, 0x004710C0, 0x00471140,
+	"Heroes of Might and Magic: A Strategic Quest",
+
+	0x0040D866, 1, "EDITOR", LNG_POLISH, 0x0041BBD2, 0x0041BE00, 0x0041BC92, 0x0041B12D, 0x00000000, 0x0044EE70, 0x0042205C, 0x38, // Heroes I Editor v1.0
+	(AppSettings*)0x0044EA30, 0x00000000, 0x00000000,
+	0x0044EE64, 0x00000000, 0x00450CE0, 0x0044FA20, 0x00450128, 0x00450830, 0x0045095C, 0x00450BB4, 0x00000000, 0x004091A0, 0x0041BC4B, 0x004222CB, 0x004222E4, 0x00422350, 0x00422440, 0x004224C0,
+	"Heroes of Might and Magic: Editor",
+#pragma endregion
+
+#pragma region Heroes II Pol
+	0x00470C7C, 2, "HEROES", LNG_POLISH, 0x004B0B7B, 0x004B0E3A, 0x004B0C90, 0x004B0040, 0x004BFCF0, 0x0051E2AC, 0x004CF172, 0x38, // Heroes II v2.1
+	(AppSettings*)0x0051DE64, 0x00000000, 0x00000000,
+	0x00000000, 0x00000000, 0x0052D928, 0x0052CBA0, 0x00000000, 0x0052D4A4, 0x0052D624, 0x00000000, 0x004BEEE2, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+	"Heroes of Might and Magic II: The Price of Loyalty",
+	0x00414E0E, 2, "EDITOR", LNG_POLISH, 0x0042C25B, 0x0042C4C9, 0x0042C342, 0x0042B7B0, 0x0042FE30, 0x00495F48, 0x0043FE02, 0x38, // Heroes II Editor v2.1
+	(AppSettings*)0x00495B9C, 0x00000000, 0x00000000,
+	0x00000000, 0x00000000, 0x00498160, 0x004973D8, 0x00000000, 0x00497CDC, 0x00497E5C, 0x00000000, 0x0042F052, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+	"Heroes of Might and Magic II: Editor",
+#pragma endregion
+
 #pragma region Heroes I Eng
 	// ----------------------------------------------------------------------------
-	0x0045B9AA, 1, "HEROES", LNG_ENGLISH, 0x00405547, 0x0040583D, 0x0040566A, 0x0040490E, 0x00000000, 0x00492E08, 0x004734D3, 0x38, // Heroes I v1.0
+	0x0045B9AA, 1, "HEROES", LNG_ENGLISH, 0x00405547, 0x0040583D, 0x0040566A, 0x0040490E, 0x00000000, 0x00492E08, 0x004734D3, 0x40, // Heroes I v1.0
 	(AppSettings*)0x004C6AC0, 0x00000000, 0x00000000,
-	0x00492E28, 0x00450FE0, 0x004CBF58, 0x004CADB8, 0x004CB720, 0x004CB4C0, 0x004CC538, 0x004CAC88, 0x00000000, 0x004644E7, 0x004682F5, 0x004736D4, 0x004736E9, 0x0047372C, 0x004737C1, 0x004737FE,
+	0x00492E28, 0x00450FE0, 0x004CBF58, 0x004CADB8, 0x004CB720, 0x004CB4C0, 0x004CC538, 0x004CAC88, 0x00000000, 0x004644E7, 0x004055FF, 0x004736D4, 0x004736E9, 0x0047372C, 0x004737C1, 0x004737FE,
 	"Heroes of Might and Magic: A Strategic Quest",
-	0x0041C62A, 1, "EDITOR", LNG_ENGLISH, 0x0041BF70, 0x0041C266, 0x0041C093, 0x0041B398, 0x00000000, 0x00436E6C, 0x00421743, 0x38, // Heroes I Editor v1.0
+	0x0041C62A, 1, "EDITOR", LNG_ENGLISH, 0x0041BF70, 0x0041C266, 0x0041C093, 0x0041B398, 0x00000000, 0x00436E6C, 0x00421743, 0x40, // Heroes I Editor v1.0
 	(AppSettings*)0x004480C0, 0x00000000, 0x00000000,
 	0x00436E60, 0x00000000, 0x0044A6C8, 0x00449528, 0x00449E90, 0x00449C30, 0x0044ACA8, 0x004493F8, 0x00000000, 0x00409ADC, 0x0041C028, 0x00421964, 0x00421979, 0x004219BC, 0x00421A51, 0x00421A8E,
 	"Heroes of Might and Magic: Editor",
 
-	0x0045BAAA, 1, "HEROES", LNG_ENGLISH, 0x00405547, 0x0040583D, 0x0040566A, 0x0040490E, 0x00000000, 0x00492E08, 0x00473AA3, 0x38, // Heroes I v1.1
+	0x0045BAAA, 1, "HEROES", LNG_ENGLISH, 0x00405547, 0x0040583D, 0x0040566A, 0x0040490E, 0x00000000, 0x00492E08, 0x00473AA3, 0x40, // Heroes I v1.1
 	(AppSettings*)0x004C6F70, 0x00000000, 0x00000000,
 	0x00492E28, 0x004510E1, 0x004CC408, 0x004CB268, 0x004CBBD0, 0x004CB970, 0x004CC9E8, 0x004CB138, 0x00000000, 0x00464607, 0x004055FF, 0x00473CA4, 0x00473CB9, 0x00473CFC, 0x00473D91, 0x00473DCE,
 	"Heroes of Might and Magic: A Strategic Quest",
-	0x0041C64A, 1, "EDITOR", LNG_ENGLISH, 0x0041BF90, 0x0041C286, 0x0041C0B3, 0x0041B3B8, 0x00000000, 0x00436E6C, 0x00421773, 0x38, // Heroes I Editor v1.1
+	0x0041C64A, 1, "EDITOR", LNG_ENGLISH, 0x0041BF90, 0x0041C286, 0x0041C0B3, 0x0041B3B8, 0x00000000, 0x00436E6C, 0x00421773, 0x40, // Heroes I Editor v1.1
 	(AppSettings*)0x004482A0, 0x00000000, 0x00000000,
 	0x00436E60, 0x00000000, 0x0044A8A8, 0x00449708, 0x0044A070, 0x00449E10, 0x0044AE88, 0x004495D8, 0x00000000, 0x00409AEC, 0x0041C048, 0x00421994, 0x004219A9, 0x004219EC, 0x00421A81, 0x00421ABE,
 	"Heroes of Might and Magic: Editor",
 
-	0x00432B2A, 1, "HEROES", LNG_ENGLISH, 0x00436E67, 0x0043715D, 0x00436F8A, 0x0043622E, 0x00000000, 0x00492C20, 0x00475CC3, 0x38, // Heroes I v1.2
+	0x00432B2A, 1, "HEROES", LNG_ENGLISH, 0x00436E67, 0x0043715D, 0x00436F8A, 0x0043622E, 0x00000000, 0x00492C20, 0x00475CC3, 0x40, // Heroes I v1.2
 	(AppSettings*)0x004A9B88, 0x00000000, 0x00000000,
 	0x00492C40, 0x00422571, 0x004CEB30, 0x004CD860, 0x004CDF68, 0x004CE670, 0x004CE7A0, 0x004CEA00, 0x00000000, 0x00439EA7, 0x00436F1F, 0x00475EC4, 0x00475ED9, 0x00475F1C, 0x00475FB1, 0x00475FEE,
 	"Heroes of Might and Magic: A Strategic Quest",
-	0x004012BA, 1, "EDITOR", LNG_ENGLISH, 0x004113AF, 0x004116A5, 0x004114D2, 0x004107D8, 0x00000000, 0x0043967C, 0x00420CD3, 0x38, // Heroes I Editor v1.2
+	0x004012BA, 1, "EDITOR", LNG_ENGLISH, 0x004113AF, 0x004116A5, 0x004114D2, 0x004107D8, 0x00000000, 0x0043967C, 0x00420CD3, 0x40, // Heroes I Editor v1.2
 	(AppSettings*)0x0044A8B8, 0x00000000, 0x00000000,
 	0x00439670, 0x00000000, 0x0044C2F0, 0x0044B020, 0x0044B728, 0x0044BE30, 0x0044BF60, 0x0044C1C0, 0x00000000, 0x0041AD4C, 0x00411467, 0x00420EF4, 0x00420F09, 0x00420F4C, 0x00420FE1, 0x0042101E,
 	"Heroes of Might and Magic: Editor",
@@ -557,7 +581,7 @@ namespace Hooks
 		HMENU hMenu = LoadMenu(hInstance, lpMenuName);
 		if (hMenu)
 		{
-			HMENU hNew = LoadMenu(hDllModule, MAKEINTRESOURCE(config.language == LNG_ENGLISH ? IDM_ENGLISH : IDM_RUSSIAN));
+			HMENU hNew = LoadMenu(hDllModule, MAKEINTRESOURCE(config.language == LNG_RUSSIAN ? IDM_RUSSIAN : IDM_ENGLISH));
 			if (hNew)
 			{
 				DWORD i, index = 0;
@@ -1366,16 +1390,8 @@ namespace Hooks
 #pragma endregion
 
 #pragma region More music formats
-	CHAR* audioExtList[] = { ".wav", ".flac", ".mp3", ".ogg", ".mod", ".s3m", ".xm", ".it" };
-	TrackInfo *tracksList, *trackInfo;
 	ADROPENDEVICE AudiereOpenDevice;
 	ADROPENSAMPLESOURCE AudiereOpenSampleSource;
-
-	BYTE positionalList[3][10] = {
-		{ 0, 1, 2, 3, 4, 5, 6, 53, 54, 99 },
-		{ 2, 3, 4, 5, 6, 7, 8, 48, 49, 50 },
-		{ 11, 12, 13, 14, 15, 16, 17, 18, 28, 42 }
-	};
 
 	AdrDevice* __stdcall AdrOpenDeviceHook(CHAR* name, CHAR* parameters)
 	{
@@ -1390,7 +1406,9 @@ namespace Hooks
 			DWORD total = 0;
 			CHAR filePath[MAX_PATH];
 
-			CHAR** extension = audioExtList;
+			const CHAR* audioExtList[] = { ".wav", ".flac", ".mp3", ".ogg", ".mod", ".s3m", ".xm", ".it" };
+
+			const CHAR** extension = audioExtList;
 			DWORD count = sizeof(audioExtList) / sizeof(CHAR*);
 			do
 			{
@@ -1464,6 +1482,8 @@ namespace Hooks
 
 	AdrSource* __stdcall AdrOpenSampleSourceHook(CHAR* originalPath)
 	{
+		static TrackInfo *tracksList, *trackInfo;
+
 		if (trackInfo && !StrCompare(trackInfo->group, originalPath))
 		{
 			audiere::SampleSource* source = AudiereOpenSampleSource(trackInfo->path);
@@ -1530,7 +1550,13 @@ namespace Hooks
 			if (type == 1 && *(--p) != ' ')
 				type = 0;
 
-			BYTE* listItem = positionalList[type];
+			const BYTE positionalList[3][10] = {
+				{ 0, 1, 2, 3, 4, 5, 6, 53, 54, 99 },
+				{ 2, 3, 4, 5, 6, 7, 8, 48, 49, 50 },
+				{ 11, 12, 13, 14, 15, 16, 17, 18, 28, 42 }
+			};
+
+			const BYTE* listItem = positionalList[type];
 			DWORD count = sizeof(positionalList) / 3;
 			do
 			{
@@ -1561,6 +1587,11 @@ namespace Hooks
 #pragma endregion
 
 #pragma region Bordered window
+	HICON __stdcall LoadIconHook(HINSTANCE hInstance, LPCSTR lpIconName)
+	{
+		return config.icon; // For PL Editor
+	}
+
 	ATOM __stdcall RegisterClassHook(WNDCLASSA* lpWndClass)
 	{
 		hookSpace->appSettings->showMenu = !hookSpace->appSettings->fullScreen;
@@ -1746,6 +1777,7 @@ namespace Hooks
 						PatchFunction(file, "DialogBoxParamA", DialogBoxParamHook);
 
 						PatchFunction(file, "PeekMessageA", PeekMessageHook);
+						PatchFunction(file, "LoadIconA", LoadIconHook);
 						PatchFunction(file, "RegisterClassA", RegisterClassHook);
 
 						PatchFunction(file, "RegCreateKeyA", RegCreateKeyHook);
@@ -1791,8 +1823,6 @@ namespace Hooks
 					delete file;
 				}
 
-				
-
 				if (hookSpace->fadein_tick && hookSpace->fadein_update_1 && hookSpace->fadein_update_2)
 				{
 					PatchCall(hookSpace->fadein_tick, SetTickCount);
@@ -1808,17 +1838,17 @@ namespace Hooks
 
 				if (!config.isNoGL)
 				{
-					if (hookSpace->resLanguage == LNG_RUSSIAN)
-					{
-						PatchNop(hookSpace->method2_nop, 2);
-						PatchByte(hookSpace->method2_jmp, 0xEB);
-						PatchWord(hookSpace->invalid_jmp, 0xE990);
-					}
-					else
+					if (hookSpace->resLanguage == LNG_ENGLISH)
 					{
 						PatchNop(hookSpace->method2_nop, 6);
 						PatchWord(hookSpace->method2_jmp, 0xE990);
 						PatchByte(hookSpace->invalid_jmp, 0xEB);
+					}
+					else
+					{
+						PatchNop(hookSpace->method2_nop, 2);
+						PatchByte(hookSpace->method2_jmp, 0xEB);
+						PatchWord(hookSpace->invalid_jmp, 0xE990);
 					}
 
 					PatchHook(hookSpace->setFullScreenStatus, hookSpace->game_version == 2 ? hook_mode_v2 : hook_mode_v1);
