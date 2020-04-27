@@ -74,6 +74,66 @@ VOID OpenDrawSurface::ReleaseBuffer()
 		DeleteDC(this->hDc);
 }
 
+VOID OpenDrawSurface::TakeSnapshot()
+{
+	if (OpenClipboard(NULL))
+	{
+		EmptyClipboard();
+
+		DWORD pitch = this->width * sizeof(WORD);
+		if (pitch & 3)
+			pitch = (pitch & 0xFFFFFFFC) + 4;
+
+		DWORD size = pitch * this->height;
+		DWORD slice = sizeof(BITMAPINFOHEADER) + 12;
+		HGLOBAL hMemory = GlobalAlloc(GMEM_MOVEABLE, slice + size);
+		if (hMemory)
+		{
+			VOID* data = GlobalLock(hMemory);
+			if (data)
+			{
+				BITMAPV5HEADER* bmi = (BITMAPV5HEADER*)data;
+				bmi->bV5Size = sizeof(BITMAPINFOHEADER);
+				bmi->bV5Width = this->width;
+				bmi->bV5Height = this->height;
+				bmi->bV5Planes = 1;
+				bmi->bV5BitCount = 16;
+				bmi->bV5Compression = BI_BITFIELDS;
+				bmi->bV5SizeImage = size;
+				bmi->bV5XPelsPerMeter = 1;
+				bmi->bV5YPelsPerMeter = 1;
+				bmi->bV5ClrUsed = 0;
+				bmi->bV5ClrImportant = 0;
+				bmi->bV5RedMask = 0xF800;
+				bmi->bV5GreenMask = 0x07E0;
+				bmi->bV5BlueMask = 0x001F;
+
+				BYTE* dstData = (BYTE*)data + slice + size - pitch;
+
+				WORD* src = this->indexBuffer;
+				DWORD height = this->height;
+				do
+				{
+					WORD* dst = (WORD*)dstData;
+					DWORD width = this->width;
+					do
+						*dst++ = *src++;
+					while (--width);
+
+					dstData -= pitch;
+				} while (--height);
+
+				GlobalUnlock(hMemory);
+				SetClipboardData(CF_DIB, hMemory);
+			}
+			
+			GlobalFree(hMemory);
+		}
+		
+		CloseClipboard();
+	}
+}
+
 VOID OpenDrawSurface::CreateBuffer(DWORD width, DWORD height)
 {
 	if (this->hBmp)

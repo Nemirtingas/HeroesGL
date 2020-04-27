@@ -71,6 +71,96 @@ VOID OpenDrawSurface::ReleaseBuffer()
 		MemoryFree(this->clipsList);
 }
 
+VOID OpenDrawSurface::TakeSnapshot()
+{
+	if (OpenClipboard(NULL))
+	{
+		EmptyClipboard();
+
+		DWORD texWidth = DWORD(this->scale * this->mode.width);
+		DWORD texHeight = DWORD(this->scale * this->mode.height);
+
+		DWORD pitch = texWidth * (this->mode.bpp == 16 ? 2 : 3);
+		if (pitch & 3)
+			pitch = (pitch & 0xFFFFFFFC) + 4;
+
+		DWORD size = pitch * texHeight;
+		DWORD slice = sizeof(BITMAPINFOHEADER) + (this->mode.bpp == 16 ? 12 : 0);
+		HGLOBAL hMemory = GlobalAlloc(GMEM_MOVEABLE, slice + size);
+		if (hMemory)
+		{
+			VOID* data = GlobalLock(hMemory);
+			if (data)
+			{
+				BITMAPV5HEADER* bmi = (BITMAPV5HEADER*)data;
+				bmi->bV5Size = sizeof(BITMAPINFOHEADER);
+				bmi->bV5Width = texWidth;
+				bmi->bV5Height = texHeight;
+				bmi->bV5Planes = 1;
+				bmi->bV5SizeImage = size;
+				bmi->bV5XPelsPerMeter = 1;
+				bmi->bV5YPelsPerMeter = 1;
+				bmi->bV5ClrUsed = 0;
+				bmi->bV5ClrImportant = 0;
+
+				BYTE* dstData = (BYTE*)data + slice + size - pitch;
+				if (this->mode.bpp == 16)
+				{
+					bmi->bV5BitCount = 16;
+					bmi->bV5Compression = BI_BITFIELDS;
+					bmi->bV5RedMask = 0xF800;
+					bmi->bV5GreenMask = 0x07E0;
+					bmi->bV5BlueMask = 0x001F;
+
+					WORD* src = (WORD*)this->indexBuffer;
+					DWORD height = texHeight;
+					do
+					{
+						WORD* dst = (WORD*)dstData;
+						DWORD width = texWidth;
+						do
+							*dst++ = *src++;
+						while (--width);
+
+						dstData -= pitch;
+					} while (--height);
+				}
+				else
+				{
+					bmi->bV5BitCount = 24;
+					bmi->bV5Compression = BI_RGB;
+
+					BYTE* src = (BYTE*)this->indexBuffer;
+					DWORD height = texHeight;
+					do
+					{
+						BYTE* dst = dstData;
+						DWORD width = texWidth;
+						do
+						{
+							DWORD count = 3;
+							do
+								*dst++ = *src++;
+							while (--count);
+
+							++src;
+						} while (--width);
+
+						dstData -= pitch;
+					} while (--height);
+				}
+
+				GlobalUnlock(hMemory);
+				SetClipboardData(CF_DIB, hMemory);
+			}
+
+			GlobalFree(hMemory);
+		}
+		
+		CloseClipboard();
+	}
+}
+
 VOID OpenDrawSurface::CreateBuffer(DWORD width, DWORD height)
 {
 	this->ReleaseBuffer();

@@ -852,45 +852,7 @@ VOID OpenDraw::RenderOld()
 						if (this->isTakeSnapshot)
 						{
 							this->isTakeSnapshot = FALSE;
-
-							if (OpenClipboard(NULL))
-							{
-								EmptyClipboard();
-
-								DWORD texWidth = this->width;
-								DWORD texHeight = this->height;
-								DWORD dataSize = texWidth * texHeight * sizeof(WORD);
-								HGLOBAL hMemory = GlobalAlloc(GMEM_MOVEABLE, sizeof(BITMAPV5HEADER) + 1024 + dataSize);
-								{
-									VOID* data = GlobalLock(hMemory);
-									{
-										BITMAPV5HEADER* bmi = (BITMAPV5HEADER*)data;
-										MemoryZero(bmi, sizeof(BITMAPV5HEADER));
-										bmi->bV5Size = sizeof(BITMAPV5HEADER);
-										bmi->bV5Width = texWidth;
-										bmi->bV5Height = -*(LONG*)&texHeight;
-										bmi->bV5Planes = 1;
-										bmi->bV5BitCount = 8;
-										bmi->bV5Compression = BI_RGB;
-
-										DWORD* src = surface->attachedPalette->entries;
-										DWORD* dst = (DWORD*)((BYTE*)data + sizeof(BITMAPV5HEADER));
-										DWORD count = 256;
-										do
-										{
-											*dst++ = ((*src & 0x00FF0000) >> 16) | (*src & 0x0000FF00) | ((*src & 0x000000FF) << 16);
-											++src;
-										} while (--count);
-										MemoryCopy((BYTE*)data + sizeof(BITMAPV5HEADER) + 1024, surface->indexBuffer, dataSize);
-									}
-									GlobalUnlock(hMemory);
-
-									SetClipboardData(CF_DIBV5, hMemory);
-								}
-								GlobalFree(hMemory);
-
-								CloseClipboard();
-							}
+							surface->TakeSnapshot(this->width, this->height);
 						}
 
 						SwapBuffers(this->hDc);
@@ -1327,46 +1289,7 @@ VOID OpenDraw::RenderMid()
 									}
 
 									if (isTakeSnapshot)
-									{
-										if (OpenClipboard(NULL))
-										{
-											EmptyClipboard();
-
-											DWORD texWidth = this->width;
-											DWORD texHeight = this->height;
-											DWORD dataSize = texWidth * texHeight * sizeof(WORD);
-											HGLOBAL hMemory = GlobalAlloc(GMEM_MOVEABLE, sizeof(BITMAPV5HEADER) + 1024 + dataSize);
-											{
-												VOID* data = GlobalLock(hMemory);
-												{
-													BITMAPV5HEADER* bmi = (BITMAPV5HEADER*)data;
-													MemoryZero(bmi, sizeof(BITMAPV5HEADER));
-													bmi->bV5Size = sizeof(BITMAPV5HEADER);
-													bmi->bV5Width = texWidth;
-													bmi->bV5Height = -*(LONG*)&texHeight;
-													bmi->bV5Planes = 1;
-													bmi->bV5BitCount = 8;
-													bmi->bV5Compression = BI_RGB;
-
-													DWORD* src = surface->attachedPalette->entries;
-													DWORD* dst = (DWORD*)((BYTE*)data + sizeof(BITMAPV5HEADER));
-													DWORD count = 256;
-													do
-													{
-														*dst++ = ((*src & 0x00FF0000) >> 16) | (*src & 0x0000FF00) | ((*src & 0x000000FF) << 16);
-														++src;
-													} while (--count);
-													MemoryCopy((BYTE*)data + sizeof(BITMAPV5HEADER) + 1024, surface->indexBuffer, dataSize);
-												}
-												GlobalUnlock(hMemory);
-
-												SetClipboardData(CF_DIBV5, hMemory);
-											}
-											GlobalFree(hMemory);
-
-											CloseClipboard();
-										}
-									}
+										surface->TakeSnapshot(this->width, this->height);
 
 									// Swap
 									SwapBuffers(this->hDc);
@@ -2153,87 +2076,48 @@ VOID OpenDraw::RenderNew()
 
 															if (isTakeSnapshot)
 															{
-																GLFinish();
-
 																if (OpenClipboard(NULL))
 																{
 																	EmptyClipboard();
 
-																	DWORD dataSize = LOWORD(viewSize) * HIWORD(viewSize) * 3;
-																	HGLOBAL hMemory = GlobalAlloc(GMEM_MOVEABLE, sizeof(BITMAPINFOHEADER) + dataSize);
+																	DWORD size = LOWORD(viewSize) * HIWORD(viewSize) * 3;
+																	DWORD slice = sizeof(BITMAPINFOHEADER);
+																	HGLOBAL hMemory = GlobalAlloc(GMEM_MOVEABLE, slice + size);
+																	if (hMemory)
 																	{
 																		VOID* data = GlobalLock(hMemory);
+																		if (data)
 																		{
-																			BITMAPINFOHEADER* bmiHeader = (BITMAPINFOHEADER*)data;
-																			MemoryZero(bmiHeader, sizeof(BITMAPINFOHEADER));
-																			bmiHeader->biSize = sizeof(BITMAPINFOHEADER);
-																			bmiHeader->biWidth = LOWORD(viewSize);
-																			bmiHeader->biHeight = HIWORD(viewSize);
-																			bmiHeader->biPlanes = 1;
-																			bmiHeader->biBitCount = 24;
-																			bmiHeader->biCompression = BI_RGB;
-																			bmiHeader->biXPelsPerMeter = 1;
-																			bmiHeader->biYPelsPerMeter = 1;
+																			BITMAPINFOHEADER* bmi = (BITMAPINFOHEADER*)data;
+																			bmi->biSize = sizeof(BITMAPINFOHEADER);
+																			bmi->biWidth = LOWORD(viewSize);
+																			bmi->biHeight = HIWORD(viewSize);
+																			bmi->biPlanes = 1;
+																			bmi->biBitCount = 24;
+																			bmi->biCompression = BI_RGB;
+																			bmi->biSizeImage = size;
+																			bmi->biXPelsPerMeter = 1;
+																			bmi->biYPelsPerMeter = 1;
+																			bmi->biClrUsed = 0;
+																			bmi->biClrImportant = 0;
 
-																			VOID* pixels = (BITMAPINFOHEADER*)((BYTE*)data + sizeof(BITMAPINFOHEADER));
-																			GLGetTexImage(GL_TEXTURE_2D, 0, GL_BGR_EXT, GL_UNSIGNED_BYTE, pixels);
+																			GLGetTexImage(GL_TEXTURE_2D, 0, GL_BGR_EXT, GL_UNSIGNED_BYTE, (BYTE*)data + slice);
+																		
+																			GlobalUnlock(hMemory);
+																			SetClipboardData(CF_DIB, hMemory);
 																		}
-																		GlobalUnlock(hMemory);
-
-																		SetClipboardData(CF_DIB, hMemory);
+																		
+																		GlobalFree(hMemory);
 																	}
-																	GlobalFree(hMemory);
-
+																	
 																	CloseClipboard();
 																}
 															}
 														}
 														UseShaderProgram(upscaleProgram, texSize);
 													}
-													else
-													{
-														if (isTakeSnapshot)
-														{
-															if (OpenClipboard(NULL))
-															{
-																EmptyClipboard();
-
-																DWORD texWidth = this->width;
-																DWORD texHeight = this->height;
-																DWORD dataSize = texWidth * texHeight * sizeof(WORD);
-																HGLOBAL hMemory = GlobalAlloc(GMEM_MOVEABLE, sizeof(BITMAPV5HEADER) + 1024 + dataSize);
-																{
-																	VOID* data = GlobalLock(hMemory);
-																	{
-																		BITMAPV5HEADER* bmi = (BITMAPV5HEADER*)data;
-																		MemoryZero(bmi, sizeof(BITMAPV5HEADER));
-																		bmi->bV5Size = sizeof(BITMAPV5HEADER);
-																		bmi->bV5Width = texWidth;
-																		bmi->bV5Height = -*(LONG*)&texHeight;
-																		bmi->bV5Planes = 1;
-																		bmi->bV5BitCount = 8;
-																		bmi->bV5Compression = BI_RGB;
-
-																		DWORD* src = surface->attachedPalette->entries;
-																		DWORD* dst = (DWORD*)((BYTE*)data + sizeof(BITMAPV5HEADER));
-																		DWORD count = 256;
-																		do
-																		{
-																			*dst++ = ((*src & 0x00FF0000) >> 16) | (*src & 0x0000FF00) | ((*src & 0x000000FF) << 16);
-																			++src;
-																		} while (--count);
-																		MemoryCopy((BYTE*)data + sizeof(BITMAPV5HEADER) + 1024, surface->indexBuffer, dataSize);
-																	}
-																	GlobalUnlock(hMemory);
-
-																	SetClipboardData(CF_DIBV5, hMemory);
-																}
-																GlobalFree(hMemory);
-
-																CloseClipboard();
-															}
-														}
-													}
+													else if (isTakeSnapshot)
+														surface->TakeSnapshot(this->width, this->height);
 
 													SwapBuffers(this->hDc);
 													GLFinish();

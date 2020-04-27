@@ -55,6 +55,8 @@ public:
 	OpenDrawSurface(IDraw*, DWORD);
 	~OpenDrawSurface();
 
+	VOID TakeSnapshot(DWORD, DWORD);
+
 	// Inherited via IDrawSurface
 	ULONG __stdcall AddRef();
 	ULONG __stdcall Release();

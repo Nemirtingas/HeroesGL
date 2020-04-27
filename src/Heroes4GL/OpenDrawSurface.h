@@ -58,6 +58,7 @@ public:
 
 	VOID CreateBuffer(DWORD, DWORD);
 	VOID ReleaseBuffer();
+	VOID TakeSnapshot();
 
 	// Inherited via IDrawSurface7
 	ULONG __stdcall AddRef();

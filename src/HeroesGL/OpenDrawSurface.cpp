@@ -77,6 +77,68 @@ OpenDrawSurface::~OpenDrawSurface()
 		MemoryFree(this->clipsList);
 }
 
+VOID OpenDrawSurface::TakeSnapshot(DWORD width, DWORD height)
+{
+	if (OpenClipboard(NULL))
+	{
+		EmptyClipboard();
+
+		DWORD size = width * height;
+		DWORD slice = sizeof(BITMAPINFOHEADER) + 1024;
+		HGLOBAL hMemory = GlobalAlloc(GMEM_MOVEABLE, slice + size);
+		if (hMemory)
+		{
+			VOID* data = GlobalLock(hMemory);
+			if (data)
+			{
+				BITMAPINFOHEADER* bmi = (BITMAPINFOHEADER*)data;
+				bmi->biSize = sizeof(BITMAPINFOHEADER);
+				bmi->biWidth = width;
+				bmi->biHeight = height;
+				bmi->biPlanes = 1;
+				bmi->biBitCount = 8;
+				bmi->biCompression = BI_RGB;
+				bmi->biSizeImage = 0;
+				bmi->biXPelsPerMeter = 1;
+				bmi->biYPelsPerMeter = 1;
+				bmi->biClrUsed = 0;
+				bmi->biClrImportant = 0;
+
+				{
+					DWORD* src = this->attachedPalette->entries;
+					DWORD* dst = (DWORD*)((BYTE*)data + sizeof(BITMAPINFOHEADER));
+					DWORD count = 256;
+					do
+						*dst++ = _byteswap_ulong(_rotl(*src++, 8));
+					while (--count);
+				}
+
+				{
+					BYTE* dstData = (BYTE*)data + slice + size - width;
+					BYTE* src = this->indexBuffer;
+					do
+					{
+						BYTE* dst = dstData;
+						DWORD count = width;
+						do
+							*dst++ = *src++;
+						while (--count);
+
+						dstData -= width;
+					} while (--height);
+				}
+
+				GlobalUnlock(hMemory);
+				SetClipboardData(CF_DIB, hMemory);
+			}
+
+			GlobalFree(hMemory);
+		}
+		
+		CloseClipboard();
+	}
+}
+
 ULONG __stdcall OpenDrawSurface::AddRef()
 {
 	return ++this->refCount;
