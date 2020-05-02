@@ -1,7 +1,7 @@
 /*
 	MIT License
 
-	Copyright (c) 2019 Oleksiy Ryabchun
+	Copyright (c) 2020 Oleksiy Ryabchun
 
 	Permission is hereby granted, free of charge, to any person obtaining a copy
 	of this software and associated documentation files (the "Software"), to deal
@@ -138,6 +138,12 @@ struct ShaderProgram
 	} texSize;
 };
 
+struct MoveObject {
+	DWORD distance[5];
+	DWORD timeout[5];
+	LONG offset[3];
+};
+
 struct AddressSpace
 {
 	DWORD check_1;
@@ -147,14 +153,15 @@ struct AddressSpace
 	DWORD renderNop;
 	DWORD cursor_time_1;
 	DWORD cursor_time_2;
-	DWORD cursor_time_3;
-	DWORD move_timeout;
-	DWORD move_distance;
+	DWORD move_object;
 	DWORD move_address;
 	DWORD bpp_address;
 	DWORD video_address;
 	DWORD video_count;
 	BYTE resLanguage;
+	DWORD move_oldCenter;
+	DWORD move_drawRect;
+	DWORD move_lifeCycle;
 	const CHAR* windowName;
 };
 
@@ -182,7 +189,7 @@ struct VideoFile
 
 struct ConfigItems
 {
-	BOOL isNoGL;
+	BOOL isDDraw;
 	DWORD language;
 	HCURSOR cursor;
 	HICON icon;
@@ -191,6 +198,7 @@ struct ConfigItems
 
 	BOOL singleWindow;
 	BOOL coldCPU;
+	BOOL smoothScroll;
 	RendererType renderer;
 
 	struct {
@@ -242,5 +250,6 @@ enum MenuType
 	MenuInterpolate,
 	MenuUpscale,
 	MenuCpu,
+	MenuSmooth,
 	MenuRenderer
 };

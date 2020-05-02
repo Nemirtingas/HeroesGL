@@ -1,7 +1,7 @@
 /*
 	MIT License
 
-	Copyright (c) 2019 Oleksiy Ryabchun
+	Copyright (c) 2020 Oleksiy Ryabchun
 
 	Permission is hereby granted, free of charge, to any person obtaining a copy
 	of this software and associated documentation files (the "Software"), to deal
@@ -26,15 +26,38 @@
 
 #include "Allocation.h"
 
-class MappedFile : public Allocation {
+#pragma once
+class Hooker : public Allocation {
 private:
 	HANDLE hFile;
 	HANDLE hMap;
 
 public:
 	HMODULE hModule;
-	VOID* address;
+	PIMAGE_NT_HEADERS headNT;
+	DWORD baseOffset;
+	VOID* mapAddress;
 
-	MappedFile(HMODULE hModule);
-	~MappedFile();
+	Hooker(HMODULE);
+	~Hooker();
+
+	BOOL MapFile();
+	VOID UnmapFile();
+
+	BOOL ReadBlock(DWORD, VOID*, DWORD);
+	BOOL ReadWord(DWORD, WORD*);
+	BOOL ReadDWord(DWORD, DWORD*);
+	BOOL ReadByte(DWORD, BYTE*);
+	BOOL PatchRedirect(DWORD, DWORD, BYTE, DWORD);
+	BOOL PatchJump(DWORD, DWORD);
+	BOOL PatchHook(DWORD, VOID*, DWORD = 0);
+	BOOL PatchCall(DWORD, VOID*, DWORD = 0);
+	DWORD RedirectCall(DWORD, VOID*);
+	BOOL PatchNop(DWORD, DWORD);
+	BOOL PatchBlock(DWORD, VOID*, DWORD);
+	BOOL PatchWord(DWORD, WORD);
+	BOOL PatchDWord(DWORD, DWORD);
+	BOOL PatchByte(DWORD, BYTE);
+	DWORD PatchImport(const CHAR*, VOID*);
+	DWORD PatchExport(DWORD, VOID*);
 };

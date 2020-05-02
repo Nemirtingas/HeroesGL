@@ -1,7 +1,7 @@
 /*
 	MIT License
 
-	Copyright (c) 2019 Oleksiy Ryabchun
+	Copyright (c) 2020 Oleksiy Ryabchun
 
 	Permission is hereby granted, free of charge, to any person obtaining a copy
 	of this software and associated documentation files (the "Software"), to deal
@@ -45,7 +45,7 @@ VOID __fastcall UseShaderProgram(ShaderProgram* program, DWORD texSize)
 		program->id = GLCreateProgram();
 
 		GLBindAttribLocation(program->id, 0, "vCoord");
-		GLBindAttribLocation(program->id, 1, "vTexCoord");
+		GLBindAttribLocation(program->id, 1, "vTex");
 
 		GLuint vShader = GL::CompileShaderSource(program->vertexName, program->version, GL_VERTEX_SHADER);
 		GLuint fShader = GL::CompileShaderSource(program->fragmentName, program->version, GL_FRAGMENT_SHADER);
@@ -62,7 +62,10 @@ VOID __fastcall UseShaderProgram(ShaderProgram* program, DWORD texSize)
 		GLDeleteShader(vShader);
 
 		GLUseProgram(program->id);
-		GLUniformMatrix4fv(GLGetUniformLocation(program->id, "mvp"), 1, GL_FALSE, program->mvp);
+
+		if (program->mvp)
+			GLUniformMatrix4fv(GLGetUniformLocation(program->id, "mvp"), 1, GL_FALSE, program->mvp);
+
 		GLUniform1i(GLGetUniformLocation(program->id, "tex01"), 0);
 
 		program->texSize.location = GLGetUniformLocation(program->id, "texSize");
@@ -526,28 +529,14 @@ VOID OpenDraw::RenderMid()
 
 	DWORD texSize = (maxTexSize & 0xFFFF) | (maxTexSize << 16);
 
-	FLOAT buffer[4][4] = {
-		{ 0.0f, 0.0f, 0.0f, 0.0f },
-		{ (FLOAT)this->mode->width, 0.0f, texWidth, 0.0f },
-		{ (FLOAT)this->mode->width, (FLOAT)this->mode->height, texWidth, texHeight },
-		{ 0.0f, (FLOAT)this->mode->height, 0.0f, texHeight }
-	};
-
-	FLOAT mvpMatrix[4][4] = {
-		{ FLOAT(2.0f / this->mode->width), 0.0f, 0.0f, 0.0f },
-		{ 0.0f, FLOAT(-2.0f / this->mode->height), 0.0f, 0.0f },
-		{ 0.0f, 0.0f, 2.0f, 0.0f },
-		{ -1.0f, 1.0f, -1.0f, 1.0f }
-	};
-
 	struct {
 		ShaderProgram linear;
 		ShaderProgram hermite;
 		ShaderProgram cubic;
 	} shaders = {
-		{ 0, GLSL_VER_1_10, IDR_LINEAR_VERTEX, IDR_LINEAR_FRAGMENT, (GLfloat*)mvpMatrix },
-		{ 0, GLSL_VER_1_10, IDR_HERMITE_VERTEX, IDR_HERMITE_FRAGMENT, (GLfloat*)mvpMatrix },
-		{ 0, GLSL_VER_1_10, IDR_CUBIC_VERTEX, IDR_CUBIC_FRAGMENT, (GLfloat*)mvpMatrix }
+		{ 0, GLSL_VER_1_10, IDR_LINEAR_VERTEX, IDR_LINEAR_FRAGMENT, NULL },
+		{ 0, GLSL_VER_1_10, IDR_HERMITE_VERTEX, IDR_HERMITE_FRAGMENT, NULL },
+		{ 0, GLSL_VER_1_10, IDR_CUBIC_VERTEX, IDR_CUBIC_FRAGMENT, NULL }
 	};
 
 	{
@@ -556,13 +545,44 @@ VOID OpenDraw::RenderMid()
 		{
 			GLBindBuffer(GL_ARRAY_BUFFER, bufferName);
 			{
-				GLBufferData(GL_ARRAY_BUFFER, sizeof(buffer), buffer, GL_STATIC_DRAW);
+				{
+					FLOAT buffer[4][8] = {
+						{ 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+						{ (FLOAT)this->mode->width, 0.0f, 0.0f, 1.0f, texWidth, 0.0f, 0.0f, 0.0f },
+						{ (FLOAT)this->mode->width, (FLOAT)this->mode->height, 0.0f, 1.0f, texWidth, texHeight, 0.0f, 0.0f },
+						{ 0.0f, (FLOAT)this->mode->height, 0.0f, 1.0f, 0.0f, texHeight, 0.0f, 0.0f }
+					};
 
-				GLEnableVertexAttribArray(0);
-				GLVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 16, (GLvoid*)0);
+					FLOAT mvp[4][4] = {
+						{ FLOAT(2.0f / this->mode->width), 0.0f, 0.0f, 0.0f },
+						{ 0.0f, FLOAT(-2.0f / this->mode->height), 0.0f, 0.0f },
+						{ 0.0f, 0.0f, 2.0f, 0.0f },
+						{ -1.0f, 1.0f, -1.0f, 1.0f }
+					};
 
-				GLEnableVertexAttribArray(1);
-				GLVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 16, (GLvoid*)8);
+					for (DWORD i = 0; i < 4; ++i)
+					{
+						FLOAT* vector = &buffer[i][0];
+						for (DWORD j = 0; j < 4; ++j)
+						{
+							FLOAT sum = 0.0f;
+							for (DWORD v = 0; v < 4; ++v)
+								sum += mvp[v][j] * vector[v];
+
+							vector[j] = sum;
+						}
+					}
+
+					GLBufferData(GL_ARRAY_BUFFER, sizeof(buffer), buffer, GL_STATIC_DRAW);
+				}
+
+				{
+					GLEnableVertexAttribArray(0);
+					GLVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 32, (GLvoid*)0);
+
+					GLEnableVertexAttribArray(1);
+					GLVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 32, (GLvoid*)16);
+				}
 
 				GLuint textureId;
 				GLGenTextures(1, &textureId);
@@ -732,18 +752,7 @@ VOID OpenDraw::RenderNew()
 
 	DWORD texSize = (maxTexSize & 0xFFFF) | (maxTexSize << 16);
 
-	FLOAT buffer[8][4] = {
-		{ 0.0f, 0.0f, 0.0f, 0.0f },
-		{ (FLOAT)this->mode->width, 0.0f, texWidth, 0.0f },
-		{ (FLOAT)this->mode->width, (FLOAT)this->mode->height, texWidth, texHeight },
-		{ 0.0f, (FLOAT)this->mode->height, 0.0f, texHeight },
-		{ 0.0f, 0.0f, 0.0f, 1.0f },
-		{ (FLOAT)this->mode->width, 0.0f, 1.0f, 1.0f },
-		{ (FLOAT)this->mode->width, (FLOAT)this->mode->height, 1.0f, 0.0f },
-		{ 0.0f, (FLOAT)this->mode->height, 0.0f, 0.0f }
-	};
-
-	FLOAT mvpMatrix[4][4] = {
+	FLOAT mvp[4][4] = {
 		{ FLOAT(2.0f / this->mode->width), 0.0f, 0.0f, 0.0f },
 		{ 0.0f, FLOAT(-2.0f / this->mode->height), 0.0f, 0.0f },
 		{ 0.0f, 0.0f, 2.0f, 0.0f },
@@ -767,21 +776,21 @@ VOID OpenDraw::RenderNew()
 		ShaderProgram scaleNx_2x;
 		ShaderProgram scaleNx_3x;
 	} shaders = {
-		{ 0, GLSL_VER_1_30, IDR_STENCIL_VERTEX, IDR_STENCIL_FRAGMENT, (GLfloat*)mvpMatrix },
-		{ 0, GLSL_VER_1_30, IDR_LINEAR_VERTEX, IDR_LINEAR_FRAGMENT, (GLfloat*)mvpMatrix },
-		{ 0, GLSL_VER_1_30, IDR_HERMITE_VERTEX, IDR_HERMITE_FRAGMENT, (GLfloat*)mvpMatrix },
-		{ 0, GLSL_VER_1_30, IDR_CUBIC_VERTEX, IDR_CUBIC_FRAGMENT, (GLfloat*)mvpMatrix },
-		{ 0, GLSL_VER_1_30, IDR_XBRZ_VERTEX, IDR_XBRZ_FRAGMENT_2X, (GLfloat*)mvpMatrix },
-		{ 0, GLSL_VER_1_30, IDR_XBRZ_VERTEX, IDR_XBRZ_FRAGMENT_3X, (GLfloat*)mvpMatrix },
-		{ 0, GLSL_VER_1_30, IDR_XBRZ_VERTEX, IDR_XBRZ_FRAGMENT_4X, (GLfloat*)mvpMatrix },
-		{ 0, GLSL_VER_1_30, IDR_XBRZ_VERTEX, IDR_XBRZ_FRAGMENT_5X, (GLfloat*)mvpMatrix },
-		{ 0, GLSL_VER_1_30, IDR_XBRZ_VERTEX, IDR_XBRZ_FRAGMENT_6X, (GLfloat*)mvpMatrix },
-		{ 0, GLSL_VER_1_30, IDR_SCALEHQ_VERTEX_2X, IDR_SCALEHQ_FRAGMENT_2X, (GLfloat*)mvpMatrix },
-		{ 0, GLSL_VER_1_30, IDR_SCALEHQ_VERTEX_4X, IDR_SCALEHQ_FRAGMENT_4X, (GLfloat*)mvpMatrix },
-		{ 0, GLSL_VER_1_30, IDR_XSAL_VERTEX, IDR_XSAL_FRAGMENT, (GLfloat*)mvpMatrix },
-		{ 0, GLSL_VER_1_30, IDR_EAGLE_VERTEX, IDR_EAGLE_FRAGMENT, (GLfloat*)mvpMatrix },
-		{ 0, GLSL_VER_1_30, IDR_SCALENX_VERTEX_2X, IDR_SCALENX_FRAGMENT_2X, (GLfloat*)mvpMatrix },
-		{ 0, GLSL_VER_1_30, IDR_SCALENX_VERTEX_3X, IDR_SCALENX_FRAGMENT_3X, (GLfloat*)mvpMatrix }
+		{ 0, GLSL_VER_1_30, IDR_STENCIL_VERTEX, IDR_STENCIL_FRAGMENT, (GLfloat*)mvp },
+		{ 0, GLSL_VER_1_30, IDR_LINEAR_VERTEX, IDR_LINEAR_FRAGMENT, NULL },
+		{ 0, GLSL_VER_1_30, IDR_HERMITE_VERTEX, IDR_HERMITE_FRAGMENT, NULL },
+		{ 0, GLSL_VER_1_30, IDR_CUBIC_VERTEX, IDR_CUBIC_FRAGMENT, NULL },
+		{ 0, GLSL_VER_1_30, IDR_XBRZ_VERTEX, IDR_XBRZ_FRAGMENT_2X, NULL },
+		{ 0, GLSL_VER_1_30, IDR_XBRZ_VERTEX, IDR_XBRZ_FRAGMENT_3X, NULL },
+		{ 0, GLSL_VER_1_30, IDR_XBRZ_VERTEX, IDR_XBRZ_FRAGMENT_4X, NULL },
+		{ 0, GLSL_VER_1_30, IDR_XBRZ_VERTEX, IDR_XBRZ_FRAGMENT_5X, NULL },
+		{ 0, GLSL_VER_1_30, IDR_XBRZ_VERTEX, IDR_XBRZ_FRAGMENT_6X, NULL },
+		{ 0, GLSL_VER_1_30, IDR_SCALEHQ_VERTEX_2X, IDR_SCALEHQ_FRAGMENT_2X, NULL },
+		{ 0, GLSL_VER_1_30, IDR_SCALEHQ_VERTEX_4X, IDR_SCALEHQ_FRAGMENT_4X, NULL },
+		{ 0, GLSL_VER_1_30, IDR_XSAL_VERTEX, IDR_XSAL_FRAGMENT, NULL },
+		{ 0, GLSL_VER_1_30, IDR_EAGLE_VERTEX, IDR_EAGLE_FRAGMENT, NULL },
+		{ 0, GLSL_VER_1_30, IDR_SCALENX_VERTEX_2X, IDR_SCALENX_FRAGMENT_2X, NULL },
+		{ 0, GLSL_VER_1_30, IDR_SCALENX_VERTEX_3X, IDR_SCALENX_FRAGMENT_3X, NULL }
 	};
 
 	{
@@ -797,13 +806,42 @@ VOID OpenDraw::RenderNew()
 				{
 					GLBindBuffer(GL_ARRAY_BUFFER, bufferName);
 					{
-						GLBufferData(GL_ARRAY_BUFFER, sizeof(buffer), buffer, GL_STATIC_DRAW);
+						{
+							FLOAT buffer[8][8] = {
+								{ 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+								{ (FLOAT)this->mode->width, 0.0f, 0.0f, 1.0f, texWidth, 0.0f, 0.0f, 0.0f },
+								{ (FLOAT)this->mode->width, (FLOAT)this->mode->height, 0.0f, 1.0f, texWidth, texHeight, 0.0f, 0.0f },
+								{ 0.0f, (FLOAT)this->mode->height, 0.0f, 1.0f, 0.0f, texHeight, 0.0f, 0.0f },
 
-						GLEnableVertexAttribArray(0);
-						GLVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 16, (GLvoid*)0);
+								{ 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f },
+								{ (FLOAT)this->mode->width, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f },
+								{ (FLOAT)this->mode->width, (FLOAT)this->mode->height, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+								{ 0.0f, (FLOAT)this->mode->height, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f }
+							};
 
-						GLEnableVertexAttribArray(1);
-						GLVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 16, (GLvoid*)8);
+							for (DWORD i = 0; i < 8; ++i)
+							{
+								FLOAT* vector = &buffer[i][0];
+								for (DWORD j = 0; j < 4; ++j)
+								{
+									FLOAT sum = 0.0f;
+									for (DWORD v = 0; v < 4; ++v)
+										sum += mvp[v][j] * vector[v];
+
+									vector[j] = sum;
+								}
+							}
+
+							GLBufferData(GL_ARRAY_BUFFER, sizeof(buffer), buffer, GL_STATIC_DRAW);
+						}
+
+						{
+							GLEnableVertexAttribArray(0);
+							GLVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 32, (GLvoid*)0);
+
+							GLEnableVertexAttribArray(1);
+							GLVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 32, (GLvoid*)16);
+						}
 
 						GLuint textureId;
 						GLGenTextures(1, &textureId);

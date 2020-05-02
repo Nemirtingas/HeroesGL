@@ -5,7 +5,7 @@
 
 	MIT License
 
-	Copyright (c) 2019 Oleksiy Ryabchun
+	Copyright (c) 2020 Oleksiy Ryabchun
 
 	Permission is hereby granted, free of charge, to any person obtaining a copy
 	of this software and associated documentation files (the "Software"), to deal
@@ -36,7 +36,7 @@ in vec4 t4;
 in vec4 t5;
 in vec4 t6;
 in vec4 t7;
-in vec2 fTexCoord;
+in vec2 fTex;
 
 out vec4 fragColor;
 
@@ -274,7 +274,7 @@ void main()
 		dst[12] = mix(dst[12], blendPix, (needBlend && doLineBlend && haveSteepLine) ? 0.250 : 0.000);			
 	}
 	
-	vec2 f = fract(fTexCoord);
+	vec2 f = fract(fTex);
 	vec3 res = mix( mix( dst[20], mix( mix(dst[21], dst[22], step(0.40, f.x)), mix(dst[23], dst[24], step(0.80, f.x)), step(0.60, f.x)), step(0.20, f.x) ),
 							mix( mix( mix( dst[19], mix( mix(dst[ 6], dst[ 7], step(0.40, f.x)), mix(dst[ 8], dst[ 9], step(0.80, f.x)), step(0.60, f.x)), step(0.20, f.x) ),
 									  mix( dst[18], mix( mix(dst[ 5], dst[ 0], step(0.40, f.x)), mix(dst[ 1], dst[10], step(0.80, f.x)), step(0.60, f.x)), step(0.20, f.x) ), step(0.40, f.y)),

@@ -169,10 +169,10 @@
     <ClCompile Include="Allocation.cpp" />
     <ClCompile Include="Config.cpp" />
     <ClCompile Include="DirectDraw.cpp" />
+    <ClCompile Include="Hooker.cpp" />
     <ClCompile Include="IDraw.cpp" />
     <ClCompile Include="IDrawClipper.cpp" />
     <ClCompile Include="IDrawSurface.cpp" />
-    <ClCompile Include="MappedFile.cpp" />
     <ClCompile Include="OpenDraw.cpp" />
     <ClCompile Include="OpenDrawClipper.cpp" />
     <ClCompile Include="OpenDrawSurface.cpp" />
@@ -189,10 +189,10 @@
     <ClInclude Include="Allocation.h" />
     <ClInclude Include="Config.h" />
     <ClInclude Include="DirectDraw.h" />
+    <ClInclude Include="Hooker.h" />
     <ClInclude Include="IDraw.h" />
     <ClInclude Include="IDrawClipper.h" />
     <ClInclude Include="IDrawSurface.h" />
-    <ClInclude Include="MappedFile.h" />
     <ClInclude Include="OpenDraw.h" />
     <ClInclude Include="OpenDrawClipper.h" />
     <ClInclude Include="OpenDrawSurface.h" />

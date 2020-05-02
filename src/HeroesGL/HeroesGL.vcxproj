@@ -174,11 +174,11 @@
     <ClCompile Include="DirectDraw.cpp" />
     <ClCompile Include="DirectDrawPalette.cpp" />
     <ClCompile Include="DirectDrawSurface.cpp" />
+    <ClCompile Include="Hooker.cpp" />
     <ClCompile Include="IDrawClipper.cpp" />
     <ClCompile Include="IDraw.cpp" />
     <ClCompile Include="IDrawPalette.cpp" />
     <ClCompile Include="IDrawSurface.cpp" />
-    <ClCompile Include="MappedFile.cpp" />
     <ClCompile Include="OpenDraw.cpp" />
     <ClCompile Include="OpenDrawClipper.cpp" />
     <ClCompile Include="OpenDrawPalette.cpp" />
@@ -201,11 +201,11 @@
     <ClInclude Include="DirectDraw.h" />
     <ClInclude Include="DirectDrawPalette.h" />
     <ClInclude Include="DirectDrawSurface.h" />
+    <ClInclude Include="Hooker.h" />
     <ClInclude Include="IDrawClipper.h" />
     <ClInclude Include="IDraw.h" />
     <ClInclude Include="IDrawPalette.h" />
     <ClInclude Include="IDrawSurface.h" />
-    <ClInclude Include="MappedFile.h" />
     <ClInclude Include="OpenDraw.h" />
     <ClInclude Include="OpenDrawClipper.h" />
     <ClInclude Include="OpenDrawPalette.h" />

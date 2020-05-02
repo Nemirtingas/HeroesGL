@@ -5,7 +5,7 @@
 
 	MIT License
 
-	Copyright (c) 2019 Oleksiy Ryabchun
+	Copyright (c) 2020 Oleksiy Ryabchun
 
 	Permission is hereby granted, free of charge, to any person obtaining a copy
 	of this software and associated documentation files (the "Software"), to deal
@@ -26,25 +26,24 @@
 	SOFTWARE.
 */
 
-uniform mat4 mvp;
 uniform sampler2D tex01;
 uniform vec2 texSize;
 
-in vec2 vCoord;
-in vec2 vTexCoord;
+in vec4 vCoord;
+in vec2 vTex;
 
 out vec4 t1;
 out vec4 t2;
 out vec4 t3;
-out vec2 fTexCoord;
+out vec2 fTex;
 
 void main() {
-	gl_Position = mvp * vec4(vCoord, 0.0, 1.0);
+	gl_Position = vCoord;
 	
 	vec2 d = 1.0 / texSize;
-	t1 = vTexCoord.xxxy + vec4(-d.x,  0, d.x,-d.y);
-	t2 = vTexCoord.xxxy + vec4(-d.x,  0, d.x,  0);
-	t3 = vTexCoord.xxxy + vec4(-d.x,  0, d.x, d.y);
+	t1 = vTex.xxxy + vec4(-d.x,  0, d.x,-d.y);
+	t2 = vTex.xxxy + vec4(-d.x,  0, d.x,  0);
+	t3 = vTex.xxxy + vec4(-d.x,  0, d.x, d.y);
 	
-	fTexCoord = vTexCoord * texSize;
+	fTex = vTex * texSize;
 }

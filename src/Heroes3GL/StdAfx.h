@@ -1,7 +1,7 @@
 /*
 	MIT License
 
-	Copyright (c) 2019 Oleksiy Ryabchun
+	Copyright (c) 2020 Oleksiy Ryabchun
 
 	Permission is hereby granted, free of charge, to any person obtaining a copy
 	of this software and associated documentation files (the "Software"), to deal
@@ -98,6 +98,8 @@ extern "C"
 #define Exit(code) exit(code)
 
 DOUBLE __fastcall MathRound(DOUBLE);
+VOID* __fastcall AlignedAlloc(size_t size);
+VOID __fastcall AlignedFree(VOID* block);
 
 extern HMODULE hDllModule;
 extern HANDLE hActCtx;

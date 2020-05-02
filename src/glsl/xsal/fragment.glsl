@@ -5,7 +5,7 @@
 
 	MIT License
 
-	Copyright (c) 2019 Oleksiy Ryabchun
+	Copyright (c) 2020 Oleksiy Ryabchun
 
 	Permission is hereby granted, free of charge, to any person obtaining a copy
 	of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +29,7 @@
 uniform sampler2D tex01;
 uniform vec2 texSize;
 
-in vec2 fTexCoord;
+in vec2 fTex;
 
 out vec4 fragColor;
 
@@ -39,10 +39,10 @@ void main()
     float dy = pow(texSize.y, -1.0) * 0.25;
     vec3  dt = vec3(1.0, 1.0, 1.0);
  
-    vec3 c00 = texture(tex01, fTexCoord + vec2(-dx, -dy)).xyz;
-    vec3 c20 = texture(tex01, fTexCoord + vec2( dx, -dy)).xyz;
-    vec3 c02 = texture(tex01, fTexCoord + vec2(-dx,  dy)).xyz;
-    vec3 c22 = texture(tex01, fTexCoord + vec2( dx,  dy)).xyz;
+    vec3 c00 = texture(tex01, fTex + vec2(-dx, -dy)).xyz;
+    vec3 c20 = texture(tex01, fTex + vec2( dx, -dy)).xyz;
+    vec3 c02 = texture(tex01, fTex + vec2(-dx,  dy)).xyz;
+    vec3 c22 = texture(tex01, fTex + vec2( dx,  dy)).xyz;
 
     float m1 = dot(abs(c00 - c22), dt) + 0.001;
     float m2 = dot(abs(c02 - c20), dt) + 0.001;

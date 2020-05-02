@@ -1,7 +1,7 @@
 /*
 	MIT License
 
-	Copyright (c) 2019 Oleksiy Ryabchun
+	Copyright (c) 2020 Oleksiy Ryabchun
 
 	Permission is hereby granted, free of charge, to any person obtaining a copy
 	of this software and associated documentation files (the "Software"), to deal
@@ -96,22 +96,19 @@ namespace Window
 
 		switch (type)
 		{
-		case MenuAspect:
-		{
+		case MenuAspect: {
 			EnableMenuItem(hMenu, IDM_ASPECT_RATIO, MF_BYCOMMAND | (config.gl.version.value ? MF_ENABLED : (MF_DISABLED | MF_GRAYED)));
 			CheckMenuItem(hMenu, IDM_ASPECT_RATIO, MF_BYCOMMAND | (config.gl.version.value && config.image.aspect ? MF_CHECKED : MF_UNCHECKED));
 		}
 		break;
 
-		case MenuVSync:
-		{
+		case MenuVSync: {
 			EnableMenuItem(hMenu, IDM_VSYNC, MF_BYCOMMAND | (config.gl.version.value && WGLSwapInterval ? MF_ENABLED : (MF_DISABLED | MF_GRAYED)));
 			CheckMenuItem(hMenu, IDM_VSYNC, MF_BYCOMMAND | (config.gl.version.value && WGLSwapInterval && config.image.vSync ? MF_CHECKED : MF_UNCHECKED));
 		}
 		break;
 
-		case MenuInterpolate:
-		{
+		case MenuInterpolate: {
 			CheckMenuItem(hMenu, IDM_FILT_OFF, MF_BYCOMMAND | MF_UNCHECKED);
 
 			EnableMenuItem(hMenu, IDM_FILT_LINEAR, MF_BYCOMMAND | (config.gl.version.value ? MF_ENABLED : (MF_DISABLED | MF_GRAYED)));
@@ -146,8 +143,7 @@ namespace Window
 		}
 		break;
 
-		case MenuUpscale:
-		{
+		case MenuUpscale: {
 			CheckMenuItem(hMenu, IDM_FILT_NONE, MF_BYCOMMAND | MF_UNCHECKED);
 
 			DWORD isFilters = config.gl.version.value >= GL_VER_3_0 ? MF_ENABLED : (MF_DISABLED | MF_GRAYED);
@@ -266,14 +262,12 @@ namespace Window
 		}
 		break;
 
-		case MenuCpu:
-		{
+		case MenuCpu: {
 			CheckMenuItem(hMenu, IDM_PATCH_CPU, MF_BYCOMMAND | (config.coldCPU ? MF_CHECKED : MF_UNCHECKED));
 		}
 		break;
 
-		case MenuRenderer:
-		{
+		case MenuRenderer: {
 			EnableMenuItem(hMenu, IDM_REND_GL1, MF_BYCOMMAND | (config.gl.version.real >= GL_VER_1_1 ? MF_ENABLED : (MF_DISABLED | MF_GRAYED)));
 			EnableMenuItem(hMenu, IDM_REND_GL2, MF_BYCOMMAND | (config.gl.version.real >= GL_VER_2_0 ? MF_ENABLED : (MF_DISABLED | MF_GRAYED)));
 			EnableMenuItem(hMenu, IDM_REND_GL3, MF_BYCOMMAND | (config.gl.version.real >= GL_VER_3_0 ? MF_ENABLED : (MF_DISABLED | MF_GRAYED)));
@@ -433,8 +427,7 @@ namespace Window
 	{
 		switch (uMsg)
 		{
-		case WM_INITDIALOG:
-		{
+		case WM_INITDIALOG: {
 			SetWindowLong(hDlg, GWL_EXSTYLE, NULL);
 			EnumChildWindows(hDlg, Hooks::EnumChildProc, NULL);
 
@@ -494,8 +487,7 @@ namespace Window
 			break;
 		}
 
-		case WM_NOTIFY:
-		{
+		case WM_NOTIFY: {
 			if (((NMHDR*)lParam)->code == NM_CLICK)
 			{
 				switch (wParam)
@@ -520,8 +512,7 @@ namespace Window
 			break;
 		}
 
-		case WM_COMMAND:
-		{
+		case WM_COMMAND: {
 			if (wParam == IDC_BTN_OK)
 				EndDialog(hDlg, TRUE);
 			break;
@@ -538,8 +529,7 @@ namespace Window
 	{
 		switch (uMsg)
 		{
-		case WM_ERASEBKGND:
-		{
+		case WM_ERASEBKGND: {
 			OpenDraw* ddraw = Main::FindOpenDrawByWindow(hWnd);
 			if (ddraw && ddraw->windowState != WinStateWindowed)
 			{
@@ -551,8 +541,7 @@ namespace Window
 			return NULL;
 		}
 
-		case WM_MOVE:
-		{
+		case WM_MOVE: {
 			OpenDraw* ddraw = Main::FindOpenDrawByWindow(hWnd);
 			if (ddraw)
 				SetEvent(ddraw->hDrawEvent);
@@ -560,8 +549,7 @@ namespace Window
 			return CallWindowProc(Window::OldWindowProc, hWnd, uMsg, wParam, lParam);
 		}
 
-		case WM_SIZE:
-		{
+		case WM_SIZE: {
 			Hooks::ScalePointer((FLOAT)LOWORD(lParam) / (FLOAT)RES_WIDTH, (FLOAT)HIWORD(lParam) / (FLOAT)RES_HEIGHT);
 
 			OpenDraw* ddraw = Main::FindOpenDrawByWindow(hWnd);
@@ -579,8 +567,7 @@ namespace Window
 			return CallWindowProc(Window::OldWindowProc, hWnd, uMsg, wParam, lParam);
 		}
 
-		case WM_GETMINMAXINFO:
-		{
+		case WM_GETMINMAXINFO: {
 			OpenDraw* ddraw = Main::FindOpenDrawByWindow(hWnd);
 			if (ddraw && ddraw->windowState == WinStateWindowed)
 			{
@@ -598,8 +585,7 @@ namespace Window
 			return CallWindowProc(OldWindowProc, hWnd, uMsg, wParam, lParam);
 		}
 
-		case WM_ACTIVATEAPP:
-		{
+		case WM_ACTIVATEAPP: {
 			OpenDraw* ddraw = Main::FindOpenDrawByWindow(hWnd);
 			if (ddraw && ddraw->windowState != WinStateWindowed)
 			{
@@ -613,8 +599,7 @@ namespace Window
 		}
 
 		case WM_SYSKEYDOWN:
-		case WM_KEYDOWN:
-		{
+		case WM_KEYDOWN: {
 			if (!(HIWORD(lParam) & KF_ALTDOWN))
 			{
 				if (config.keys.imageFilter && config.keys.imageFilter + VK_F1 - 1 == wParam)
@@ -679,8 +664,7 @@ namespace Window
 		case WM_XBUTTONDBLCLK:
 
 		case WM_MOUSEWHEEL:
-		case WM_MOUSEMOVE:
-		{
+		case WM_MOUSEMOVE: {
 			OpenDraw* ddraw = Main::FindOpenDrawByWindow(hWnd);
 			if (ddraw)
 			{
@@ -697,17 +681,11 @@ namespace Window
 			return CallWindowProc(Window::OldWindowProc, hWnd, uMsg, wParam, lParam);
 		}
 
-		case WM_COMMAND:
-		{
+		case WM_COMMAND: {
 			switch (wParam)
 			{
-			case IDM_PATCH_CPU:
-			{
+			case IDM_PATCH_CPU: {
 				config.coldCPU = !config.coldCPU;
-				if (config.coldCPU)
-					timeBeginPeriod(1);
-				else
-					timeEndPeriod(1);
 
 				Config::Set(CONFIG_WRAPPER, "ColdCPU", config.coldCPU);
 
@@ -715,8 +693,7 @@ namespace Window
 				return NULL;
 			}
 
-			case IDM_HELP_WRAPPER:
-			{
+			case IDM_HELP_WRAPPER: {
 				ULONG_PTR cookie = NULL;
 				if (hActCtx && hActCtx != INVALID_HANDLE_VALUE && !ActivateActCtxC(hActCtx, &cookie))
 					cookie = NULL;
@@ -736,8 +713,7 @@ namespace Window
 				return NULL;
 			}
 
-			case IDM_ASPECT_RATIO:
-			{
+			case IDM_ASPECT_RATIO: {
 				config.image.aspect = !config.image.aspect;
 				Config::Set(CONFIG_WRAPPER, "ImageAspect", config.image.aspect);
 
@@ -753,8 +729,7 @@ namespace Window
 				return NULL;
 			}
 
-			case IDM_VSYNC:
-			{
+			case IDM_VSYNC: {
 				config.image.vSync = !config.image.vSync;
 				Config::Set(CONFIG_WRAPPER, "ImageVSync", config.image.vSync);
 
@@ -767,122 +742,102 @@ namespace Window
 				return NULL;
 			}
 
-			case IDM_FILT_OFF:
-			{
+			case IDM_FILT_OFF: {
 				InterpolationChanged(hWnd, InterpolateNearest);
 				return NULL;
 			}
 
-			case IDM_FILT_LINEAR:
-			{
+			case IDM_FILT_LINEAR: {
 				InterpolationChanged(hWnd, InterpolateLinear);
 				return NULL;
 			}
 
-			case IDM_FILT_HERMITE:
-			{
+			case IDM_FILT_HERMITE: {
 				InterpolationChanged(hWnd, InterpolateHermite);
 				return NULL;
 			}
 
-			case IDM_FILT_CUBIC:
-			{
+			case IDM_FILT_CUBIC: {
 				InterpolationChanged(hWnd, InterpolateCubic);
 				return NULL;
 			}
 
-			case IDM_FILT_NONE:
-			{
+			case IDM_FILT_NONE: {
 				UpscalingChanged(hWnd, UpscaleNone);
 				return NULL;
 			}
 
-			case IDM_FILT_SCALENX_2X:
-			{
+			case IDM_FILT_SCALENX_2X: {
 				SelectScaleNxMode(hWnd, 2);
 				return NULL;
 			}
 
-			case IDM_FILT_SCALENX_3X:
-			{
+			case IDM_FILT_SCALENX_3X: {
 				SelectScaleNxMode(hWnd, 3);
 				return NULL;
 			}
 
-			case IDM_FILT_XSAL_2X:
-			{
+			case IDM_FILT_XSAL_2X: {
 				SelectXSalMode(hWnd, 2);
 				return NULL;
 			}
 
-			case IDM_FILT_EAGLE_2X:
-			{
+			case IDM_FILT_EAGLE_2X: {
 				SelectEagleMode(hWnd, 2);
 				return NULL;
 			}
 
-			case IDM_FILT_SCALEHQ_2X:
-			{
+			case IDM_FILT_SCALEHQ_2X: {
 				SelectScaleHQMode(hWnd, 2);
 				return NULL;
 			}
 
-			case IDM_FILT_SCALEHQ_4X:
-			{
+			case IDM_FILT_SCALEHQ_4X: {
 				SelectScaleHQMode(hWnd, 4);
 				return NULL;
 			}
 
-			case IDM_FILT_XRBZ_2X:
-			{
+			case IDM_FILT_XRBZ_2X: {
 				SelectXBRZMode(hWnd, 2);
 				return NULL;
 			}
 
-			case IDM_FILT_XRBZ_3X:
-			{
+			case IDM_FILT_XRBZ_3X: {
 				SelectXBRZMode(hWnd, 3);
 				return NULL;
 			}
 
-			case IDM_FILT_XRBZ_4X:
-			{
+			case IDM_FILT_XRBZ_4X: {
 				SelectXBRZMode(hWnd, 4);
 				return NULL;
 			}
 
-			case IDM_FILT_XRBZ_5X:
-			{
+			case IDM_FILT_XRBZ_5X: {
 				SelectXBRZMode(hWnd, 5);
 				return NULL;
 			}
 
-			case IDM_FILT_XRBZ_6X:
-			{
+			case IDM_FILT_XRBZ_6X: {
 				SelectXBRZMode(hWnd, 6);
 				return NULL;
 			}
 
-			case IDM_REND_AUTO:
-			{
+			case IDM_REND_AUTO: {
 				SelectRenderer(hWnd, RendererAuto);
 				return NULL;
 			}
 
-			case IDM_REND_GL1:
-			{
+			case IDM_REND_GL1: {
 				SelectRenderer(hWnd, RendererOpenGL1);
 				return NULL;
 			}
 
-			case IDM_REND_GL2:
-			{
+			case IDM_REND_GL2: {
 				SelectRenderer(hWnd, RendererOpenGL2);
 				return NULL;
 			}
 
-			case IDM_REND_GL3:
-			{
+			case IDM_REND_GL3: {
 				SelectRenderer(hWnd, RendererOpenGL3);
 				return NULL;
 			}

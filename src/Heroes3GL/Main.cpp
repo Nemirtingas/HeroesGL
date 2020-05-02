@@ -1,7 +1,7 @@
 /*
 	MIT License
 
-	Copyright (c) 2019 Oleksiy Ryabchun
+	Copyright (c) 2020 Oleksiy Ryabchun
 
 	Permission is hereby granted, free of charge, to any person obtaining a copy
 	of this software and associated documentation files (the "Software"), to deal
@@ -34,7 +34,7 @@ namespace Main
 {
 	HRESULT __stdcall DirectDrawCreate(GUID* lpGUID, LPDIRECTDRAW* lplpDD, IUnknown* pUnkOuter)
 	{
-		if (config.isNoGL)
+		if (config.isDDraw)
 		{
 			HRESULT res = DDCreate(lpGUID, lplpDD, pUnkOuter);
 			if (res == DD_OK)

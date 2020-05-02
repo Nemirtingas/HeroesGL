@@ -1,7 +1,7 @@
 /*
 	MIT License
 
-	Copyright (c) 2019 Oleksiy Ryabchun
+	Copyright (c) 2020 Oleksiy Ryabchun
 
 	Permission is hereby granted, free of charge, to any person obtaining a copy
 	of this software and associated documentation files (the "Software"), to deal
@@ -743,10 +743,6 @@ namespace Window
 			{
 			case IDM_PATCH_CPU: {
 				config.coldCPU = !config.coldCPU;
-				if (config.coldCPU)
-					timeBeginPeriod(1);
-				else
-					timeEndPeriod(1);
 
 				Config::Set(CONFIG_WRAPPER, "ColdCPU", config.coldCPU);
 

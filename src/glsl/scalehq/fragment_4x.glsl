@@ -5,7 +5,7 @@
 
 	MIT License
 
-	Copyright (c) 2019 Oleksiy Ryabchun
+	Copyright (c) 2020 Oleksiy Ryabchun
 
 	Permission is hereby granted, free of charge, to any person obtaining a copy
 	of this software and associated documentation files (the "Software"), to deal
@@ -34,7 +34,7 @@ in vec4 t3;
 in vec4 t4;
 in vec4 t5;
 in vec4 t6;
-in vec2 fTexCoord;
+in vec2 fTex;
 
 out vec4 fragColor;
 
@@ -48,7 +48,7 @@ vec3 dt = vec3(1.0);
 
 void main()
 {
-	vec3 c  = texture(tex01, fTexCoord).xyz;
+	vec3 c  = texture(tex01, fTex).xyz;
 	vec3 i1 = texture(tex01, t1.xy).xyz; 
 	vec3 i2 = texture(tex01, t2.xy).xyz; 
 	vec3 i3 = texture(tex01, t3.xy).xyz; 

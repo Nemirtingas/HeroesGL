@@ -1,7 +1,7 @@
 /*
 	MIT License
 
-	Copyright (c) 2019 Oleksiy Ryabchun
+	Copyright (c) 2020 Oleksiy Ryabchun
 
 	Permission is hereby granted, free of charge, to any person obtaining a copy
 	of this software and associated documentation files (the "Software"), to deal
@@ -22,8 +22,6 @@
 	SOFTWARE.
 */
 
-uniform mat4 mvp;
-
 #if __VERSION__ >= 130
 	#define COMPAT_IN in
 	#define COMPAT_OUT out
@@ -32,11 +30,11 @@ uniform mat4 mvp;
 	#define COMPAT_OUT varying 
 #endif
 
-COMPAT_IN vec2 vCoord;
-COMPAT_IN vec2 vTexCoord;
-COMPAT_OUT vec2 fTexCoord;
+COMPAT_IN vec4 vCoord;
+COMPAT_IN vec2 vTex;
+COMPAT_OUT vec2 fTex;
 
 void main() {
-	gl_Position = mvp * vec4(vCoord, 0.0, 1.0);
-	fTexCoord = vTexCoord;
+	gl_Position = vCoord;
+	fTex = vTex;
 }

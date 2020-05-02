@@ -1,7 +1,7 @@
 /*
 	MIT License
 
-	Copyright (c) 2019 Oleksiy Ryabchun
+	Copyright (c) 2020 Oleksiy Ryabchun
 
 	Permission is hereby granted, free of charge, to any person obtaining a copy
 	of this software and associated documentation files (the "Software"), to deal
@@ -60,12 +60,12 @@ namespace Config
 			FreeLibrary(hLibrary);
 		}
 
-		if (!config.isNoGL)
+		if (!config.isDDraw)
 		{
 			if (!config.isExist)
-				Config::Set(CONFIG_WRAPPER, "UseOpenGL", !config.isNoGL);
+				Config::Set(CONFIG_WRAPPER, "UseOpenGL", !config.isDDraw);
 			else
-				config.isNoGL = !(BOOL)Config::Get(CONFIG_WRAPPER, "UseOpenGL", TRUE);
+				config.isDDraw = !(BOOL)Config::Get(CONFIG_WRAPPER, "UseOpenGL", TRUE);
 		}
 		else
 		{
@@ -78,7 +78,7 @@ namespace Config
 			config.renderer = RendererAuto;
 			Config::Set(CONFIG_WRAPPER, "Renderer", *(INT*)&config.renderer);
 
-			config.coldCPU = FALSE;
+			config.coldCPU = TRUE;
 			Config::Set(CONFIG_WRAPPER, "ColdCPU", config.coldCPU);
 
 			config.cursor.fix = TRUE;
@@ -122,11 +122,11 @@ namespace Config
 		}
 		else
 		{
-			config.coldCPU = (BOOL)Config::Get(CONFIG_WRAPPER, "ColdCPU", FALSE);
+			config.coldCPU = (BOOL)Config::Get(CONFIG_WRAPPER, "ColdCPU", TRUE);
 			config.cursor.fix = (BOOL)Config::Get(CONFIG_WRAPPER, "PointerFix", TRUE);
 		}
 
-		if (!config.isNoGL)
+		if (!config.isDDraw)
 		{
 			if (config.isExist)
 			{

@@ -5,7 +5,7 @@
 
 	MIT License
 
-	Copyright (c) 2019 Oleksiy Ryabchun
+	Copyright (c) 2020 Oleksiy Ryabchun
 
 	Permission is hereby granted, free of charge, to any person obtaining a copy
 	of this software and associated documentation files (the "Software"), to deal
@@ -32,14 +32,14 @@ uniform vec2 texSize;
 #if __VERSION__ >= 130
 	#define COMPAT_IN in
 	#define COMPAT_TEXTURE texture
-	out mediump vec4 FRAG_COLOR;
+	out vec4 FRAG_COLOR;
 #else
 	#define COMPAT_IN varying 
 	#define COMPAT_TEXTURE texture2D
 	#define FRAG_COLOR gl_FragColor
 #endif
 
-COMPAT_IN vec2 fTexCoord;
+COMPAT_IN vec2 fTex;
 
 void weights(vec2 t, out vec4 x, out vec4 y) {
 	vec2 t2 = t * t;
@@ -58,10 +58,10 @@ void weights(vec2 t, out vec4 x, out vec4 y) {
 }
 
 void main() {
-	vec2 texel = floor(fTexCoord);
+	vec2 texel = floor(fTex);
 	
 	vec4 x, y;
-	weights(fTexCoord - texel, x, y);
+	weights(fTex - texel, x, y);
 
 	texel -= 0.5;
 	vec3 color = vec3(0.0);

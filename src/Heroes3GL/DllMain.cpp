@@ -1,7 +1,7 @@
 /*
 	MIT License
 
-	Copyright (c) 2019 Oleksiy Ryabchun
+	Copyright (c) 2020 Oleksiy Ryabchun
 
 	Permission is hereby granted, free of charge, to any person obtaining a copy
 	of this software and associated documentation files (the "Software"), to deal
@@ -48,7 +48,7 @@ BOOL __stdcall DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 
 			if (StrStr(line, "-nogl") == line)
 			{
-				config.isNoGL = TRUE;
+				config.isDDraw = TRUE;
 				break;
 			}
 		} while (TRUE);
@@ -58,7 +58,7 @@ BOOL __stdcall DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 			hDllModule = hModule;
 			LoadKernel32();
 
-			if (!config.isNoGL)
+			if (!config.isDDraw)
 			{
 				Window::SetCaptureKeys(TRUE);
 
@@ -96,8 +96,7 @@ BOOL __stdcall DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 			if (SetProcessDpiAwarenessC)
 				SetProcessDpiAwarenessC(PROCESS_PER_MONITOR_DPI_AWARE);
 
-			if (config.coldCPU)
-				timeBeginPeriod(1);
+			timeBeginPeriod(1);
 		}
 
 		break;
@@ -106,13 +105,12 @@ BOOL __stdcall DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 	case DLL_PROCESS_DETACH:
 		if (hDllModule)
 		{
-			if (config.coldCPU)
-				timeEndPeriod(1);
+			timeEndPeriod(1);
 
 			if (hActCtx && hActCtx != INVALID_HANDLE_VALUE)
 				ReleaseActCtxC(hActCtx);
 
-			if (!config.isNoGL)
+			if (!config.isDDraw)
 			{
 				UnregisterClass(WC_DRAW, hDllModule);
 				ClipCursor(NULL);

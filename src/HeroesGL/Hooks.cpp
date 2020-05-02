@@ -1,7 +1,7 @@
 /*
 	MIT License
 
-	Copyright (c) 2019 Oleksiy Ryabchun
+	Copyright (c) 2020 Oleksiy Ryabchun
 
 	Permission is hereby granted, free of charge, to any person obtaining a copy
 	of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,7 @@
 #include "Window.h"
 #include "AdrDevice.h"
 #include "AdrSource.h"
-#include "MappedFile.h"
+#include "Hooker.h"
 
 #define STYLE_FULL_OLD (WS_VISIBLE | WS_CLIPSIBLINGS)
 #define STYLE_FULL_NEW (WS_VISIBLE | WS_CLIPSIBLINGS | WS_SYSMENU | WS_POPUP)
@@ -180,200 +180,8 @@ const UINT menuIds[] = { IDM_FILT_OFF, IDM_FILT_LINEAR, IDM_FILT_HERMITE, IDM_FI
 namespace Hooks
 {
 	const AddressSpace* hookSpace;
-	HMODULE hModule;
-	INT baseOffset;
+	Hooker* mainHooker;
 	HWND hWnd;
-
-#pragma region Hook helpers
-	BOOL __fastcall PatchRedirect(DWORD addr, VOID* hook, BYTE instruction)
-	{
-		DWORD address = addr + baseOffset;
-
-		DWORD old_prot;
-		if (VirtualProtect((VOID*)address, 5, PAGE_EXECUTE_READWRITE, &old_prot))
-		{
-			BYTE* jump = (BYTE*)address;
-			*jump = instruction;
-			++jump;
-			*(DWORD*)jump = (DWORD)hook - (DWORD)address - 5;
-
-			VirtualProtect((VOID*)address, 5, old_prot, &old_prot);
-
-			return TRUE;
-		}
-		return FALSE;
-	}
-
-	BOOL __fastcall PatchHook(DWORD addr, VOID* hook)
-	{
-		return PatchRedirect(addr, hook, 0xE9);
-	}
-
-	BOOL __fastcall PatchCall(DWORD addr, VOID* hook)
-	{
-		return PatchRedirect(addr, hook, 0xE8);
-	}
-
-	BOOL __fastcall PatchNop(DWORD addr, DWORD size)
-	{
-		DWORD address = addr + baseOffset;
-
-		DWORD old_prot;
-		if (VirtualProtect((VOID*)address, size, PAGE_EXECUTE_READWRITE, &old_prot))
-		{
-			MemorySet((VOID*)address, 0x90, size);
-			VirtualProtect((VOID*)address, size, old_prot, &old_prot);
-
-			return TRUE;
-		}
-		return FALSE;
-	}
-
-	BOOL __fastcall PatchBlock(DWORD addr, VOID* block, DWORD size)
-	{
-		DWORD address = addr + baseOffset;
-
-		DWORD old_prot;
-		if (VirtualProtect((VOID*)address, size, PAGE_EXECUTE_READWRITE, &old_prot))
-		{
-			switch (size)
-			{
-			case 4:
-				*(DWORD*)address = *(DWORD*)block;
-				break;
-			case 2:
-				*(WORD*)address = *(WORD*)block;
-				break;
-			case 1:
-				*(BYTE*)address = *(BYTE*)block;
-				break;
-			default:
-				MemoryCopy((VOID*)address, block, size);
-				break;
-			}
-
-			VirtualProtect((VOID*)address, size, old_prot, &old_prot);
-
-			return TRUE;
-		}
-		return FALSE;
-	}
-
-	BOOL __fastcall ReadBlock(DWORD addr, VOID* block, DWORD size)
-	{
-		DWORD address = addr + baseOffset;
-
-		DWORD old_prot;
-		if (VirtualProtect((VOID*)address, size, PAGE_READONLY, &old_prot))
-		{
-			switch (size)
-			{
-			case 4:
-				*(DWORD*)block = *(DWORD*)address;
-				break;
-			case 2:
-				*(WORD*)block = *(WORD*)address;
-				break;
-			case 1:
-				*(BYTE*)block = *(BYTE*)address;
-				break;
-			default:
-				MemoryCopy(block, (VOID*)address, size);
-				break;
-			}
-
-			VirtualProtect((VOID*)address, size, old_prot, &old_prot);
-
-			return TRUE;
-		}
-		return FALSE;
-	}
-
-	BOOL __fastcall PatchByte(DWORD addr, BYTE value)
-	{
-		return PatchBlock(addr, &value, sizeof(value));
-	}
-
-	BOOL __fastcall PatchWord(DWORD addr, WORD value)
-	{
-		return PatchBlock(addr, &value, sizeof(value));
-	}
-
-	BOOL __fastcall PatchDWord(DWORD addr, DWORD value)
-	{
-		return PatchBlock(addr, &value, sizeof(value));
-	}
-
-	BOOL __fastcall ReadWord(DWORD addr, WORD* value)
-	{
-		return ReadBlock(addr, value, sizeof(*value));
-	}
-
-	BOOL __fastcall ReadDWord(DWORD addr, DWORD* value)
-	{
-		return ReadBlock(addr, value, sizeof(*value));
-	}
-
-	DWORD __fastcall PatchFunction(MappedFile* file, const CHAR* function, VOID* addr)
-	{
-		DWORD res = NULL;
-
-		DWORD base = (DWORD)file->hModule;
-		PIMAGE_NT_HEADERS headNT = (PIMAGE_NT_HEADERS)((BYTE*)base + ((PIMAGE_DOS_HEADER)file->hModule)->e_lfanew);
-
-		PIMAGE_DATA_DIRECTORY dataDir = &headNT->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
-		if (dataDir->Size)
-		{
-			PIMAGE_IMPORT_DESCRIPTOR imports = (PIMAGE_IMPORT_DESCRIPTOR)(base + dataDir->VirtualAddress);
-			for (DWORD idx = 0; imports->Name; ++idx, ++imports)
-			{
-				CHAR* libraryName = (CHAR*)(base + imports->Name);
-
-				PIMAGE_THUNK_DATA addressThunk = (PIMAGE_THUNK_DATA)(base + imports->FirstThunk);
-				PIMAGE_THUNK_DATA nameThunk;
-				if (imports->OriginalFirstThunk)
-					nameThunk = (PIMAGE_THUNK_DATA)(base + imports->OriginalFirstThunk);
-				else
-				{
-					headNT = (PIMAGE_NT_HEADERS)((BYTE*)file->address + ((PIMAGE_DOS_HEADER)file->address)->e_lfanew);
-					PIMAGE_SECTION_HEADER sh = (PIMAGE_SECTION_HEADER)((DWORD)&headNT->OptionalHeader + headNT->FileHeader.SizeOfOptionalHeader);
-
-					nameThunk = NULL;
-					DWORD sCount = headNT->FileHeader.NumberOfSections;
-					while (sCount--)
-					{
-						if (imports->FirstThunk >= sh->VirtualAddress && imports->FirstThunk < sh->VirtualAddress + sh->Misc.VirtualSize)
-						{
-							nameThunk = PIMAGE_THUNK_DATA((DWORD)file->address + sh->PointerToRawData + imports->FirstThunk - sh->VirtualAddress);
-							break;
-						}
-
-						++sh;
-					}
-
-					if (!nameThunk)
-						return res;
-				}
-
-				for (; nameThunk->u1.AddressOfData; ++nameThunk, ++addressThunk)
-				{
-					PIMAGE_IMPORT_BY_NAME name = PIMAGE_IMPORT_BY_NAME(base + nameThunk->u1.AddressOfData);
-
-					WORD hint;
-					if (ReadWord((INT)name - baseOffset, &hint) && !StrCompare((CHAR*)name->Name, function))
-					{
-						if (ReadDWord((INT)&addressThunk->u1.AddressOfData - baseOffset, &res))
-							PatchDWord((INT)&addressThunk->u1.AddressOfData - baseOffset, (DWORD)addr);
-
-						return res;
-					}
-				}
-			}
-		}
-
-		return res;
-	}
-#pragma endregion
 
 #pragma region Fix paint rectangle on VM
 	RECT rcPaint;
@@ -478,7 +286,7 @@ namespace Hooks
 
 	BOOL __stdcall AdjustWindowRectHook(LPRECT lpRect, DWORD dwStyle, BOOL bMenu)
 	{
-		if (config.cursor.fix && !config.isNoGL)
+		if (config.cursor.fix && !config.isDDraw)
 			Hooks::ScalePointer((FLOAT)(lpRect->right - lpRect->left + 1) / (FLOAT)RES_WIDTH, (FLOAT)(lpRect->bottom - lpRect->top + 1) / (FLOAT)RES_HEIGHT);
 
 		if (dwStyle == STYLE_FULL_OLD)
@@ -550,7 +358,7 @@ namespace Hooks
 	BOOL __stdcall WinHelpHook(HWND hWndMain, LPCSTR lpszHelp, UINT uCommand, ULONG_PTR dwData)
 	{
 		CHAR filePath[MAX_PATH];
-		GetModuleFileName(hModule, filePath, MAX_PATH - 1);
+		GetModuleFileName(NULL, filePath, MAX_PATH - 1);
 		CHAR* p = StrLastChar(filePath, '\\');
 		*p = NULL;
 		StrCopy(p, "\\winhlp32.exe");
@@ -1051,7 +859,7 @@ namespace Hooks
 
 	HBITMAP __stdcall CreateBitmapIndirectHook(BITMAP* pbm)
 	{
-		if (config.isNoGL)
+		if (config.isDDraw)
 		{
 			HBITMAP hBmp = NULL;
 
@@ -1310,7 +1118,7 @@ namespace Hooks
 
 	HICON __stdcall CreateIconIndirectHook(PICONINFO piconinfo)
 	{
-		if (config.isNoGL)
+		if (config.isDDraw)
 		{
 			piconinfo->xHotspot = (DWORD)MathRound(scale.cx * piconinfo->xHotspot);
 			piconinfo->yHotspot = (DWORD)MathRound(scale.cy * piconinfo->yHotspot);
@@ -1501,7 +1309,7 @@ namespace Hooks
 			CHAR* o = StrChar(originalPath, '\\');
 			if (o)
 			{
-				GetModuleFileName(hModule, path, MAX_PATH - 1);
+				GetModuleFileName(NULL, path, MAX_PATH - 1);
 				p = StrLastChar(path, '\\');
 				if (p)
 				{
@@ -1602,10 +1410,8 @@ namespace Hooks
 #pragma region Patch audio on GOG release
 	VOID __inline PatchWinMM()
 	{
-		const CHAR* winmmLibList[] = { "MSS32.dll" };
-
 		CHAR filePath[MAX_PATH];
-		GetModuleFileName(hModule, filePath, sizeof(filePath) - 1);
+		GetModuleFileName(NULL, filePath, sizeof(filePath) - 1);
 		CHAR* p = StrLastChar(filePath, '\\');
 		if (p)
 		{
@@ -1615,69 +1421,65 @@ namespace Hooks
 			HMODULE hWinMM = LoadLibrary(filePath);
 			if (hWinMM)
 			{
-				const CHAR** libName = winmmLibList;
-				DWORD libcount = sizeof(winmmLibList) / sizeof(CHAR*);
-				do
+				Hooker* hooker = new Hooker(GetModuleHandle("MSS32.dll"));
+				if (hooker->hModule)
 				{
-					HMODULE hLibModule = GetModuleHandle(*libName);
-					if (hLibModule)
+					PIMAGE_DATA_DIRECTORY dataDir = &hooker->headNT->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
+					if (dataDir->Size)
 					{
-						DWORD baseEx;
-						DWORD base = (DWORD)hLibModule;
-						PIMAGE_NT_HEADERS headNT = (PIMAGE_NT_HEADERS)(base + ((PIMAGE_DOS_HEADER)hLibModule)->e_lfanew);
-
-						PIMAGE_DATA_DIRECTORY dataDir = &headNT->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
-						if (dataDir->Size)
+						PIMAGE_IMPORT_DESCRIPTOR imports = (PIMAGE_IMPORT_DESCRIPTOR)((DWORD)hooker->hModule + dataDir->VirtualAddress);
+						for (DWORD idx = 0; imports->Name; ++idx, ++imports)
 						{
-							HANDLE hFile = NULL;
+							CHAR* libraryName = (CHAR*)((DWORD)hooker->hModule + imports->Name);
+							if (!StrCompareInsensitive(libraryName, "WINMM.dll"))
 							{
-								PIMAGE_IMPORT_DESCRIPTOR imports = (PIMAGE_IMPORT_DESCRIPTOR)(base + dataDir->VirtualAddress);
-								for (DWORD idx = 0; imports->Name; ++idx, ++imports)
+								PIMAGE_THUNK_DATA addressThunk = (PIMAGE_THUNK_DATA)((DWORD)hooker->hModule + imports->FirstThunk);
+								PIMAGE_THUNK_DATA nameThunk;
+								if (imports->OriginalFirstThunk)
+									nameThunk = (PIMAGE_THUNK_DATA)((DWORD)hooker->hModule + imports->OriginalFirstThunk);
+								else if (hooker->MapFile())
 								{
-									CHAR* libraryName = (CHAR*)(base + imports->Name);
-									if (!StrCompareInsensitive(libraryName, "WINMM.dll"))
-									{
-										PIMAGE_THUNK_DATA addressThunk = (PIMAGE_THUNK_DATA)(base + imports->FirstThunk);
-										PIMAGE_THUNK_DATA nameThunk;
-										if (imports->OriginalFirstThunk)
-											nameThunk = (PIMAGE_THUNK_DATA)(base + imports->OriginalFirstThunk);
-										else
-										{
-											if (!hFile)
-											{
-												GetModuleFileName(hLibModule, filePath, sizeof(filePath) - 1);
-												hFile = CreateFile(filePath, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-												HANDLE hMap = CreateFileMapping(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
-												baseEx = (DWORD)MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0);
-											}
+									PIMAGE_NT_HEADERS headNT = (PIMAGE_NT_HEADERS)((BYTE*)hooker->mapAddress + ((PIMAGE_DOS_HEADER)hooker->mapAddress)->e_lfanew);
+									PIMAGE_SECTION_HEADER sh = (PIMAGE_SECTION_HEADER)((DWORD)&headNT->OptionalHeader + headNT->FileHeader.SizeOfOptionalHeader);
 
-											nameThunk = (PIMAGE_THUNK_DATA)(baseEx + imports->FirstThunk);
+									nameThunk = NULL;
+									DWORD sCount = headNT->FileHeader.NumberOfSections;
+									while (sCount--)
+									{
+										if (imports->FirstThunk >= sh->VirtualAddress && imports->FirstThunk < sh->VirtualAddress + sh->Misc.VirtualSize)
+										{
+											nameThunk = PIMAGE_THUNK_DATA((DWORD)hooker->mapAddress + sh->PointerToRawData + imports->FirstThunk - sh->VirtualAddress);
+											break;
 										}
 
-										for (; nameThunk->u1.AddressOfData; ++nameThunk, ++addressThunk)
-										{
-											PIMAGE_IMPORT_BY_NAME name = PIMAGE_IMPORT_BY_NAME(base + nameThunk->u1.AddressOfData);
+										++sh;
+									}
+								}
 
-											WORD hint;
-											if (ReadWord((INT)name - baseOffset, &hint))
+								if (nameThunk)
+								{
+									for (; nameThunk->u1.AddressOfData; ++nameThunk, ++addressThunk)
+									{
+										PIMAGE_IMPORT_BY_NAME name = PIMAGE_IMPORT_BY_NAME((DWORD)hooker->hModule + nameThunk->u1.AddressOfData);
+
+										WORD hint;
+										if (hooker->ReadWord((INT)name - hooker->baseOffset, &hint))
+										{
+											DWORD old;
+											if (hooker->ReadDWord((INT)&addressThunk->u1.AddressOfData - hooker->baseOffset, &old))
 											{
-												DWORD old;
-												if (ReadDWord((INT)&addressThunk->u1.AddressOfData - baseOffset, &old))
-												{
-													DWORD address = (DWORD)GetProcAddress(hWinMM, (CHAR*)name->Name);
-													if (address)
-														PatchDWord((INT)&addressThunk->u1.AddressOfData - baseOffset, (DWORD)address);
-												}
+												DWORD address = (DWORD)GetProcAddress(hWinMM, (CHAR*)name->Name);
+												if (address)
+													hooker->PatchDWord((INT)&addressThunk->u1.AddressOfData - hooker->baseOffset, (DWORD)address);
 											}
 										}
 									}
 								}
 							}
-							if (hFile)
-								CloseHandle(hFile);
 						}
 					}
-				} while (--libcount);
+				}
+				delete hooker;
 			}
 		}
 	}
@@ -1746,135 +1548,131 @@ namespace Hooks
 
 	BOOL Load()
 	{
-		hookSpace = addressArray;
-		hModule = GetModuleHandle(NULL);
-		PIMAGE_NT_HEADERS headNT = (PIMAGE_NT_HEADERS)((BYTE*)hModule + ((PIMAGE_DOS_HEADER)hModule)->e_lfanew);
-		baseOffset = (INT)hModule - (INT)headNT->OptionalHeader.ImageBase;
+		Hooker* mainHooker = new Hooker(GetModuleHandle(NULL));
 
+		hookSpace = addressArray;
 		DWORD hookCount = sizeof(addressArray) / sizeof(AddressSpace);
 		do
 		{
 			DWORD check;
-			if (ReadDWord(hookSpace->check + 6, &check) && check == STYLE_FULL_OLD)
+			if (mainHooker->ReadDWord(hookSpace->check + 6, &check) && check == STYLE_FULL_OLD)
 			{
-				Config::Load(hModule, hookSpace);
+				Config::Load(mainHooker->hModule, hookSpace);
 
 				{
-					MappedFile* file = new MappedFile(hModule);
+					mainHooker->PatchImport("AdjustWindowRect", AdjustWindowRectHook);
+					mainHooker->PatchImport("CreateWindowExA", CreateWindowExHook);
+					mainHooker->PatchImport("SetWindowLongA", SetWindowLongHook);
+
+					mainHooker->PatchImport("MessageBoxA", MessageBoxHook);
+					mainHooker->PatchImport("WinHelpA", WinHelpHook);
+
+					mainHooker->PatchImport("LoadMenuA", LoadMenuHook);
+					mainHooker->PatchImport("SetMenu", SetMenuHook);
+					mainHooker->PatchImport("EnableMenuItem", EnableMenuItemHook);
+
+					mainHooker->PatchImport("Sleep", SleepHook);
+					mainHooker->PatchImport("DialogBoxParamA", DialogBoxParamHook);
+
+					mainHooker->PatchImport("PeekMessageA", PeekMessageHook);
+					mainHooker->PatchImport("LoadIconA", LoadIconHook);
+					mainHooker->PatchImport("RegisterClassA", RegisterClassHook);
+
+					mainHooker->PatchImport("RegCreateKeyA", RegCreateKeyHook);
+					mainHooker->PatchImport("RegOpenKeyExA", RegOpenKeyExHook);
+					mainHooker->PatchImport("RegCloseKey", RegCloseKeyHook);
+					mainHooker->PatchImport("RegQueryValueExA", RegQueryValueExHook);
+					mainHooker->PatchImport("RegSetValueExA", RegSetValueExHook);
+
+					AudiereOpenDevice = (ADROPENDEVICE)mainHooker->PatchImport("_AdrOpenDevice@8", AdrOpenDeviceHook);
+					AudiereOpenSampleSource = (ADROPENSAMPLESOURCE)mainHooker->PatchImport("_AdrOpenSampleSource@4", AdrOpenSampleSourceHook);
+
+					if (!config.isDDraw)
 					{
-						PatchFunction(file, "AdjustWindowRect", AdjustWindowRectHook);
-						PatchFunction(file, "CreateWindowExA", CreateWindowExHook);
-						PatchFunction(file, "SetWindowLongA", SetWindowLongHook);
+						mainHooker->PatchImport("LoadLibraryA", LoadLibraryHook);
+						mainHooker->PatchImport("FreeLibrary", FreeLibraryHook);
+						mainHooker->PatchImport("GetProcAddress", GetProcAddressHook);
 
-						PatchFunction(file, "MessageBoxA", MessageBoxHook);
-						PatchFunction(file, "WinHelpA", WinHelpHook);
+						mainHooker->PatchImport("ScreenToClient", ScreenToClientHook);
+						mainHooker->PatchImport("InvalidateRect", hook_InvalidateRect);
+						mainHooker->PatchImport("BeginPaint", BeginPaintHook);
+					}
 
-						PatchFunction(file, "LoadMenuA", LoadMenuHook);
-						PatchFunction(file, "SetMenu", SetMenuHook);
-						PatchFunction(file, "EnableMenuItem", EnableMenuItemHook);
-
-						PatchFunction(file, "Sleep", SleepHook);
-						PatchFunction(file, "DialogBoxParamA", DialogBoxParamHook);
-
-						PatchFunction(file, "PeekMessageA", PeekMessageHook);
-						PatchFunction(file, "LoadIconA", LoadIconHook);
-						PatchFunction(file, "RegisterClassA", RegisterClassHook);
-
-						PatchFunction(file, "RegCreateKeyA", RegCreateKeyHook);
-						PatchFunction(file, "RegOpenKeyExA", RegOpenKeyExHook);
-						PatchFunction(file, "RegCloseKey", RegCloseKeyHook);
-						PatchFunction(file, "RegQueryValueExA", RegQueryValueExHook);
-						PatchFunction(file, "RegSetValueExA", RegSetValueExHook);
-
-						AudiereOpenDevice = (ADROPENDEVICE)PatchFunction(file, "_AdrOpenDevice@8", AdrOpenDeviceHook);
-						AudiereOpenSampleSource = (ADROPENSAMPLESOURCE)PatchFunction(file, "_AdrOpenSampleSource@4", AdrOpenSampleSourceHook);
-
-						if (!config.isNoGL)
+					if (config.cursor.fix)
+					{
+						if (hookSpace->icons_list)
 						{
-							PatchFunction(file, "LoadLibraryA", LoadLibraryHook);
-							PatchFunction(file, "FreeLibrary", FreeLibraryHook);
-							PatchFunction(file, "GetProcAddress", GetProcAddressHook);
+							mainHooker->PatchImport("CreateBitmapIndirect", CreateBitmapIndirectHook);
+							mainHooker->PatchImport("CreateIconIndirect", CreateIconIndirectHook);
 
-							PatchFunction(file, "ScreenToClient", ScreenToClientHook);
-							PatchFunction(file, "InvalidateRect", hook_InvalidateRect);
-							PatchFunction(file, "BeginPaint", BeginPaintHook);
-						}
-
-						if (config.cursor.fix)
-						{
-							if (hookSpace->icons_list)
+							if (!config.isDDraw)
 							{
-								PatchFunction(file, "CreateBitmapIndirect", CreateBitmapIndirectHook);
-								PatchFunction(file, "CreateIconIndirect", CreateIconIndirectHook);
-
-								if (!config.isNoGL)
-								{
-									PatchFunction(file, "SetCursor", SetCursorHook);
-									PatchFunction(file, "ShowCursor", ShowCursorHook);
-									PatchFunction(file, "LoadCursorA", LoadCursorHook);
-								}
-								else
-									config.cursor.fix = FALSE;
+								mainHooker->PatchImport("SetCursor", SetCursorHook);
+								mainHooker->PatchImport("ShowCursor", ShowCursorHook);
+								mainHooker->PatchImport("LoadCursorA", LoadCursorHook);
 							}
 							else
 								config.cursor.fix = FALSE;
 						}
+						else
+							config.cursor.fix = FALSE;
 					}
-					delete file;
+
+					mainHooker->UnmapFile();
 				}
 
 				if (hookSpace->fadein_tick && hookSpace->fadein_update_1 && hookSpace->fadein_update_2)
 				{
-					PatchCall(hookSpace->fadein_tick, SetTickCount);
-					PatchCall(hookSpace->fadein_update_1, UpdatePaletteHook);
-					PatchCall(hookSpace->fadein_update_2, UpdatePaletteHook);
+					mainHooker->PatchCall(hookSpace->fadein_tick, SetTickCount);
+					mainHooker->PatchCall(hookSpace->fadein_update_1, UpdatePaletteHook);
+					mainHooker->PatchCall(hookSpace->fadein_update_2, UpdatePaletteHook);
 				}
 
 				if (hookSpace->fadeout_tick && hookSpace->fadeout_update)
 				{
-					PatchCall(hookSpace->fadeout_tick, SetTickCount);
-					PatchCall(hookSpace->fadeout_update, UpdatePaletteHook);
+					mainHooker->PatchCall(hookSpace->fadeout_tick, SetTickCount);
+					mainHooker->PatchCall(hookSpace->fadeout_update, UpdatePaletteHook);
 				}
 
-				if (!config.isNoGL)
+				if (!config.isDDraw)
 				{
 					if (hookSpace->resLanguage == LNG_ENGLISH)
 					{
-						PatchNop(hookSpace->method2_nop, 6);
-						PatchWord(hookSpace->method2_jmp, 0xE990);
-						PatchByte(hookSpace->invalid_jmp, 0xEB);
+						mainHooker->PatchNop(hookSpace->method2_nop, 6);
+						mainHooker->PatchWord(hookSpace->method2_jmp, 0xE990);
+						mainHooker->PatchByte(hookSpace->invalid_jmp, 0xEB);
 					}
 					else
 					{
-						PatchNop(hookSpace->method2_nop, 2);
-						PatchByte(hookSpace->method2_jmp, 0xEB);
-						PatchWord(hookSpace->invalid_jmp, 0xE990);
+						mainHooker->PatchNop(hookSpace->method2_nop, 2);
+						mainHooker->PatchByte(hookSpace->method2_jmp, 0xEB);
+						mainHooker->PatchWord(hookSpace->invalid_jmp, 0xE990);
 					}
 
-					PatchHook(hookSpace->setFullScreenStatus, hookSpace->game_version == 2 ? hook_mode_v2 : hook_mode_v1);
-					ddSetFullScreenStatus = hookSpace->ddSetFullScreenStatus + baseOffset;
-					checkChangeCursor = hookSpace->checkChangeCursor + baseOffset;
+					mainHooker->PatchHook(hookSpace->setFullScreenStatus, hookSpace->game_version == 2 ? hook_mode_v2 : hook_mode_v1);
+					ddSetFullScreenStatus = hookSpace->ddSetFullScreenStatus + mainHooker->baseOffset;
+					checkChangeCursor = hookSpace->checkChangeCursor + mainHooker->baseOffset;
 
-					config.update.offset = (POINT*)(hookSpace->moveOffset + baseOffset);
+					config.update.offset = (POINT*)(hookSpace->moveOffset + mainHooker->baseOffset);
 					invalidEsp = hookSpace->invalid_esp;
 				}
 
 				if (hookSpace->icons_list && hookSpace->color_pointer && config.cursor.fix)
 				{
-					PatchDWord(hookSpace->color_pointer, TRUE);
+					mainHooker->PatchDWord(hookSpace->color_pointer, TRUE);
 					if (hookSpace->color_pointer_nop)
-						PatchNop(hookSpace->color_pointer_nop, 10);
+						mainHooker->PatchNop(hookSpace->color_pointer_nop, 10);
 				}
 
-				PatchWinMM();
+				//PatchWinMM();
 
 				if (hookSpace->pointer_fs_nop)
-					PatchNop(hookSpace->pointer_fs_nop, 2);
+					mainHooker->PatchNop(hookSpace->pointer_fs_nop, 2);
 
 				if (hookSpace->dispelMagicSwitch)
 				{
 					BYTE caseList[15];
-					if (ReadBlock(hookSpace->dispelMagicSwitch, &caseList, sizeof(caseList)))
+					if (mainHooker->ReadBlock(hookSpace->dispelMagicSwitch, &caseList, sizeof(caseList)))
 					{
 						BYTE norm = caseList[0];
 						BYTE alt = caseList[1];
@@ -1894,11 +1692,11 @@ namespace Hooks
 						caseList[13] = norm;
 						caseList[14] = norm;
 
-						PatchBlock(hookSpace->dispelMagicSwitch, &caseList, sizeof(caseList));
+						mainHooker->PatchBlock(hookSpace->dispelMagicSwitch, &caseList, sizeof(caseList));
 
 						WORD inst;
-						if (ReadWord(hookSpace->dispelMagicFix, &inst))
-							PatchWord(hookSpace->dispelMagicFix, inst == 0xC1DE ? 0xE1DE : 0x6DD8); // faddp -> fsubrp
+						if (mainHooker->ReadWord(hookSpace->dispelMagicFix, &inst))
+							mainHooker->PatchWord(hookSpace->dispelMagicFix, inst == 0xC1DE ? 0xE1DE : 0x6DD8); // faddp -> fsubrp
 					}
 				}
 

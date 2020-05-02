@@ -5,7 +5,7 @@
 
 	MIT License
 
-	Copyright (c) 2019 Oleksiy Ryabchun
+	Copyright (c) 2020 Oleksiy Ryabchun
 
 	Permission is hereby granted, free of charge, to any person obtaining a copy
 	of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,6 @@
 	SOFTWARE.
 */
 
-uniform mat4 mvp;
 uniform vec2 texSize;
 
 #if __VERSION__ >= 130
@@ -37,11 +36,11 @@ uniform vec2 texSize;
 	#define COMPAT_OUT varying 
 #endif
 
-COMPAT_IN vec2 vCoord;
-COMPAT_IN vec2 vTexCoord;
-COMPAT_OUT vec2 fTexCoord;
+COMPAT_IN vec4 vCoord;
+COMPAT_IN vec2 vTex;
+COMPAT_OUT vec2 fTex;
 
 void main() {
-	gl_Position = mvp * vec4(vCoord, 0.0, 1.0);
-	fTexCoord = vTexCoord * texSize - 0.5;
+	gl_Position = vCoord;
+	fTex = vTex * texSize - 0.5;
 }

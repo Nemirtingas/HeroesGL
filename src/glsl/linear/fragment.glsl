@@ -1,7 +1,7 @@
 /*
 	MIT License
 
-	Copyright (c) 2019 Oleksiy Ryabchun
+	Copyright (c) 2020 Oleksiy Ryabchun
 
 	Permission is hereby granted, free of charge, to any person obtaining a copy
 	of this software and associated documentation files (the "Software"), to deal
@@ -27,15 +27,15 @@ uniform sampler2D tex01;
 #if __VERSION__ >= 130
 	#define COMPAT_IN in
 	#define COMPAT_TEXTURE texture
-	out mediump vec4 FRAG_COLOR;
+	out vec4 FRAG_COLOR;
 #else
 	#define COMPAT_IN varying 
 	#define COMPAT_TEXTURE texture2D
 	#define FRAG_COLOR gl_FragColor
 #endif
 
-COMPAT_IN vec2 fTexCoord;
+COMPAT_IN vec2 fTex;
 
 void main() {
-	FRAG_COLOR = COMPAT_TEXTURE(tex01, fTexCoord);
+	FRAG_COLOR = COMPAT_TEXTURE(tex01, fTex);
 }

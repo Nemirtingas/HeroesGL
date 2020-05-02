@@ -5,7 +5,7 @@
 
 	MIT License
 
-	Copyright (c) 2019 Oleksiy Ryabchun
+	Copyright (c) 2020 Oleksiy Ryabchun
 
 	Permission is hereby granted, free of charge, to any person obtaining a copy
 	of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,7 @@ uniform vec2 texSize;
 in vec4 t1;
 in vec4 t2;
 in vec4 t3;
-in vec2 fTexCoord;
+in vec2 fTex;
 
 out vec4 fragColor;
 
@@ -67,6 +67,6 @@ void main()
 	vec3 E7 = eqHD && neqEI || eqHF && neqEG ? H : E;
 	vec3 E8 = eqHF ? H : E;
 
-	vec2 fp = floor(3.0 * fract(fTexCoord));
+	vec2 fp = floor(3.0 * fract(fTex));
 	fragColor = vec4(neq(B,H) && neq(D,F) ? (fp.y == 0. ? (fp.x == 0. ? E0 : fp.x == 1. ? E1 : E2) : (fp.y == 1. ? (fp.x == 0. ? E3 : fp.x == 1. ? E : E5) : (fp.x == 0. ? E6 : fp.x == 1. ? E7 : E8))) : E, 1.0);
 }

@@ -5,7 +5,7 @@
 
 	MIT License
 
-	Copyright (c) 2019 Oleksiy Ryabchun
+	Copyright (c) 2020 Oleksiy Ryabchun
 
 	Permission is hereby granted, free of charge, to any person obtaining a copy
 	of this software and associated documentation files (the "Software"), to deal
@@ -26,12 +26,11 @@
 	SOFTWARE.
 */
 
-uniform mat4 mvp;
 uniform sampler2D tex01;
 uniform vec2 texSize;
 
-in vec2 vCoord;
-in vec2 vTexCoord;
+in vec4 vCoord;
+in vec2 vTex;
 
 out vec4 t1;
 out vec4 t2;
@@ -41,27 +40,27 @@ out vec4 t5;
 out vec4 t6;
 out vec4 t7;
 out vec4 t8;
-out vec2 fTexCoord;
+out vec2 fTex;
 
 void main() {
-	gl_Position = mvp * vec4(vCoord, 0.0, 1.0);
+	gl_Position = vCoord;
 	
 	vec2 d = 1.0 / texSize;
-	t1.xy = vTexCoord + vec2(-d.x,-d.y);
-	t1.zw = vTexCoord + vec2(-d.x,  0);
-	t2.xy = vTexCoord + vec2(+d.x,-d.y);
-	t2.zw = vTexCoord + vec2(+d.x+d.x,-d.y);
-	t3.xy = vTexCoord + vec2(-d.x,  0);
-	t3.zw = vTexCoord + vec2(+d.x,  0);
-	t4.xy = vTexCoord + vec2(+d.x+d.x,  0);
-	t4.zw = vTexCoord + vec2(-d.x,+d.y);
-	t5.xy = vTexCoord + vec2(  0,+d.y);
-	t5.zw = vTexCoord + vec2(+d.x,+d.y);
-	t6.xy = vTexCoord + vec2(+d.x+d.x,+d.y);
-	t6.zw = vTexCoord + vec2(-d.x,+d.y+d.y);
-	t7.xy = vTexCoord + vec2(  0,+d.y+d.y);
-	t7.zw = vTexCoord + vec2(+d.x,+d.y+d.y);
-	t8.xy = vTexCoord + vec2(+d.x+d.x,+d.y+d.y);
+	t1.xy = vTex + vec2(-d.x,-d.y);
+	t1.zw = vTex + vec2(-d.x,  0);
+	t2.xy = vTex + vec2(+d.x,-d.y);
+	t2.zw = vTex + vec2(+d.x+d.x,-d.y);
+	t3.xy = vTex + vec2(-d.x,  0);
+	t3.zw = vTex + vec2(+d.x,  0);
+	t4.xy = vTex + vec2(+d.x+d.x,  0);
+	t4.zw = vTex + vec2(-d.x,+d.y);
+	t5.xy = vTex + vec2(  0,+d.y);
+	t5.zw = vTex + vec2(+d.x,+d.y);
+	t6.xy = vTex + vec2(+d.x+d.x,+d.y);
+	t6.zw = vTex + vec2(-d.x,+d.y+d.y);
+	t7.xy = vTex + vec2(  0,+d.y+d.y);
+	t7.zw = vTex + vec2(+d.x,+d.y+d.y);
+	t8.xy = vTex + vec2(+d.x+d.x,+d.y+d.y);
 	
-	fTexCoord = vTexCoord;
+	fTex = vTex;
 }

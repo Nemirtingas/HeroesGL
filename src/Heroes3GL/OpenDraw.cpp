@@ -1,7 +1,7 @@
 /*
 	MIT License
 
-	Copyright (c) 2019 Oleksiy Ryabchun
+	Copyright (c) 2020 Oleksiy Ryabchun
 
 	Permission is hereby granted, free of charge, to any person obtaining a copy
 	of this software and associated documentation files (the "Software"), to deal
@@ -46,7 +46,7 @@ VOID __fastcall UseShaderProgram(ShaderProgram* program, DWORD texSize)
 		program->id = GLCreateProgram();
 
 		GLBindAttribLocation(program->id, 0, "vCoord");
-		GLBindAttribLocation(program->id, 1, "vTexCoord");
+		GLBindAttribLocation(program->id, 1, "vTex");
 
 		GLuint vShader = GL::CompileShaderSource(program->vertexName, program->version, GL_VERTEX_SHADER);
 		GLuint fShader = GL::CompileShaderSource(program->fragmentName, program->version, GL_FRAGMENT_SHADER);
@@ -63,7 +63,10 @@ VOID __fastcall UseShaderProgram(ShaderProgram* program, DWORD texSize)
 		GLDeleteShader(vShader);
 
 		GLUseProgram(program->id);
-		GLUniformMatrix4fv(GLGetUniformLocation(program->id, "mvp"), 1, GL_FALSE, program->mvp);
+
+		if (program->mvp)
+			GLUniformMatrix4fv(GLGetUniformLocation(program->id, "mvp"), 1, GL_FALSE, program->mvp);
+
 		GLUniform1i(GLGetUniformLocation(program->id, "tex01"), 0);
 
 		program->texSize.location = GLGetUniformLocation(program->id, "texSize");
@@ -266,7 +269,7 @@ VOID OpenDraw::RenderOld()
 		VOID* frameBuffer = NULL;
 		BOOL isPixelStore = this->mode.bpp == 32 && config.gl.caps.bgra || this->mode.bpp == 16 && config.gl.version.value > GL_VER_1_1;
 		if (!isPixelStore)
-			frameBuffer = MemoryAlloc(maxTexSize * maxTexSize * (this->mode.bpp == 16 && config.gl.version.value > GL_VER_1_1 ? sizeof(WORD) : sizeof(DWORD)));
+			frameBuffer = AlignedAlloc(maxTexSize * maxTexSize * (this->mode.bpp == 16 && config.gl.version.value > GL_VER_1_1 ? sizeof(WORD) : sizeof(DWORD)));
 		{
 			BOOL isVSync = config.image.vSync;
 			if (WGLSwapInterval)
@@ -274,6 +277,8 @@ VOID OpenDraw::RenderOld()
 
 			BOOL first = TRUE;
 			DWORD clear = 0;
+
+			BYTE* secondBuffer = (BYTE*)AlignedAlloc(this->mode.height * this->pitch);
 			do
 			{
 				OpenDrawSurface* surface = this->attachedSurface;
@@ -290,6 +295,9 @@ VOID OpenDraw::RenderOld()
 					UpdateRect* finClip = surface->currentClip;
 					surface->poinetrClip = finClip;
 
+					FLOAT currScale = surface->scale;
+					MemoryCopy(secondBuffer, surface->indexBuffer, this->mode.height * this->pitch);
+
 					if (this->CheckView())
 					{
 						GLViewport(this->viewport.rectangle.x, this->viewport.rectangle.y, this->viewport.rectangle.width, this->viewport.rectangle.height);
@@ -305,7 +313,6 @@ VOID OpenDraw::RenderOld()
 					if (state.flags)
 						glFilter = state.interpolation == InterpolateNearest ? GL_NEAREST : GL_LINEAR;
 
-					FLOAT currScale = surface->scale;
 					if (surface->isSizeChanged || first)
 					{
 						surface->isSizeChanged = FALSE;
@@ -319,10 +326,8 @@ VOID OpenDraw::RenderOld()
 						updateClip->isActive = TRUE;
 					}
 
-					BOOL isDouble = currScale != 1.0f;
-					DWORD frameWidth = isDouble ? DWORD(currScale * this->mode.width) : this->mode.width;
 					if (isPixelStore)
-						GLPixelStorei(GL_UNPACK_ROW_LENGTH, frameWidth);
+						GLPixelStorei(GL_UNPACK_ROW_LENGTH, this->mode.width);
 					{
 						DWORD count = frameCount;
 						frame = frames;
@@ -343,33 +348,23 @@ VOID OpenDraw::RenderOld()
 										RECT update = updateClip->rect;
 										DWORD texWidth = update.right - update.left;
 										DWORD texHeight = update.bottom - update.top;
-										if (isDouble)
-										{
-											update.left = DWORD(currScale * update.left);
-											update.top = DWORD(currScale * update.top);
-											update.right = DWORD(currScale * update.right);
-											update.bottom = DWORD(currScale * update.bottom);
 
-											texWidth = DWORD(currScale * texWidth);
-											texHeight = DWORD(currScale * texHeight);
-										}
-
-										if (texWidth == frameWidth)
+										if (texWidth == this->mode.width)
 										{
 											if (this->mode.bpp == 32)
 											{
 												if (config.gl.caps.bgra)
-													GLTexSubImage2D(GL_TEXTURE_2D, 0, 0, update.top, texWidth, texHeight, GL_BGRA_EXT, GL_UNSIGNED_BYTE, (DWORD*)surface->indexBuffer + update.top * texWidth);
+													GLTexSubImage2D(GL_TEXTURE_2D, 0, 0, update.top, texWidth, texHeight, GL_BGRA_EXT, GL_UNSIGNED_BYTE, (DWORD*)secondBuffer + update.top * this->pitch);
 												else
 												{
-													DWORD* source = (DWORD*)surface->indexBuffer + update.top * texWidth;
+													BYTE* source = secondBuffer + update.top * this->pitch;
 													DWORD* dest = (DWORD*)frameBuffer;
 													DWORD copyWidth = texWidth;
 													DWORD copyHeight = texHeight;
 													do
 													{
-														DWORD* src = source;
-														source += frameWidth;
+														DWORD* src = (DWORD*)source;
+														source += this->pitch;
 
 														DWORD count = copyWidth;
 														do
@@ -383,17 +378,17 @@ VOID OpenDraw::RenderOld()
 											else
 											{
 												if (config.gl.version.value > GL_VER_1_1)
-													GLTexSubImage2D(GL_TEXTURE_2D, 0, 0, update.top, texWidth, texHeight, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, (WORD*)surface->indexBuffer + update.top * texWidth);
+													GLTexSubImage2D(GL_TEXTURE_2D, 0, 0, update.top, texWidth, texHeight, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, (WORD*)secondBuffer + update.top * this->pitch);
 												else
 												{
-													WORD* source = (WORD*)surface->indexBuffer + update.top * texWidth;
+													BYTE* source = secondBuffer + update.top * this->pitch;
 													DWORD* dest = (DWORD*)frameBuffer;
 													DWORD copyWidth = texWidth;
 													DWORD copyHeight = texHeight;
 													do
 													{
-														WORD* src = source;
-														source += frameWidth;
+														WORD* src = (WORD*)source;
+														source += this->pitch;
 
 														DWORD count = copyWidth;
 														do
@@ -412,17 +407,17 @@ VOID OpenDraw::RenderOld()
 											if (this->mode.bpp == 32)
 											{
 												if (config.gl.caps.bgra)
-													GLTexSubImage2D(GL_TEXTURE_2D, 0, update.left, update.top, texWidth, texHeight, GL_BGRA_EXT, GL_UNSIGNED_BYTE, (DWORD*)surface->indexBuffer + update.top * frameWidth + update.left);
+													GLTexSubImage2D(GL_TEXTURE_2D, 0, update.left, update.top, texWidth, texHeight, GL_BGRA_EXT, GL_UNSIGNED_BYTE, (DWORD*)(secondBuffer + update.top * this->pitch) + update.left);
 												else
 												{
-													DWORD* source = (DWORD*)surface->indexBuffer + update.top * frameWidth + update.left;
+													BYTE* source = (BYTE*)((DWORD*)(secondBuffer + update.top * this->pitch) + update.left);
 													DWORD* dest = (DWORD*)frameBuffer;
 													DWORD copyWidth = texWidth;
 													DWORD copyHeight = texHeight;
 													do
 													{
-														DWORD* src = source;
-														source += frameWidth;
+														DWORD* src = (DWORD*)source;
+														source += this->pitch;
 
 														DWORD count = copyWidth;
 														do
@@ -445,17 +440,17 @@ VOID OpenDraw::RenderOld()
 												}
 
 												if (config.gl.version.value > GL_VER_1_1)
-													GLTexSubImage2D(GL_TEXTURE_2D, 0, update.left, update.top, texWidth, texHeight, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, (WORD*)surface->indexBuffer + update.top * frameWidth + update.left);
+													GLTexSubImage2D(GL_TEXTURE_2D, 0, update.left, update.top, texWidth, texHeight, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, (WORD*)(secondBuffer + update.top * this->pitch) + update.left);
 												else
 												{
-													WORD* source = (WORD*)surface->indexBuffer + update.top * frameWidth + update.left;
+													BYTE* source = (BYTE*)((WORD*)(secondBuffer + update.top * this->pitch) + update.left);
 													DWORD* dest = (DWORD*)frameBuffer;
 													DWORD copyWidth = texWidth;
 													DWORD copyHeight = texHeight;
 													do
 													{
-														WORD* src = source;
-														source += frameWidth;
+														WORD* src = (WORD*)source;
+														source += this->pitch;
 
 														DWORD count = copyWidth;
 														do
@@ -507,17 +502,17 @@ VOID OpenDraw::RenderOld()
 											if (this->mode.bpp == 32)
 											{
 												if (config.gl.caps.bgra)
-													GLTexSubImage2D(GL_TEXTURE_2D, 0, clip.left - frame->rect.x, clip.top - frame->rect.y, clipWidth, clipHeight, GL_BGRA_EXT, GL_UNSIGNED_BYTE, (DWORD*)surface->indexBuffer + clip.top * frameWidth + clip.left);
+													GLTexSubImage2D(GL_TEXTURE_2D, 0, clip.left - frame->rect.x, clip.top - frame->rect.y, clipWidth, clipHeight, GL_BGRA_EXT, GL_UNSIGNED_BYTE, (DWORD*)(secondBuffer + clip.top * this->pitch) + clip.left);
 												else
 												{
-													DWORD* source = (DWORD*)surface->indexBuffer + clip.top * frameWidth + clip.left;
+													BYTE* source = (BYTE*)((DWORD*)(secondBuffer + clip.top * this->pitch) + clip.left);
 													DWORD* dest = (DWORD*)frameBuffer;
 													DWORD copyWidth = clipWidth;
 													DWORD copyHeight = clipHeight;
 													do
 													{
-														DWORD* src = source;
-														source += frameWidth;
+														DWORD* src = (DWORD*)source;
+														source += this->pitch;
 
 														DWORD count = copyWidth;
 														do
@@ -540,17 +535,17 @@ VOID OpenDraw::RenderOld()
 												}
 
 												if (config.gl.version.value > GL_VER_1_1)
-													GLTexSubImage2D(GL_TEXTURE_2D, 0, clip.left - frame->rect.x, clip.top - frame->rect.y, clipWidth, clipHeight, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, (WORD*)surface->indexBuffer + clip.top * frameWidth + clip.left);
+													GLTexSubImage2D(GL_TEXTURE_2D, 0, clip.left - frame->rect.x, clip.top - frame->rect.y, clipWidth, clipHeight, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, (WORD*)(secondBuffer + clip.top * this->pitch) + clip.left);
 												else
 												{
-													WORD* source = (WORD*)surface->indexBuffer + clip.top * frameWidth + clip.left;
+													BYTE* source = (BYTE*)((WORD*)(secondBuffer + clip.top * this->pitch) + clip.left);
 													DWORD* dest = (DWORD*)frameBuffer;
 													DWORD copyWidth = clipWidth;
 													DWORD copyHeight = clipHeight;
 													do
 													{
-														WORD* src = source;
-														source += frameWidth;
+														WORD* src = (WORD*)source;
+														source += this->pitch;
 
 														DWORD count = copyWidth;
 														do
@@ -608,9 +603,10 @@ VOID OpenDraw::RenderOld()
 						WaitForSingleObject(this->hDrawEvent, INFINITE);
 				}
 			} while (!this->isFinish);
+			AlignedFree(secondBuffer);
 		}
 		if (!isPixelStore)
-			MemoryFree(frameBuffer);
+			AlignedFree(frameBuffer);
 
 		frame = frames;
 		DWORD count = frameCount;
@@ -633,31 +629,14 @@ VOID OpenDraw::RenderMid()
 
 	DWORD texSize = (maxTexSize & 0xFFFF) | (maxTexSize << 16);
 
-	FLOAT buffer[4][4] = {
-		{ 0.0f, 0.0f, 0.0f, 0.0f },
-		{ (FLOAT)this->mode.width, 0.0f, texWidth, 0.0f },
-		{ (FLOAT)this->mode.width, (FLOAT)this->mode.height, texWidth, texHeight },
-		{ 0.0f, (FLOAT)this->mode.height, 0.0f, texHeight }
-	};
-
-	FLOAT vertices[4][4];
-	MemoryCopy(vertices, buffer, 16 * sizeof(FLOAT));
-
-	FLOAT mvpMatrix[4][4] = {
-		{ FLOAT(2.0f / this->mode.width), 0.0f, 0.0f, 0.0f },
-		{ 0.0f, FLOAT(-2.0f / this->mode.height), 0.0f, 0.0f },
-		{ 0.0f, 0.0f, 2.0f, 0.0f },
-		{ -1.0f, 1.0f, -1.0f, 1.0f }
-	};
-
 	struct {
 		ShaderProgram linear;
 		ShaderProgram hermite;
 		ShaderProgram cubic;
 	} shaders = {
-		{ 0, GLSL_VER_1_10, IDR_LINEAR_VERTEX, IDR_LINEAR_FRAGMENT, (GLfloat*)mvpMatrix },
-		{ 0, GLSL_VER_1_10, IDR_HERMITE_VERTEX, IDR_HERMITE_FRAGMENT, (GLfloat*)mvpMatrix },
-		{ 0, GLSL_VER_1_10, IDR_CUBIC_VERTEX, IDR_CUBIC_FRAGMENT, (GLfloat*)mvpMatrix }
+		{ 0, GLSL_VER_1_10, IDR_LINEAR_VERTEX, IDR_LINEAR_FRAGMENT, NULL },
+		{ 0, GLSL_VER_1_10, IDR_HERMITE_VERTEX, IDR_HERMITE_FRAGMENT, NULL },
+		{ 0, GLSL_VER_1_10, IDR_CUBIC_VERTEX, IDR_CUBIC_FRAGMENT, NULL }
 	};
 
 	ShaderProgram* filterProgram = &shaders.linear;
@@ -667,13 +646,44 @@ VOID OpenDraw::RenderMid()
 		{
 			GLBindBuffer(GL_ARRAY_BUFFER, bufferName);
 			{
-				GLBufferData(GL_ARRAY_BUFFER, sizeof(buffer), buffer, GL_STATIC_DRAW);
+				FLOAT buffer[4][8] = {
+					{ 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+					{ (FLOAT)this->mode.width, 0.0f, 0.0f, 1.0f, texWidth, 0.0f, 0.0f, 0.0f },
+					{ (FLOAT)this->mode.width, (FLOAT)this->mode.height, 0.0f, 1.0f, texWidth, texHeight, 0.0f, 0.0f },
+					{ 0.0f, (FLOAT)this->mode.height, 0.0f, 1.0f, 0.0f, texHeight, 0.0f, 0.0f }
+				};
 
-				GLEnableVertexAttribArray(0);
-				GLVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 16, (GLvoid*)0);
+				{
+					FLOAT mvp[4][4] = {
+						{ FLOAT(2.0f / this->mode.width), 0.0f, 0.0f, 0.0f },
+						{ 0.0f, FLOAT(-2.0f / this->mode.height), 0.0f, 0.0f },
+						{ 0.0f, 0.0f, 2.0f, 0.0f },
+						{ -1.0f, 1.0f, -1.0f, 1.0f }
+					};
 
-				GLEnableVertexAttribArray(1);
-				GLVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 16, (GLvoid*)8);
+					for (DWORD i = 0; i < 4; ++i)
+					{
+						FLOAT* vector = &buffer[i][0];
+						for (DWORD j = 0; j < 4; ++j)
+						{
+							FLOAT sum = 0.0f;
+							for (DWORD v = 0; v < 4; ++v)
+								sum += mvp[v][j] * vector[v];
+
+							vector[j] = sum;
+						}
+					}
+
+					GLBufferData(GL_ARRAY_BUFFER, sizeof(buffer), buffer, GL_STATIC_DRAW);
+				}
+
+				{
+					GLEnableVertexAttribArray(0);
+					GLVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 32, (GLvoid*)0);
+
+					GLEnableVertexAttribArray(1);
+					GLVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 32, (GLvoid*)16);
+				}
 
 				GLuint textureId;
 				GLGenTextures(1, &textureId);
@@ -702,6 +712,8 @@ VOID OpenDraw::RenderMid()
 					FLOAT oldScale = 1.0f;
 					BOOL first = TRUE;
 					DWORD clear = 0;
+
+					BYTE* secondBuffer = (BYTE*)AlignedAlloc(this->mode.height * this->pitch);
 					do
 					{
 						OpenDrawSurface* surface = this->attachedSurface;
@@ -727,6 +739,9 @@ VOID OpenDraw::RenderMid()
 							UpdateRect* updateClip = surface->poinetrClip;
 							UpdateRect* finClip = surface->currentClip;
 							surface->poinetrClip = finClip;
+
+							FLOAT currScale = surface->scale;
+							MemoryCopy(secondBuffer, surface->indexBuffer, this->mode.height * this->pitch);
 
 							if (this->CheckView())
 							{
@@ -760,8 +775,6 @@ VOID OpenDraw::RenderMid()
 								GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
 							}
 
-							FLOAT currScale = surface->scale;
-							BOOL isDouble = currScale != 1.0f;
 							if (surface->isSizeChanged || first)
 							{
 								surface->isSizeChanged = FALSE;
@@ -778,8 +791,7 @@ VOID OpenDraw::RenderMid()
 							// NEXT UNCHANGED
 							{
 								// Update texture
-								DWORD frameWidth = isDouble ? DWORD(currScale * this->mode.width) : this->mode.width;
-								GLPixelStorei(GL_UNPACK_ROW_LENGTH, frameWidth);
+								GLPixelStorei(GL_UNPACK_ROW_LENGTH, this->mode.width);
 								while (updateClip != finClip)
 								{
 									if (updateClip->isActive)
@@ -787,28 +799,18 @@ VOID OpenDraw::RenderMid()
 										RECT update = updateClip->rect;
 										DWORD texWidth = update.right - update.left;
 										DWORD texHeight = update.bottom - update.top;
-										if (isDouble)
-										{
-											update.left = DWORD(currScale * update.left);
-											update.top = DWORD(currScale * update.top);
-											update.right = DWORD(currScale * update.right);
-											update.bottom = DWORD(currScale * update.bottom);
 
-											texWidth = DWORD(currScale * texWidth);
-											texHeight = DWORD(currScale * texHeight);
-										}
-
-										if (texWidth == frameWidth)
+										if (texWidth == this->mode.width)
 										{
 											if (this->mode.bpp == 32)
-												GLTexSubImage2D(GL_TEXTURE_2D, 0, 0, update.top, texWidth, texHeight, GL_BGRA_EXT, GL_UNSIGNED_BYTE, (DWORD*)surface->indexBuffer + update.top * texWidth);
+												GLTexSubImage2D(GL_TEXTURE_2D, 0, 0, update.top, texWidth, texHeight, GL_BGRA_EXT, GL_UNSIGNED_BYTE, secondBuffer + update.top * this->pitch);
 											else
-												GLTexSubImage2D(GL_TEXTURE_2D, 0, 0, update.top, texWidth, texHeight, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, (WORD*)surface->indexBuffer + update.top * texWidth);
+												GLTexSubImage2D(GL_TEXTURE_2D, 0, 0, update.top, texWidth, texHeight, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, secondBuffer + update.top * this->pitch);
 										}
 										else
 										{
 											if (this->mode.bpp == 32)
-												GLTexSubImage2D(GL_TEXTURE_2D, 0, update.left, update.top, texWidth, texHeight, GL_BGRA_EXT, GL_UNSIGNED_BYTE, (DWORD*)surface->indexBuffer + update.top * frameWidth + update.left);
+												GLTexSubImage2D(GL_TEXTURE_2D, 0, update.left, update.top, texWidth, texHeight, GL_BGRA_EXT, GL_UNSIGNED_BYTE, (DWORD*)(secondBuffer + update.top * this->pitch) + update.left);
 											else
 											{
 												if (texWidth & 1)
@@ -820,7 +822,7 @@ VOID OpenDraw::RenderMid()
 														++update.right;
 												}
 
-												GLTexSubImage2D(GL_TEXTURE_2D, 0, update.left, update.top, texWidth, texHeight, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, (WORD*)surface->indexBuffer + update.top * frameWidth + update.left);
+												GLTexSubImage2D(GL_TEXTURE_2D, 0, update.left, update.top, texWidth, texHeight, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, (WORD*)(secondBuffer + update.top * this->pitch) + update.left);
 											}
 										}
 									}
@@ -834,19 +836,14 @@ VOID OpenDraw::RenderMid()
 								{
 									oldScale = currScale;
 
-									if (currScale == 1.0f)
-										MemoryCopy(vertices, buffer, 16 * sizeof(FLOAT));
-									else
-									{
-										vertices[1][2] = buffer[1][2] * currScale;
+									buffer[1][4] = texWidth * currScale;
 
-										vertices[2][2] = buffer[2][2] * currScale;
-										vertices[2][3] = buffer[2][3] * currScale;
+									buffer[2][4] = texWidth * currScale;
+									buffer[2][5] = texHeight * currScale;
 
-										vertices[3][3] = buffer[3][3] * currScale;
-									}
+									buffer[3][5] = texHeight * currScale;
 
-									GLBufferSubData(GL_ARRAY_BUFFER, 0, 16 * sizeof(FLOAT), vertices);
+									GLBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(buffer), buffer);
 								}
 
 								GLDrawArrays(GL_TRIANGLE_FAN, 0, 4);
@@ -862,6 +859,7 @@ VOID OpenDraw::RenderMid()
 								WaitForSingleObject(this->hDrawEvent, INFINITE);
 						}
 					} while (!this->isFinish);
+					AlignedFree(secondBuffer);
 				}
 				GLDeleteTextures(1, &textureId);
 			}
@@ -892,21 +890,7 @@ VOID OpenDraw::RenderNew()
 
 	DWORD texSize = (maxTexSize & 0xFFFF) | (maxTexSize << 16);
 
-	FLOAT buffer[8][4] = {
-		{ 0.0f, 0.0f, 0.0f, 0.0f },
-		{ (FLOAT)this->mode.width, 0.0f, texWidth, 0.0f },
-		{ (FLOAT)this->mode.width, (FLOAT)this->mode.height, texWidth, texHeight },
-		{ 0.0f, (FLOAT)this->mode.height, 0.0f, texHeight },
-		{ 0.0f, 0.0f, 0.0f, 1.0f },
-		{ (FLOAT)this->mode.width, 0.0f, 1.0f, 1.0f },
-		{ (FLOAT)this->mode.width, (FLOAT)this->mode.height, 1.0f, 0.0f },
-		{ 0.0f, (FLOAT)this->mode.height, 0.0f, 0.0f }
-	};
-
-	FLOAT vertices[4][4];
-	MemoryCopy(vertices, buffer, 16 * sizeof(FLOAT));
-
-	FLOAT mvpMatrix[4][4] = {
+	FLOAT mvp[4][4] = {
 		{ FLOAT(2.0f / this->mode.width), 0.0f, 0.0f, 0.0f },
 		{ 0.0f, FLOAT(-2.0f / this->mode.height), 0.0f, 0.0f },
 		{ 0.0f, 0.0f, 2.0f, 0.0f },
@@ -930,21 +914,21 @@ VOID OpenDraw::RenderNew()
 		ShaderProgram scaleNx_2x;
 		ShaderProgram scaleNx_3x;
 	} shaders = {
-		{ 0, GLSL_VER_1_30, IDR_STENCIL_VERTEX, IDR_STENCIL_FRAGMENT, (GLfloat*)mvpMatrix },
-		{ 0, GLSL_VER_1_30, IDR_LINEAR_VERTEX, IDR_LINEAR_FRAGMENT, (GLfloat*)mvpMatrix },
-		{ 0, GLSL_VER_1_30, IDR_HERMITE_VERTEX, IDR_HERMITE_FRAGMENT, (GLfloat*)mvpMatrix },
-		{ 0, GLSL_VER_1_30, IDR_CUBIC_VERTEX, IDR_CUBIC_FRAGMENT, (GLfloat*)mvpMatrix },
-		{ 0, GLSL_VER_1_30, IDR_XBRZ_VERTEX, IDR_XBRZ_FRAGMENT_2X, (GLfloat*)mvpMatrix },
-		{ 0, GLSL_VER_1_30, IDR_XBRZ_VERTEX, IDR_XBRZ_FRAGMENT_3X, (GLfloat*)mvpMatrix },
-		{ 0, GLSL_VER_1_30, IDR_XBRZ_VERTEX, IDR_XBRZ_FRAGMENT_4X, (GLfloat*)mvpMatrix },
-		{ 0, GLSL_VER_1_30, IDR_XBRZ_VERTEX, IDR_XBRZ_FRAGMENT_5X, (GLfloat*)mvpMatrix },
-		{ 0, GLSL_VER_1_30, IDR_XBRZ_VERTEX, IDR_XBRZ_FRAGMENT_6X, (GLfloat*)mvpMatrix },
-		{ 0, GLSL_VER_1_30, IDR_SCALEHQ_VERTEX_2X, IDR_SCALEHQ_FRAGMENT_2X, (GLfloat*)mvpMatrix },
-		{ 0, GLSL_VER_1_30, IDR_SCALEHQ_VERTEX_4X, IDR_SCALEHQ_FRAGMENT_4X, (GLfloat*)mvpMatrix },
-		{ 0, GLSL_VER_1_30, IDR_XSAL_VERTEX, IDR_XSAL_FRAGMENT, (GLfloat*)mvpMatrix },
-		{ 0, GLSL_VER_1_30, IDR_EAGLE_VERTEX, IDR_EAGLE_FRAGMENT, (GLfloat*)mvpMatrix },
-		{ 0, GLSL_VER_1_30, IDR_SCALENX_VERTEX_2X, IDR_SCALENX_FRAGMENT_2X, (GLfloat*)mvpMatrix },
-		{ 0, GLSL_VER_1_30, IDR_SCALENX_VERTEX_3X, IDR_SCALENX_FRAGMENT_3X, (GLfloat*)mvpMatrix }
+		{ 0, GLSL_VER_1_30, IDR_STENCIL_VERTEX, IDR_STENCIL_FRAGMENT, (GLfloat*)mvp },
+		{ 0, GLSL_VER_1_30, IDR_LINEAR_VERTEX, IDR_LINEAR_FRAGMENT, NULL },
+		{ 0, GLSL_VER_1_30, IDR_HERMITE_VERTEX, IDR_HERMITE_FRAGMENT, NULL },
+		{ 0, GLSL_VER_1_30, IDR_CUBIC_VERTEX, IDR_CUBIC_FRAGMENT, NULL },
+		{ 0, GLSL_VER_1_30, IDR_XBRZ_VERTEX, IDR_XBRZ_FRAGMENT_2X, NULL },
+		{ 0, GLSL_VER_1_30, IDR_XBRZ_VERTEX, IDR_XBRZ_FRAGMENT_3X, NULL },
+		{ 0, GLSL_VER_1_30, IDR_XBRZ_VERTEX, IDR_XBRZ_FRAGMENT_4X, NULL },
+		{ 0, GLSL_VER_1_30, IDR_XBRZ_VERTEX, IDR_XBRZ_FRAGMENT_5X, NULL },
+		{ 0, GLSL_VER_1_30, IDR_XBRZ_VERTEX, IDR_XBRZ_FRAGMENT_6X, NULL },
+		{ 0, GLSL_VER_1_30, IDR_SCALEHQ_VERTEX_2X, IDR_SCALEHQ_FRAGMENT_2X, NULL },
+		{ 0, GLSL_VER_1_30, IDR_SCALEHQ_VERTEX_4X, IDR_SCALEHQ_FRAGMENT_4X, NULL },
+		{ 0, GLSL_VER_1_30, IDR_XSAL_VERTEX, IDR_XSAL_FRAGMENT, NULL },
+		{ 0, GLSL_VER_1_30, IDR_EAGLE_VERTEX, IDR_EAGLE_FRAGMENT, NULL },
+		{ 0, GLSL_VER_1_30, IDR_SCALENX_VERTEX_2X, IDR_SCALENX_FRAGMENT_2X, NULL },
+		{ 0, GLSL_VER_1_30, IDR_SCALENX_VERTEX_3X, IDR_SCALENX_FRAGMENT_3X, NULL }
 	};
 
 	{
@@ -960,13 +944,42 @@ VOID OpenDraw::RenderNew()
 				{
 					GLBindBuffer(GL_ARRAY_BUFFER, bufferName);
 					{
-						GLBufferData(GL_ARRAY_BUFFER, sizeof(buffer), buffer, GL_STATIC_DRAW);
+						FLOAT buffer[8][8] = {
+							{ 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+							{ (FLOAT)this->mode.width, 0.0f, 0.0f, 1.0f, texWidth, 0.0f, 0.0f, 0.0f },
+							{ (FLOAT)this->mode.width, (FLOAT)this->mode.height, 0.0f, 1.0f, texWidth, texHeight, 0.0f, 0.0f },
+							{ 0.0f, (FLOAT)this->mode.height, 0.0f, 1.0f, 0.0f, texHeight, 0.0f, 0.0f },
+							
+							{ 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f },
+							{ (FLOAT)this->mode.width, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f },
+							{ (FLOAT)this->mode.width, (FLOAT)this->mode.height, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+							{ 0.0f, (FLOAT)this->mode.height, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f }
+						};
 
-						GLEnableVertexAttribArray(0);
-						GLVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 16, (GLvoid*)0);
+						{
+							for (DWORD i = 0; i < 8; ++i)
+							{
+								FLOAT* vector = &buffer[i][0];
+								for (DWORD j = 0; j < 4; ++j)
+								{
+									FLOAT sum = 0.0f;
+									for (DWORD v = 0; v < 4; ++v)
+										sum += mvp[v][j] * vector[v];
 
-						GLEnableVertexAttribArray(1);
-						GLVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 16, (GLvoid*)8);
+									vector[j] = sum;
+								}
+							}
+
+							GLBufferData(GL_ARRAY_BUFFER, sizeof(buffer), buffer, GL_STATIC_DRAW);
+						}
+
+						{
+							GLEnableVertexAttribArray(0);
+							GLVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 32, (GLvoid*)0);
+
+							GLEnableVertexAttribArray(1);
+							GLVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 32, (GLvoid*)16);
+						}
 
 						GLuint textureId;
 						GLGenTextures(1, &textureId);
@@ -1002,6 +1015,8 @@ VOID OpenDraw::RenderNew()
 									FLOAT oldScale = 1.0f;
 									BOOL first = TRUE;
 									DWORD clear = 0;
+
+									BYTE* secondBuffer = (BYTE*)AlignedAlloc(this->mode.height * this->pitch);
 									do
 									{
 										OpenDrawSurface* surface = this->attachedSurface;
@@ -1029,7 +1044,7 @@ VOID OpenDraw::RenderNew()
 											surface->poinetrClip = finClip;
 
 											FLOAT currScale = surface->scale;
-											BOOL isDouble = currScale != 1.0f;
+											MemoryCopy(secondBuffer, surface->indexBuffer, this->mode.height * this->pitch);
 
 											if (state.upscaling)
 											{
@@ -1298,8 +1313,7 @@ VOID OpenDraw::RenderNew()
 											// NEXT UNCHANGED
 											{
 												// Update texture
-												DWORD frameWidth = isDouble ? DWORD(currScale * this->mode.width) : this->mode.width;
-												GLPixelStorei(GL_UNPACK_ROW_LENGTH, frameWidth);
+												GLPixelStorei(GL_UNPACK_ROW_LENGTH, this->mode.width);
 												while (updateClip != finClip)
 												{
 													if (updateClip->isActive)
@@ -1307,28 +1321,18 @@ VOID OpenDraw::RenderNew()
 														RECT update = updateClip->rect;
 														DWORD texWidth = update.right - update.left;
 														DWORD texHeight = update.bottom - update.top;
-														if (isDouble)
-														{
-															update.left = DWORD(currScale * update.left);
-															update.top = DWORD(currScale * update.top);
-															update.right = DWORD(currScale * update.right);
-															update.bottom = DWORD(currScale * update.bottom);
 
-															texWidth = DWORD(currScale * texWidth);
-															texHeight = DWORD(currScale * texHeight);
-														}
-
-														if (texWidth == frameWidth)
+														if (texWidth == this->mode.width)
 														{
 															if (this->mode.bpp == 32)
-																GLTexSubImage2D(GL_TEXTURE_2D, 0, 0, update.top, texWidth, texHeight, GL_BGRA_EXT, GL_UNSIGNED_BYTE, (DWORD*)surface->indexBuffer + update.top * texWidth);
+																GLTexSubImage2D(GL_TEXTURE_2D, 0, 0, update.top, texWidth, texHeight, GL_BGRA_EXT, GL_UNSIGNED_BYTE, secondBuffer + update.top * this->pitch);
 															else
-																GLTexSubImage2D(GL_TEXTURE_2D, 0, 0, update.top, texWidth, texHeight, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, (WORD*)surface->indexBuffer + update.top * texWidth);
+																GLTexSubImage2D(GL_TEXTURE_2D, 0, 0, update.top, texWidth, texHeight, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, secondBuffer + update.top * this->pitch);
 														}
 														else
 														{
 															if (this->mode.bpp == 32)
-																GLTexSubImage2D(GL_TEXTURE_2D, 0, update.left, update.top, texWidth, texHeight, GL_BGRA_EXT, GL_UNSIGNED_BYTE, (DWORD*)surface->indexBuffer + update.top * frameWidth + update.left);
+																GLTexSubImage2D(GL_TEXTURE_2D, 0, update.left, update.top, texWidth, texHeight, GL_BGRA_EXT, GL_UNSIGNED_BYTE, (DWORD*)(secondBuffer + update.top * this->pitch) + update.left);
 															else
 															{
 																if (texWidth & 1)
@@ -1340,7 +1344,7 @@ VOID OpenDraw::RenderNew()
 																		++update.right;
 																}
 
-																GLTexSubImage2D(GL_TEXTURE_2D, 0, update.left, update.top, texWidth, texHeight, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, (WORD*)surface->indexBuffer + update.top * frameWidth + update.left);
+																GLTexSubImage2D(GL_TEXTURE_2D, 0, update.left, update.top, texWidth, texHeight, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, (WORD*)(secondBuffer + update.top * this->pitch) + update.left);
 															}
 														}
 													}
@@ -1354,19 +1358,14 @@ VOID OpenDraw::RenderNew()
 												{
 													oldScale = currScale;
 
-													if (currScale == 1.0f)
-														MemoryCopy(vertices, buffer, 16 * sizeof(FLOAT));
-													else
-													{
-														vertices[1][2] = buffer[1][2] * currScale;
+													buffer[1][4] = texWidth * currScale;
 
-														vertices[2][2] = buffer[2][2] * currScale;
-														vertices[2][3] = buffer[2][3] * currScale;
+													buffer[2][4] = texWidth * currScale;
+													buffer[2][5] = texHeight * currScale;
 
-														vertices[3][3] = buffer[3][3] * currScale;
-													}
+													buffer[3][5] = texHeight * currScale;
 
-													GLBufferSubData(GL_ARRAY_BUFFER, 0, 16 * sizeof(FLOAT), vertices);
+													GLBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(buffer) >> 1, buffer);
 												}
 
 												// Draw into FBO texture
@@ -1464,6 +1463,7 @@ VOID OpenDraw::RenderNew()
 												WaitForSingleObject(this->hDrawEvent, INFINITE);
 										}
 									} while (!this->isFinish);
+									AlignedFree(secondBuffer);
 								}
 
 								if (viewSize)
@@ -1717,6 +1717,9 @@ OpenDraw::OpenDraw(IDraw** last)
 	this->hDraw = NULL;
 
 	this->mode = displayMode;
+	this->pitch = this->mode.width * this->mode.bpp >> 3;
+	if (this->pitch & 3)
+		this->pitch = (this->pitch & 0xFFFFFFFC) + 4;
 
 	this->isNextIsMode = FALSE;
 	this->isTakeSnapshot = FALSE;
@@ -1766,9 +1769,10 @@ HRESULT __stdcall OpenDraw::SetCooperativeLevel(HWND hWnd, DWORD dwFlags)
 
 HRESULT __stdcall OpenDraw::SetDisplayMode(DWORD dwWidth, DWORD dwHeight, DWORD dwBPP)
 {
-	this->mode.width = dwWidth;
-	this->mode.height = dwHeight;
-	this->mode.bpp = dwBPP;
+	this->mode = { dwWidth, dwHeight, dwBPP };
+	this->pitch = this->mode.width * this->mode.bpp >> 3;
+	if (this->pitch & 3)
+		this->pitch = (this->pitch & 0xFFFFFFFC) + 4;
 
 	RECT rect = { 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN) };
 	AdjustWindowRect(&rect, GetWindowLong(this->hWnd, GWL_STYLE), FALSE);

@@ -1,7 +1,7 @@
 /*
 	MIT License
 
-	Copyright (c) 2019 Oleksiy Ryabchun
+	Copyright (c) 2020 Oleksiy Ryabchun
 
 	Permission is hereby granted, free of charge, to any person obtaining a copy
 	of this software and associated documentation files (the "Software"), to deal
@@ -24,12 +24,13 @@
 
 #include "stdafx.h"
 #include "Shellapi.h"
+#include "Mmsystem.h"
 #include "Hooks.h"
 #include "Main.h"
 #include "Config.h"
 #include "Resource.h"
 #include "Window.h"
-#include "MappedFile.h"
+#include "Hooker.h"
 
 #define STYLE_FULL_OLD (WS_VISIBLE | WS_POPUP)
 #define STYLE_FULL_NEW (WS_VISIBLE | WS_POPUP | WS_SYSMENU | WS_CLIPSIBLINGS)
@@ -40,157 +41,157 @@
 #define STYLE_DIALOG (DS_MODALFRAME | WS_POPUP)
 
 const AddressSpace addressArray[] = {
-	// === RUS ======================================================================================================================================
+// === RUS ======================================================================================================================================
 #pragma region RUS
-	0x004D4A5F, 0x0059308B, 0x00000000, 0x00000000, 0x00592D72, 0x004E6BAF, 0x004E6C1D, 0x004E6C22, 0x005B88F0, 0x005B8904, 0x004759BD, 0x00592A2C, 0x005E3D48, 50, LNG_RUSSIAN, // Heroes III Erathia - v1.0 Buka
-	"Герои Меча и Магии III: Возрождение Эрафии",
+	0x004D4A5F, 0x0059308B, 0x00000000, 0x00000000, 0x00592D72, 0x004E6BAF, 0x004E6C1D, 0x005B88F0, 0x004759CB, 0x00592A2C, 0x005E3D48, 50, LNG_RUSSIAN, // Heroes III Erathia - v1.0 Buka
+	0x00418DD4, 0x00418E74, 0x004D5390, "Герои Меча и Магии III: Возрождение Эрафии",
 
-	0x004F2533, 0x005F9649, 0x00000000, 0x00000000, 0x005F9336, 0x005074CF, 0x0050753B, 0x00507540, 0x0063569C, 0x00635688, 0x0047DFF6, 0x005F901D, 0x006793D8, 142, LNG_RUSSIAN, // Heroes III Armageddon - v2.1 Buka
-	"Герои Меча и Магии III: Клинок Армагеддона",
+	0x004F2533, 0x005F9649, 0x00000000, 0x00000000, 0x005F9336, 0x005074CF, 0x0050753B, 0x00635688, 0x0047E004, 0x005F901D, 0x006793D8, 142, LNG_RUSSIAN, // Heroes III Armageddon - v2.1 Buka
+	0x00418A27, 0x00418AC3, 0x004F2CD0, "Герои Меча и Магии III: Клинок Армагеддона",
 
-	0x004F2863, 0x005F9609, 0x00000000, 0x00000000, 0x005F92F6, 0x00507A5F, 0x00507ACB, 0x00507AD0, 0x0063569C, 0x00635688, 0x0047DCB6, 0x005F8FDD, 0x00679400, 142, LNG_RUSSIAN, // Heroes III Armageddon - v2.2 Buka
-	"Герои Меча и Магии III: Клинок Армагеддона",
+	0x004F2863, 0x005F9609, 0x00000000, 0x00000000, 0x005F92F6, 0x00507A5F, 0x00507ACB, 0x00635688, 0x0047DCC4, 0x005F8FDD, 0x00679400, 142, LNG_RUSSIAN, // Heroes III Armageddon - v2.2 Buka
+	0x004189C7, 0x00418A63, 0x004F3000, "Герои Меча и Магии III: Клинок Армагеддона",
 
-	0x004F7EB3, 0x00602379, 0x00000000, 0x00000000, 0x00602066, 0x0050D58F, 0x0050D5FB, 0x0050D600, 0x0063C6BC, 0x0063C6A8, 0x0048051E, 0x00601D4D, 0x00682A10, 142, LNG_RUSSIAN, // Heroes III Shadow - v3.1 Buka
-	"Герои Меча и Магии III: Дыхание Cмерти",
+	0x004F7EB3, 0x00602379, 0x00000000, 0x00000000, 0x00602066, 0x0050D58F, 0x0050D5FB, 0x0063C6A8, 0x0048052C, 0x00601D4D, 0x00682A10, 142, LNG_RUSSIAN, // Heroes III Shadow - v3.1 Buka
+	0x00419787, 0x00419823, 0x004F86A0, "Герои Меча и Магии III: Дыхание Cмерти",
 
-	0x004F7EB3, 0x006021A9, 0x00000000, 0x00000000, 0x00601E96, 0x0050DB1F, 0x0050DB8B, 0x0050DB90, 0x0063E6EC, 0x0063E6D8, 0x0048016E, 0x00601B7D, 0x00684D60, 142, LNG_RUSSIAN, // Heroes III Complete - v4.0 Buka
-	"Герои Меча и Магии III: Полное Собрание",
+	0x004F7EB3, 0x006021A9, 0x00000000, 0x00000000, 0x00601E96, 0x0050DB1F, 0x0050DB8B, 0x0063E6D8, 0x0048017C, 0x00601B7D, 0x00684D60, 142, LNG_RUSSIAN, // Heroes III Complete - v4.0 Buka
+	0x00419707, 0x004197A3, 0x004F86A0, "Герои Меча и Магии III: Полное Собрание",
 
 	// ----------------------------------------------------------------------------------------------------------------------------------------------
 
-	0x004EBA34, 0x005AF329, 0x00000000, 0x00000000, 0x005AF016, 0x004FFFAF, 0x0050001B, 0x00500020, 0x005EB1CC, 0x005EB1B8, 0x0047AF86, 0x005AECFD, 0x00620D58, 146, LNG_RUSSIAN, // Heroes Chronicles Warlords & Underworld & Elements & Dragons - v1.0
-	"Хроники героев",
+	0x004EBA34, 0x005AF329, 0x00000000, 0x00000000, 0x005AF016, 0x004FFFAF, 0x0050001B, 0x005EB1B8, 0x0047AF94, 0x005AECFD, 0x00620D58, 146, LNG_RUSSIAN, // Heroes Chronicles Warlords & Underworld & Elements & Dragons - v1.0
+	0x00418A77, 0x00418B13, 0x004EC1D0, "Хроники героев",
 
-	0x004EB494, 0x005AF2D9, 0x004027E9, 0x00643234, 0x005AEFC6, 0x004FF98F, 0x004FF9FB, 0x004FFA00, 0x005EB1CC, 0x005EB1B8, 0x0047AF36, 0x005AECAD, 0x00620D80, 146, LNG_RUSSIAN, // Heroes Chronicles Beastmaster - v1.0
-	"Хроники героев: Восстание",
+	0x004EB494, 0x005AF2D9, 0x004027E9, 0x00643234, 0x005AEFC6, 0x004FF98F, 0x004FF9FB, 0x005EB1B8, 0x0047AF44, 0x005AECAD, 0x00620D80, 146, LNG_RUSSIAN, // Heroes Chronicles Beastmaster - v1.0
+	0x00418AF7, 0x00418B93, 0x004EBC30, "Хроники героев: Восстание",
 
-	0x004EB494, 0x005AF2D9, 0x004027E9, 0x0064322C, 0x005AEFC6, 0x004FF98F, 0x004FF9FB, 0x004FFA00, 0x005EB1CC, 0x005EB1B8, 0x0047AF36, 0x005AECAD, 0x00620D80, 146, LNG_RUSSIAN, // Heroes Chronicles Sword - v1.0
-	"Хроники героев: Ледяной Клинок",
-#pragma endregion 
+	0x004EB494, 0x005AF2D9, 0x004027E9, 0x0064322C, 0x005AEFC6, 0x004FF98F, 0x004FF9FB, 0x005EB1B8, 0x0047AF44, 0x005AECAD, 0x00620D80, 146, LNG_RUSSIAN, // Heroes Chronicles Sword - v1.0
+	0x00418AF7, 0x00418B93, 0x004EBC30, "Хроники героев: Ледяной Клинок",
+#pragma endregion
 
-	// === ENG ======================================================================================================================================
+// === ENG ======================================================================================================================================
 #pragma region ENG
-	0x004D3363, 0x0058E558, 0x00000000, 0x00000000, 0x0058E246, 0x004E568F, 0x004E56FB, 0x004E5700, 0x005B58B4, 0x005B58A0, 0x004753D2, 0x0058DF2F, 0x005E0D48, 50, LNG_ENGLISH, // Heroes III Erathia - v1.0
-	"Heroes of Might and Magic III: The Restoration of Erathia",
+	0x004D3363, 0x0058E558, 0x00000000, 0x00000000, 0x0058E246, 0x004E568F, 0x004E56FB, 0x005B58A0, 0x004753E0, 0x0058DF2F, 0x005E0D48, 50, LNG_ENGLISH, // Heroes III Erathia - v1.0
+	0x00418BD9, 0x00418C79, 0x004D3CE0, "Heroes of Might and Magic III: The Restoration of Erathia",
 
-	0x0041E573, 0x004210B8, 0x00000000, 0x00000000, 0x00420DA6, 0x004179AF, 0x00417A1B, 0x00417A20, 0x005B7D64, 0x005B7D50, 0x0048B7A2, 0x00420A8F, 0x005E3900, 50, LNG_ENGLISH, // Heroes III Erathia - v1.1
-	"Heroes of Might and Magic III: The Restoration of Erathia",
+	0x0041E573, 0x004210B8, 0x00000000, 0x00000000, 0x00420DA6, 0x004179AF, 0x00417A1B, 0x005B7D50, 0x0048B7B0, 0x00420A8F, 0x005E3900, 50, LNG_ENGLISH, // Heroes III Erathia - v1.1
+	0x00438229, 0x004382C9, 0x0041EE70, "Heroes of Might and Magic III: The Restoration of Erathia",
 
-	0x0041E523, 0x00421078, 0x00000000, 0x00000000, 0x00420D66, 0x0041797F, 0x004179EB, 0x004179F0, 0x005B6D54, 0x005B6D40, 0x0048BB12, 0x00420A4F, 0x005E2900, 50, LNG_ENGLISH, // Heroes III Erathia - v1.2
-	"Heroes of Might and Magic III: The Restoration of Erathia",
+	0x0041E523, 0x00421078, 0x00000000, 0x00000000, 0x00420D66, 0x0041797F, 0x004179EB, 0x005B6D40, 0x0048BB20, 0x00420A4F, 0x005E2900, 50, LNG_ENGLISH, // Heroes III Erathia - v1.2
+	0x00438119, 0x004381B9, 0x0041EE30, "Heroes of Might and Magic III: The Restoration of Erathia",
 
-	0x004F58F3, 0x005D9679, 0x00000000, 0x00000000, 0x005D9366, 0x0050ABEF, 0x0050AC5B, 0x0050AC60, 0x00613644, 0x00613630, 0x0047F81E, 0x005D904D, 0x006559A0, 141, LNG_ENGLISH, // Heroes III Erathia - v1.3
-	"Heroes of Might and Magic III: The Restoration of Erathia",
+	0x004F58F3, 0x005D9679, 0x00000000, 0x00000000, 0x005D9366, 0x0050ABEF, 0x0050AC5B, 0x00613630, 0x0047F82C, 0x005D904D, 0x006559A0, 141, LNG_ENGLISH, // Heroes III Erathia - v1.3
+	0x004194B7, 0x00419553, 0x004F60C0, "Heroes of Might and Magic III: The Restoration of Erathia",
 
-	0x004F5583, 0x005D8F69, 0x00000000, 0x00000000, 0x005D8C56, 0x0050AAAF, 0x0050AB1B, 0x0050AB20, 0x00613644, 0x00613630, 0x0047FC3E, 0x005D893D, 0x006559B0, 141, LNG_ENGLISH, // Heroes III Erathia - v1.4
-	"Heroes of Might and Magic III: The Restoration of Erathia",
-
-	// ----------------------------------------------------------------------------------------------------------------------------------------------
-
-	0x004EB283, 0x005EEFD8, 0x00000000, 0x00000000, 0x005EECC6, 0x0050041F, 0x0050048B, 0x00500490, 0x00628F28, 0x00628F14, 0x0047A472, 0x005EE9AF, 0x006692D0, 90, LNG_ENGLISH, // Heroes III Armageddon - v2.0
-	"Heroes of Might and Magic III: Armageddon’s Blade",
-
-	0x004F5C43, 0x00600299, 0x00000000, 0x00000000, 0x005FFF86, 0x0050B6AF, 0x0050B71B, 0x0050B720, 0x0063B68C, 0x0063B678, 0x0048023E, 0x005FFC6D, 0x006808F0, 141, LNG_ENGLISH, // Heroes III Armageddon - v2.1
-	"Heroes of Might and Magic III: Armageddon’s Blade",
-
-	0x004F5963, 0x005FFBF9, 0x00000000, 0x00000000, 0x005FF8E6, 0x0050B1BF, 0x0050B22B, 0x0050B230, 0x0063B68C, 0x0063B678, 0x0048052E, 0x005FF5CD, 0x006808F8, 141, LNG_ENGLISH, // Heroes III Armageddon - v2.2
-	"Heroes of Might and Magic III: Armageddon’s Blade",
+	0x004F5583, 0x005D8F69, 0x00000000, 0x00000000, 0x005D8C56, 0x0050AAAF, 0x0050AB1B, 0x00613630, 0x0047FC4C, 0x005D893D, 0x006559B0, 141, LNG_ENGLISH, // Heroes III Erathia - v1.4
+	0x00419587, 0x00419623, 0x004F5D50, "Heroes of Might and Magic III: The Restoration of Erathia",
 
 	// ----------------------------------------------------------------------------------------------------------------------------------------------
 
-	0x004F7D73, 0x006027E9, 0x00000000, 0x00000000, 0x006024D6, 0x0050D93F, 0x0050D9AB, 0x0050D9B0, 0x0063E6DC, 0x0063E6C8, 0x004802DE, 0x006021BD, 0x00684A08, 141, LNG_ENGLISH, // Heroes III Shadow - v3.0
-	"Heroes of Might and Magic III: The Shadow of Death",
+	0x004EB283, 0x005EEFD8, 0x00000000, 0x00000000, 0x005EECC6, 0x0050041F, 0x0050048B, 0x00628F14, 0x0047A480, 0x005EE9AF, 0x006692D0, 90, LNG_ENGLISH, // Heroes III Armageddon - v2.0
+	0x00419299, 0x00419339, 0x004EBA50, "Heroes of Might and Magic III: Armageddon’s Blade",
 
-	0x004F85B3, 0x006027E9, 0x00000000, 0x00000000, 0x006024D6, 0x0050DE4F, 0x0050DEBB, 0x0050DEC0, 0x0063E6DC, 0x0063E6C8, 0x004802EE, 0x006021BD, 0x00684A08, 141, LNG_ENGLISH, // Heroes III Shadow - v3.1
-	"Heroes of Might and Magic III: The Shadow of Death",
+	0x004F5C43, 0x00600299, 0x00000000, 0x00000000, 0x005FFF86, 0x0050B6AF, 0x0050B71B, 0x0063B678, 0x0048024C, 0x005FFC6D, 0x006808F0, 141, LNG_ENGLISH, // Heroes III Armageddon - v2.1
+	0x00419557, 0x004195F3, 0x004F6410, "Heroes of Might and Magic III: Armageddon’s Blade",
 
-	0x004F8193, 0x00602149, 0x00000000, 0x00000000, 0x00601E36, 0x0050D8CF, 0x0050D93B, 0x0050D940, 0x0063D6DC, 0x0063D6C8, 0x0047FE9E, 0x00601B1D, 0x00683A10, 141, LNG_ENGLISH, // Heroes III Shadow - v3.2
-	"Heroes of Might and Magic III: The Shadow of Death",
+	0x004F5963, 0x005FFBF9, 0x00000000, 0x00000000, 0x005FF8E6, 0x0050B1BF, 0x0050B22B, 0x0063B678, 0x0048053C, 0x005FF5CD, 0x006808F8, 141, LNG_ENGLISH, // Heroes III Armageddon - v2.2
+	0x00419507, 0x004195A3, 0x004F6130, "Heroes of Might and Magic III: Armageddon’s Blade",
 
 	// ----------------------------------------------------------------------------------------------------------------------------------------------
 
-	0x004F7B03, 0x00601B89, 0x00000000, 0x00000000, 0x00601876, 0x0050D6CF, 0x0050D73B, 0x0050D740, 0x0063D6DC, 0x0063D6C8, 0x0048057E, 0x0060155D, 0x006839C0, 141, LNG_ENGLISH, // Heroes III Complete - v4.0
-	"Heroes of Might and Magic III: Complete",
+	0x004F7D73, 0x006027E9, 0x00000000, 0x00000000, 0x006024D6, 0x0050D93F, 0x0050D9AB, 0x0063E6C8, 0x004802EC, 0x006021BD, 0x00684A08, 141, LNG_ENGLISH, // Heroes III Shadow - v3.0
+	0x00419727, 0x004197C3, 0x004F8560, "Heroes of Might and Magic III: The Shadow of Death",
+
+	0x004F85B3, 0x006027E9, 0x00000000, 0x00000000, 0x006024D6, 0x0050DE4F, 0x0050DEBB, 0x0063E6C8, 0x004802FC, 0x006021BD, 0x00684A08, 141, LNG_ENGLISH, // Heroes III Shadow - v3.1
+	0x00419707, 0x004197A3, 0x004F8DA0, "Heroes of Might and Magic III: The Shadow of Death",
+
+	0x004F8193, 0x00602149, 0x00000000, 0x00000000, 0x00601E36, 0x0050D8CF, 0x0050D93B, 0x0063D6C8, 0x0047FEAC, 0x00601B1D, 0x00683A10, 141, LNG_ENGLISH, // Heroes III Shadow - v3.2
+	0x00419657, 0x004196F3, 0x004F8980, "Heroes of Might and Magic III: The Shadow of Death",
+
+	// ----------------------------------------------------------------------------------------------------------------------------------------------
+
+	0x004F7B03, 0x00601B89, 0x00000000, 0x00000000, 0x00601876, 0x0050D6CF, 0x0050D73B, 0x0063D6C8, 0x0048058C, 0x0060155D, 0x006839C0, 141, LNG_ENGLISH, // Heroes III Complete - v4.0
+	0x004196F7, 0x00419793, 0x004F82F0, "Heroes of Might and Magic III: Complete",
 
 	// ==============================================================================================================================================
 
-	0x004F0033, 0x005B5129, 0x004022FD, 0x0063B6C0, 0x005B4E16, 0x00504C8F, 0x00504CFB, 0x00504D00, 0x005EFE3C, 0x005EFE28, 0x0047DF4E, 0x005B4AFD, 0x00625B78, 145, LNG_ENGLISH, // Heroes Chronicles Warlords - v1.0
-	"Heroes Chronicles: Warlords of the Wasteland",
+	0x004F0033, 0x005B5129, 0x004022FD, 0x0063B6C0, 0x005B4E16, 0x00504C8F, 0x00504CFB, 0x005EFE28, 0x0047DF5C, 0x005B4AFD, 0x00625B78, 145, LNG_ENGLISH, // Heroes Chronicles Warlords - v1.0
+	0x00419697, 0x00419733, 0x004F07F0, "Heroes Chronicles: Warlords of the Wasteland",
 
-	0x004F0033, 0x005B5129, 0x004022FD, 0x0063B6B8, 0x005B4E16, 0x00504C8F, 0x00504CFB, 0x00504D00, 0x005EFE3C, 0x005EFE28, 0x0047DF4E, 0x005B4AFD, 0x00625B78, 145, LNG_ENGLISH, // Heroes Chronicles Underworld - v1.0
-	"Heroes Chronicles: Conquest of the Underworld",
+	0x004F0033, 0x005B5129, 0x004022FD, 0x0063B6B8, 0x005B4E16, 0x00504C8F, 0x00504CFB, 0x005EFE28, 0x0047DF5C, 0x005B4AFD, 0x00625B78, 145, LNG_ENGLISH, // Heroes Chronicles Underworld - v1.0
+	0x00419697, 0x00419733, 0x004F07F0, "Heroes Chronicles: Conquest of the Underworld",
 
-	0x004EFE04, 0x005B5469, 0x004022FD, 0x0063B6C0, 0x005B5156, 0x00504B6F, 0x00504BDB, 0x00504BE0, 0x005EFE3C, 0x005EFE28, 0x0047DA0E, 0x005B4E3D, 0x00625B68, 145, LNG_ENGLISH, // Heroes Chronicles Elements - v1.0
-	"Heroes Chronicles: Masters of the Elements",
+	0x004EFE04, 0x005B5469, 0x004022FD, 0x0063B6C0, 0x005B5156, 0x00504B6F, 0x00504BDB, 0x005EFE28, 0x0047DA1C, 0x005B4E3D, 0x00625B68, 145, LNG_ENGLISH, // Heroes Chronicles Elements - v1.0
+	0x00419687, 0x00419723, 0x004F05D0, "Heroes Chronicles: Masters of the Elements",
 
-	0x004EFE04, 0x005B5469, 0x004022FD, 0x0063B6B8, 0x005B5156, 0x00504B6F, 0x00504BDB, 0x00504BE0, 0x005EFE3C, 0x005EFE28, 0x0047DA0E, 0x005B4E3D, 0x00625B70, 145, LNG_ENGLISH, // Heroes Chronicles Dragons - v1.0
-	"Heroes Chronicles: Clash of the Dragons",
+	0x004EFE04, 0x005B5469, 0x004022FD, 0x0063B6B8, 0x005B5156, 0x00504B6F, 0x00504BDB, 0x005EFE28, 0x0047DA1C, 0x005B4E3D, 0x00625B70, 145, LNG_ENGLISH, // Heroes Chronicles Dragons - v1.0
+	0x00419687, 0x00419723, 0x004F05D0, "Heroes Chronicles: Clash of the Dragons",
 
-	0x004EFA84, 0x005B51B9, 0x00000000, 0x00000000, 0x005B4EA6, 0x00504B6F, 0x00504BDB, 0x00504BE0, 0x005EFE3C, 0x005EFE28, 0x0047D8DE, 0x005B4B8D, 0x00625B70, 145, LNG_ENGLISH, // Heroes Chronicles WorldTree - v1.0
-	"Heroes Chronicles: The World Tree",
+	0x004EFA84, 0x005B51B9, 0x00000000, 0x00000000, 0x005B4EA6, 0x00504B6F, 0x00504BDB, 0x005EFE28, 0x0047D8EC, 0x005B4B8D, 0x00625B70, 145, LNG_ENGLISH, // Heroes Chronicles WorldTree - v1.0
+	0x00419637, 0x004196D3, 0x004F02B0, "Heroes Chronicles: The World Tree",
 
-	0x004EF824, 0x005B5249, 0x00000000, 0x00000000, 0x005B4F36, 0x0050418F, 0x005041FB, 0x00504200, 0x005F11BC, 0x005F11A8, 0x0047D36E, 0x005B4C1D, 0x00627F60, 145, LNG_ENGLISH, // Heroes Chronicles FieryMoon - v1.0
-	"Heroes Chronicles: The Fiery Moon",
+	0x004EF824, 0x005B5249, 0x00000000, 0x00000000, 0x005B4F36, 0x0050418F, 0x005041FB, 0x005F11A8, 0x0047D37C, 0x005B4C1D, 0x00627F60, 145, LNG_ENGLISH, // Heroes Chronicles FieryMoon - v1.0
+	0x00419657, 0x004196F3, 0x004F0050, "Heroes Chronicles: The Fiery Moon",
 
-	0x004EF874, 0x005B4C09, 0x00401050, 0x00636868, 0x005B48F6, 0x0050460F, 0x0050467B, 0x00504680, 0x005F11CC, 0x005F11B8, 0x0047D5FE, 0x005B45DD, 0x00626FA0, 145, LNG_ENGLISH, // Heroes Chronicles Beastmaster - v1.0
-	"Heroes Chronicles: Revolt of the Beastmasters",
+	0x004EF874, 0x005B4C09, 0x00401050, 0x00636868, 0x005B48F6, 0x0050460F, 0x0050467B, 0x005F11B8, 0x0047D60C, 0x005B45DD, 0x00626FA0, 145, LNG_ENGLISH, // Heroes Chronicles Beastmaster - v1.0
+	0x004196B7, 0x00419753, 0x004F0040, "Heroes Chronicles: Revolt of the Beastmasters",
 
-	0x004EF914, 0x005B51B9, 0x005AFABC, 0x0064A494, 0x005B4EA6, 0x0050459F, 0x0050460B, 0x00504610, 0x005F11CC, 0x005F11B8, 0x0047DB4E, 0x005B4B8D, 0x00627F98, 145, LNG_ENGLISH, // Heroes Chronicles Beastmaster - v1.0
-	"Heroes Chronicles: Revolt of the Beastmasters",
+	0x004EF914, 0x005B51B9, 0x005AFABC, 0x0064A494, 0x005B4EA6, 0x0050459F, 0x0050460B, 0x005F11B8, 0x0047DB5C, 0x005B4B8D, 0x00627F98, 145, LNG_ENGLISH, // Heroes Chronicles Beastmaster - v1.0
+	0x004196E7, 0x00419783, 0x004F00E0, "Heroes Chronicles: Revolt of the Beastmasters",
 
-	0x004EF874, 0x005B4C09, 0x00401050, 0x00636878, 0x005B48F6, 0x0050460F, 0x0050467B, 0x00504680, 0x005F11CC, 0x005F11B8, 0x0047D5FE, 0x005AECAD, 0x00626FA8, 145, LNG_ENGLISH, // Heroes Chronicles Sword - v1.0
-	"Heroes Chronicles: The Sword of Frost",
+	0x004EF874, 0x005B4C09, 0x00401050, 0x00636878, 0x005B48F6, 0x0050460F, 0x0050467B, 0x005F11B8, 0x0047D60C, 0x005AECAD, 0x00626FA8, 145, LNG_ENGLISH, // Heroes Chronicles Sword - v1.0
+	0x004196B7, 0x00419753, 0x004F0040, "Heroes Chronicles: The Sword of Frost",
 
-	0x004EF914, 0x005B51B9, 0x005AFABC, 0x0064A484, 0x005B4EA6, 0x0050459F, 0x0050460B, 0x00504610, 0x005F11CC, 0x005F11B8, 0x0047DB4E, 0x005B4B8D, 0x00627F98, 145, LNG_ENGLISH, // Heroes Chronicles Beastmaster - v1.0
-	"Heroes Chronicles: The Sword of Frost",
+	0x004EF914, 0x005B51B9, 0x005AFABC, 0x0064A484, 0x005B4EA6, 0x0050459F, 0x0050460B, 0x005F11B8, 0x0047DB5C, 0x005B4B8D, 0x00627F98, 145, LNG_ENGLISH, // Heroes Chronicles Beastmaster - v1.0
+	0x004196E7, 0x00419783, 0x004F00E0, "Heroes Chronicles: The Sword of Frost",
 #pragma endregion
 
-	// === GER ======================================================================================================================================
+// === GER ======================================================================================================================================
 #pragma region GER
-	0x004D5253, 0x00591B29, 0x00000000, 0x00000000, 0x00591816, 0x004E714F, 0x004E71BB, 0x004E71C0, 0x005B88B4, 0x005B88A0, 0x004761CE, 0x005914FD, 0x005E3E68, 50, LNG_ENGLISH, // Heroes III Erathia - v1.2
-	"Heroes of Might and Magic III: The Restoration of Erathia",
+	0x004D5253, 0x00591B29, 0x00000000, 0x00000000, 0x00591816, 0x004E714F, 0x004E71BB, 0x005B88A0, 0x004761DC, 0x005914FD, 0x005E3E68, 50, LNG_ENGLISH, // Heroes III Erathia - v1.2
+	0x00418B77, 0x00418C13, 0x004D5B60, "Heroes of Might and Magic III: The Restoration of Erathia",
 
 	// ==============================================================================================================================================
 
-	0x004EFA04, 0x005B51C9, 0x00000000, 0x00000000, 0x005B4EB6, 0x0050475F, 0x005047CB, 0x005047D0, 0x005F11BC, 0x005F11A8, 0x0047D25E, 0x005B4B9D, 0x00627FA8, 145, LNG_ENGLISH, // Heroes Chronicles Dragons - GOG - v1.0
-	"Heroes Chronicles: Clash of the Dragons",
+	0x004EFA04, 0x005B51C9, 0x00000000, 0x00000000, 0x005B4EB6, 0x0050475F, 0x005047CB, 0x005F11A8, 0x0047D26C, 0x005B4B9D, 0x00627FA8, 145, LNG_ENGLISH, // Heroes Chronicles Dragons - GOG - v1.0
+	0x004195C7, 0x00419663, 0x004F01D0, "Heroes Chronicles: Clash of the Dragons",
 #pragma endregion
 
-	// === FRA ======================================================================================================================================
+// === FRA ======================================================================================================================================
 #pragma region FRA
-	0x004F61C3, 0x006003D9, 0x00000000, 0x00000000, 0x006000C6, 0x0050BA6F, 0x0050BADB, 0x0050BAE0, 0x0063B68C, 0x0063B678, 0x004804CE, 0x005FFDAD, 0x006809D0, 141, LNG_ENGLISH, // Heroes III Armageddon - v2.1
-	"Heroes of Might and Magic III: Armageddon’s Blade",
+	0x004F61C3, 0x006003D9, 0x00000000, 0x00000000, 0x006000C6, 0x0050BA6F, 0x0050BADB, 0x0063B678, 0x004804DC, 0x005FFDAD, 0x006809D0, 141, LNG_ENGLISH, // Heroes III Armageddon - v2.1
+	0x004195A7, 0x00419643, 0x004F6990, "Heroes of Might and Magic III: Armageddon’s Blade",
 
-	0x004F8163, 0x006028F9, 0x00000000, 0x00000000, 0x006025E6, 0x0050DBBF, 0x0050DC2B, 0x0050DC30, 0x0063E6EC, 0x0063E6D8, 0x0048072E, 0x006022CD, 0x00684AD0, 141, LNG_ENGLISH, // Heroes III Shadow - v3.1
-	"Heroes of Might and Magic III: The Shadow of Death",
+	0x004F8163, 0x006028F9, 0x00000000, 0x00000000, 0x006025E6, 0x0050DBBF, 0x0050DC2B, 0x0063E6D8, 0x0048073C, 0x006022CD, 0x00684AD0, 141, LNG_ENGLISH, // Heroes III Shadow - v3.1
+	0x00419707, 0x004197A3, 0x004F8950, "Heroes of Might and Magic III: The Shadow of Death",
 #pragma endregion
 
-	// === POL ======================================================================================================================================
+// === POL ======================================================================================================================================
 #pragma region POL
-	0x004F5723, 0x005FED57, 0x00000000, 0x00000000, 0x006000B6, 0x0050AFAF, 0x0050B01B, 0x0050B020, 0x0063C68C, 0x0063C678, 0x0047FDAE, 0x005FFD9D, 0x006818F0, 141, LNG_ENGLISH, // Heroes III Armageddon - v2.1
-	"Heroes of Might and Magic III: Armageddon’s Blade",
+	0x004F5723, 0x005FED57, 0x00000000, 0x00000000, 0x006000B6, 0x0050AFAF, 0x0050B01B, 0x0063C678, 0x0047FDBC, 0x005FFD9D, 0x006818F0, 141, LNG_ENGLISH, // Heroes III Armageddon - v2.1
+	0x00419617, 0x004196B3, 0x004F5EF0, "Heroes of Might and Magic III: Armageddon’s Blade",
 
-	0x004F7AF3, 0x00600ED7, 0x00000000, 0x00000000, 0x00602236, 0x0050D66F, 0x0050D6DB, 0x0050D6E0, 0x0063E6EC, 0x0063E6D8, 0x0047FF5E, 0x00601F1D, 0x00684A20, 141, LNG_ENGLISH, // Heroes III Shadow - v3.1
-	"Heroes of Might and Magic III: The Shadow of Death",
+	0x004F7AF3, 0x00600ED7, 0x00000000, 0x00000000, 0x00602236, 0x0050D66F, 0x0050D6DB, 0x0063E6D8, 0x0047FF6C, 0x00601F1D, 0x00684A20, 141, LNG_ENGLISH, // Heroes III Shadow - v3.1
+	0x00419707, 0x004197A3, 0x004F82E0, "Heroes of Might and Magic III: The Shadow of Death",
 
-	0x004F78D3, 0x00602179, 0x00000000, 0x00000000, 0x00601E66, 0x0050D50F, 0x0050D57B, 0x0050D580, 0x0063E6EC, 0x0063E6D8, 0x0047FD2E, 0x00601B4D, 0x00684A18, 141, LNG_ENGLISH, // Heroes III Shadow - v3.2
-	"Heroes of Might and Magic III: The Shadow of Death",
+	0x004F78D3, 0x00602179, 0x00000000, 0x00000000, 0x00601E66, 0x0050D50F, 0x0050D57B, 0x0063E6D8, 0x0047FD3C, 0x00601B4D, 0x00684A18, 141, LNG_ENGLISH, // Heroes III Shadow - v3.2
+	0x00419837, 0x004198D3, 0x004F80C0, "Heroes of Might and Magic III: The Shadow of Death",
 
-	0x004F5993, 0x005FE337, 0x00000000, 0x00000000, 0x005FF696, 0x0050B70F, 0x0050B77B, 0x0050B780, 0x0063B68C, 0x0063B678, 0x0047FD8E, 0x005FF37D, 0x00680900, 141, LNG_ENGLISH, // Heroes III Shadow - v3.2 / Armageddon - v2.2
-	"Heroes of Might and Magic III: The Shadow of Death",
+	0x004F5993, 0x005FE337, 0x00000000, 0x00000000, 0x005FF696, 0x0050B70F, 0x0050B77B, 0x0063B678, 0x0047FD9C, 0x005FF37D, 0x00680900, 141, LNG_ENGLISH, // Heroes III Shadow - v3.2 / Armageddon - v2.2
+	0x00419657, 0x004196F3, 0x004F6160, "Heroes of Might and Magic III: The Shadow of Death",
 #pragma endregion
 
-	// ==============================================================================================================================================
+// ==============================================================================================================================================
 #pragma region Others
-	0x004F8193, 0x00602149, 0x0067FEB2, 0x00352E33, 0x00601E36, 0x0050D8CF, 0x0050D93B, 0x0050D940, 0x0063D6DC, 0x0063D6C8, 0x0047FE9E, 0x00601B1D, 0x00683A10, 141, LNG_ENGLISH, // Heroes III WoG - v3.52f - v3.58f
-	"Heroes of Might and Magic III: In the Wake of Gods",
+	0x004F8193, 0x00602149, 0x0067FEB2, 0x00352E33, 0x00601E36, 0x0050D8CF, 0x0050D93B, 0x0063D6C8, 0x0047FEAC, 0x00601B1D, 0x00683A10, 141, LNG_ENGLISH, // Heroes III WoG - v3.52f - v3.58f
+	0x00419657, 0x004196F3, 0x004F8980, "Heroes of Might and Magic III: In the Wake of Gods",
 
-	0x004F8193, 0x00602149, 0x0067FEB2, 0x00506F4D, 0x00601E36, 0x0050D8CF, 0x0050D93B, 0x0050D940, 0x0063D6DC, 0x0063D6C8, 0x0047FE9E, 0x00601B1D, 0x00683A10, 141, LNG_ENGLISH, // Heroes III MoP - v3.7.2.7
-	"Heroes of Might and Magic III: Master of Puppets",
+	0x004F8193, 0x00602149, 0x0067FEB2, 0x00506F4D, 0x00601E36, 0x0050D8CF, 0x0050D93B, 0x0063D6C8, 0x0047FEAC, 0x00601B1D, 0x00683A10, 141, LNG_ENGLISH, // Heroes III MoP - v3.7.2.7
+	0x00419657, 0x004196F3, 0x004F8980, "Heroes of Might and Magic III: Master of Puppets",
 
-	0x004F8193, 0x00602149, 0x00639C01, 0x00639BF4, 0x00601E36, 0x0050D8CF, 0x0050D93B, 0x0050D940, 0x0063D6DC, 0x0063D6C8, 0x0047FE9E, 0x00601B1D, 0x00683A10, 141, LNG_ENGLISH, // Heroes III HotA - v1.5.3
-	"Heroes of Might and Magic III: Horn of the Abyss"
+	0x004F8193, 0x00602149, 0x00639C01, 0x00639BF4, 0x00601E36, 0x0050D8CF, 0x0050D93B, 0x0063D6C8, 0x0047FEAC, 0x00601B1D, 0x00683A10, 141, LNG_ENGLISH, // Heroes III HotA - v1.5.3
+	0x00419657, 0x004196F3, 0x004F8980, "Heroes of Might and Magic III: Horn of the Abyss"
 #pragma endregion
 };
 
@@ -200,211 +201,13 @@ const UINT menuIds[] = { IDM_FILT_OFF, IDM_FILT_LINEAR, IDM_FILT_HERMITE, IDM_FI
 	IDM_FILT_XSAL_2X,
 	IDM_FILT_EAGLE_2X,
 	IDM_FILT_SCALENX_2X, IDM_FILT_SCALENX_3X,
-	IDM_PATCH_CPU,
-	IDM_REND_AUTO, IDM_REND_GL1, IDM_REND_GL2, IDM_REND_GL3
-};
+	IDM_PATCH_CPU, IDM_SMOOTH_SCROLL,
+	IDM_REND_AUTO, IDM_REND_GL1, IDM_REND_GL2, IDM_REND_GL3 };
 
 namespace Hooks
 {
 	const AddressSpace* hookSpace;
-	HMODULE hModule;
-	INT baseOffset;
-
-#pragma region Hook helpers
-	BOOL __fastcall PatchRedirect(DWORD addr, VOID* hook, BYTE instruction)
-	{
-		DWORD address = addr + baseOffset;
-
-		DWORD old_prot;
-		if (VirtualProtect((VOID*)address, 5, PAGE_EXECUTE_READWRITE, &old_prot))
-		{
-			BYTE* jump = (BYTE*)address;
-			*jump = instruction;
-			++jump;
-			*(DWORD*)jump = (DWORD)hook - (DWORD)address - 5;
-
-			VirtualProtect((VOID*)address, 5, old_prot, &old_prot);
-
-			return TRUE;
-		}
-		return FALSE;
-	}
-
-	BOOL __fastcall PatchHook(DWORD addr, VOID* hook)
-	{
-		return PatchRedirect(addr, hook, 0xE9);
-	}
-
-	BOOL __fastcall PatchCall(DWORD addr, VOID* hook)
-	{
-		return PatchRedirect(addr, hook, 0xE8);
-	}
-
-	BOOL __fastcall PatchNop(DWORD addr, DWORD size)
-	{
-		DWORD address = addr + baseOffset;
-
-		DWORD old_prot;
-		if (VirtualProtect((VOID*)address, size, PAGE_EXECUTE_READWRITE, &old_prot))
-		{
-			MemorySet((VOID*)address, 0x90, size);
-			VirtualProtect((VOID*)address, size, old_prot, &old_prot);
-
-			return TRUE;
-		}
-		return FALSE;
-	}
-
-	BOOL __fastcall PatchBlock(DWORD addr, VOID* block, DWORD size)
-	{
-		DWORD address = addr + baseOffset;
-
-		DWORD old_prot;
-		if (VirtualProtect((VOID*)address, size, PAGE_EXECUTE_READWRITE, &old_prot))
-		{
-			switch (size)
-			{
-			case 4:
-				*(DWORD*)address = *(DWORD*)block;
-				break;
-			case 2:
-				*(WORD*)address = *(WORD*)block;
-				break;
-			case 1:
-				*(BYTE*)address = *(BYTE*)block;
-				break;
-			default:
-				MemoryCopy((VOID*)address, block, size);
-				break;
-			}
-
-			VirtualProtect((VOID*)address, size, old_prot, &old_prot);
-
-			return TRUE;
-		}
-		return FALSE;
-	}
-
-	BOOL __fastcall ReadBlock(DWORD addr, VOID* block, DWORD size)
-	{
-		DWORD address = addr + baseOffset;
-
-		DWORD old_prot;
-		if (VirtualProtect((VOID*)address, size, PAGE_READONLY, &old_prot))
-		{
-			switch (size)
-			{
-			case 4:
-				*(DWORD*)block = *(DWORD*)address;
-				break;
-			case 2:
-				*(WORD*)block = *(WORD*)address;
-				break;
-			case 1:
-				*(BYTE*)block = *(BYTE*)address;
-				break;
-			default:
-				MemoryCopy(block, (VOID*)address, size);
-				break;
-			}
-
-			VirtualProtect((VOID*)address, size, old_prot, &old_prot);
-
-			return TRUE;
-		}
-		return FALSE;
-	}
-
-	BOOL __fastcall PatchWord(DWORD addr, WORD value)
-	{
-		return PatchBlock(addr, &value, sizeof(value));
-	}
-
-	BOOL __fastcall PatchDWord(DWORD addr, DWORD value)
-	{
-		return PatchBlock(addr, &value, sizeof(value));
-	}
-
-	BOOL __fastcall PatchByte(DWORD addr, BYTE value)
-	{
-		return PatchBlock(addr, &value, sizeof(value));
-	}
-
-	BOOL __fastcall ReadWord(DWORD addr, WORD* value)
-	{
-		return ReadBlock(addr, value, sizeof(*value));
-	}
-
-	BOOL __fastcall ReadDWord(DWORD addr, DWORD* value)
-	{
-		return ReadBlock(addr, value, sizeof(*value));
-	}
-
-	BOOL __fastcall ReadByte(DWORD addr, BYTE* value)
-	{
-		return ReadBlock(addr, value, sizeof(*value));
-	}
-
-	DWORD __fastcall PatchFunction(MappedFile* file, const CHAR* function, VOID* addr)
-	{
-		DWORD res = NULL;
-
-		DWORD base = (DWORD)file->hModule;
-		PIMAGE_NT_HEADERS headNT = (PIMAGE_NT_HEADERS)((BYTE*)base + ((PIMAGE_DOS_HEADER)file->hModule)->e_lfanew);
-
-		PIMAGE_DATA_DIRECTORY dataDir = &headNT->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
-		if (dataDir->Size)
-		{
-			PIMAGE_IMPORT_DESCRIPTOR imports = (PIMAGE_IMPORT_DESCRIPTOR)(base + dataDir->VirtualAddress);
-			for (DWORD idx = 0; imports->Name; ++idx, ++imports)
-			{
-				CHAR* libraryName = (CHAR*)(base + imports->Name);
-
-				PIMAGE_THUNK_DATA addressThunk = (PIMAGE_THUNK_DATA)(base + imports->FirstThunk);
-				PIMAGE_THUNK_DATA nameThunk;
-				if (imports->OriginalFirstThunk)
-					nameThunk = (PIMAGE_THUNK_DATA)(base + imports->OriginalFirstThunk);
-				else
-				{
-					headNT = (PIMAGE_NT_HEADERS)((BYTE*)file->address + ((PIMAGE_DOS_HEADER)file->address)->e_lfanew);
-					PIMAGE_SECTION_HEADER sh = (PIMAGE_SECTION_HEADER)((DWORD)&headNT->OptionalHeader + headNT->FileHeader.SizeOfOptionalHeader);
-
-					nameThunk = NULL;
-					DWORD sCount = headNT->FileHeader.NumberOfSections;
-					while (sCount--)
-					{
-						if (imports->FirstThunk >= sh->VirtualAddress && imports->FirstThunk < sh->VirtualAddress + sh->Misc.VirtualSize)
-						{
-							nameThunk = PIMAGE_THUNK_DATA((DWORD)file->address + sh->PointerToRawData + imports->FirstThunk - sh->VirtualAddress);
-							break;
-						}
-
-						++sh;
-					}
-
-					if (!nameThunk)
-						return res;
-				}
-
-				for (; nameThunk->u1.AddressOfData; ++nameThunk, ++addressThunk)
-				{
-					PIMAGE_IMPORT_BY_NAME name = PIMAGE_IMPORT_BY_NAME(base + nameThunk->u1.AddressOfData);
-
-					WORD hint;
-					if (ReadWord((INT)name - baseOffset, &hint) && !StrCompare((CHAR*)name->Name, function))
-					{
-						if (ReadDWord((INT)&addressThunk->u1.AddressOfData - baseOffset, &res))
-							PatchDWord((INT)&addressThunk->u1.AddressOfData - baseOffset, (DWORD)addr);
-
-						return res;
-					}
-				}
-			}
-		}
-
-		return res;
-	}
-#pragma endregion
+	Hooker* mainHooker;
 
 	// ===============================================================
 	BOOL __stdcall AdjustWindowRectHook(LPRECT lpRect, DWORD dwStyle, BOOL bMenu)
@@ -499,9 +302,9 @@ namespace Hooks
 		if (!isModeReaded)
 		{
 			isModeReaded = TRUE;
-			ReadByte(hookSpace->bpp_address + 1, (BYTE*)&displayMode.bpp);
-			ReadDWord(hookSpace->bpp_address + 2 + 1, &displayMode.height);
-			ReadDWord(hookSpace->bpp_address + 2 + 5 + 1, &displayMode.width);
+			mainHooker->ReadByte(hookSpace->bpp_address + 1, (BYTE*)&displayMode.bpp);
+			mainHooker->ReadDWord(hookSpace->bpp_address + 2 + 1, &displayMode.height);
+			mainHooker->ReadDWord(hookSpace->bpp_address + 2 + 5 + 1, &displayMode.width);
 		}
 
 		return index != BITSPIXEL ? GetDeviceCaps(hdc, index) : displayMode.bpp;
@@ -549,7 +352,7 @@ namespace Hooks
 	BOOL __stdcall WinHelpHook(HWND hWndMain, LPCSTR lpszHelp, UINT uCommand, ULONG_PTR dwData)
 	{
 		CHAR filePath[MAX_PATH];
-		GetModuleFileName(hModule, filePath, MAX_PATH - 1);
+		GetModuleFileName(mainHooker->hModule, filePath, MAX_PATH - 1);
 		CHAR* p = StrLastChar(filePath, '\\');
 		*p = NULL;
 		StrCopy(p, "\\winhlp32.exe");
@@ -726,7 +529,7 @@ namespace Hooks
 	AIL_STREAM_POSITION AIL_stream_position;
 	AIL_SET_STREAM_POSITION AIL_set_stream_position;
 	CHAR* audioExtList[] = { ".wav", ".mp3" };
-	TrackInfo* tracksList, *trackInfo;
+	TrackInfo *tracksList, *trackInfo;
 
 	DWORD __stdcall AIL_waveOutOpenHook(LPVOID driver, DWORD a1, DWORD a2, LPPCMWAVEFORMAT pcmFormat)
 	{
@@ -858,59 +661,16 @@ namespace Hooks
 
 #pragma endregion
 
-	DWORD posIndex;
-	DWORD moveCounter;
-	VOID __stdcall CalcRunPos(VOID* obj)
-	{
-		if (posIndex % moveCounter)
-		{
-			DWORD* pos = (DWORD*)obj + 128;
-			if (*pos)
-				--*pos;
-			else
-				*pos = 7;
-		}
-
-		++posIndex;
-	}
-
-	DWORD sub_move;
-	VOID __declspec(naked) hook_move()
-	{
-		__asm
-		{
-			PUSH ECX
-			PUSH EAX
-
-			PUSH ESI
-			CALL CalcRunPos
-
-			POP EAX
-			POP ECX
-			JMP sub_move
-		}
-	}
-
+	BOOL notSleep;
 	BOOL __stdcall PeekMessageHook(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg)
 	{
 		if (PeekMessage(lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax, wRemoveMsg))
 			return TRUE;
 
-		Sleep(config.coldCPU);
+		if (!notSleep)
+			Sleep(config.coldCPU);
 
 		return FALSE;
-	}
-
-	DWORD video_address;
-	VOID __fastcall ResetVideoTable()
-	{
-		VideoInfo* gameInfo = (VideoInfo*)video_address;
-		DWORD countInGame = hookSpace->video_count;
-		do
-		{
-			gameInfo->isBink = FALSE;
-			++gameInfo;
-		} while (--countInGame);
 	}
 
 	HANDLE __stdcall CreateFileHook(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
@@ -929,7 +689,7 @@ namespace Hooks
 					{
 						CHAR name[40];
 
-						VideoInfo* gameInfo = (VideoInfo*)video_address;
+						VideoInfo* gameInfo = (VideoInfo*)(hookSpace->video_address + mainHooker->baseOffset);
 						DWORD countInGame = hookSpace->video_count;
 						do
 						{
@@ -963,34 +723,238 @@ namespace Hooks
 		return hFile;
 	}
 
+#pragma region Move Hero
+	DWORD posIndex;
+	DWORD moveCounter;
+	VOID __stdcall CalcRunPos(VOID* obj)
+	{
+		if (posIndex % moveCounter)
+		{
+			DWORD* pos = (DWORD*)obj + 128;
+			if (*pos)
+				--*pos;
+			else
+				*pos = 7;
+		}
+
+		++posIndex;
+	}
+
+	DWORD sub_DrawSizedRect_1;
+	VOID __declspec(naked) hook_0048017C()
+	{
+		__asm
+		{
+			PUSH ECX
+			PUSH EAX
+
+			PUSH ESI
+			CALL CalcRunPos
+
+			POP EAX
+			POP ECX
+			JMP sub_DrawSizedRect_1
+		}
+	}
+#pragma endregion
+
+	DWORD cursorTime = 16;
 	VOID __fastcall CheckRefreshRate()
 	{
 		DEVMODE devMode;
 		MemoryZero(&devMode, sizeof(DEVMODE));
 		devMode.dmSize = sizeof(DEVMODE);
-		DWORD cursorTime;
+
 		if (EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &devMode) && devMode.dmDisplayFrequency)
 			cursorTime = 1000 / devMode.dmDisplayFrequency;
 		else
 			cursorTime = 16;
 
 		// ==========================================================
-		PatchByte(hookSpace->cursor_time_1 + 2, (BYTE)cursorTime);
-		PatchByte(hookSpace->cursor_time_2 + 2, (BYTE)cursorTime);
-		PatchDWord(hookSpace->cursor_time_3 + 1, cursorTime);
+		mainHooker->PatchByte(hookSpace->cursor_time_1 + 2, (BYTE)cursorTime);
+		mainHooker->PatchByte(hookSpace->cursor_time_2 + 2, (BYTE)cursorTime);
+		mainHooker->PatchDWord(hookSpace->cursor_time_2 + 5 + 1, cursorTime);
 
 		// ==========================================================
-		moveCounter = DWORD(50.0f / cursorTime);
+		if (config.smoothScroll)
+		{
+			moveCounter = DWORD(50.0f / cursorTime);
 
-		PatchDWord(hookSpace->move_timeout + 4, cursorTime);
-		PatchDWord(hookSpace->move_timeout + 8, cursorTime);
-		PatchDWord(hookSpace->move_timeout + 12, cursorTime);
+			FLOAT dist = 0.02f * cursorTime;
+			MoveObject moveObject = {
+				2, DWORD(dist * 8), DWORD(dist * 12), DWORD(dist * 16), 32,
+				100, cursorTime, cursorTime, cursorTime, 100,
+				-32, 0, 32
+			};
 
-		PatchDWord(hookSpace->move_distance + 4, DWORD((FLOAT)cursorTime / 50.0f * 8.0f));
-		PatchDWord(hookSpace->move_distance + 8, DWORD((FLOAT)cursorTime / 50.0f * 12.0f));
-		PatchDWord(hookSpace->move_distance + 12, DWORD((FLOAT)cursorTime / 50.0f * 16.0f));
+			mainHooker->PatchBlock(hookSpace->move_object, &moveObject, sizeof(MoveObject));
+		}
+		else
+		{
+			const MoveObject moveObject = {
+				2, 8, 12, 16, 32,
+				100, 50, 50, 50, 100,
+				-32, 0, 32
+			};
+
+			mainHooker->PatchBlock(hookSpace->move_object, (VOID*)&moveObject, sizeof(MoveObject));
+		}
 		// ==========================================================
 	}
+
+#pragma region Move Map
+	struct MapPosition {
+		SHORT x;
+		SHORT y;
+	} oldCenter;
+
+	DWORD sub_SetMapCenter, sub_DrawSizedRect_2;
+
+	VOID __declspec(naked) hook_00419707()
+	{
+		__asm
+		{
+			MOV EAX, [ESI+0xE4]
+			MOV oldCenter, EAX
+			RETN
+		}
+	}
+
+	VOID __stdcall DrawMapRect(DWORD mapObject, DWORD object, RECT rc)
+	{
+		MapPosition* newCenter = (MapPosition*)(mapObject + 228);
+		POINT newc = { SHORT(newCenter->x << 6) >> 6, SHORT(newCenter->y << 6) >> 6 };
+		LONG newUnk = SHORT(newCenter->y << 2) >> 12;
+
+		if (config.smoothScroll)
+		{
+			POINT oldc = { SHORT(oldCenter.x << 6) >> 6, SHORT(oldCenter.y << 6) >> 6 };
+			LONG oldUnk = SHORT(oldCenter.y << 2) >> 12;
+
+			POINT speed = { newc.x - oldc.x, newc.y - oldc.y };
+			if (speed.x || speed.y)
+			{
+				DWORD sleep = timeGetTime();
+
+				POINTFLOAT start = { speed.x, speed.y };
+				POINTFLOAT offset = { start.x, start.y };
+
+				FLOAT mult = (FLOAT)cursorTime / 70;
+				POINTFLOAT diff = { 0.0f, 0.0f };
+				POINT step = { 0, 0 };
+
+				if (speed.x)
+				{
+					if (speed.x > 0)
+						step.x = 1;
+					else
+						step.x = -1;
+
+					start.x += step.x;
+					diff.x = mult * speed.x;
+				}
+
+				if (speed.y)
+				{
+					if (speed.y > 0)
+						step.y = 1;
+					else
+						step.y = -1;
+
+					start.y += step.y;
+					diff.y = mult * speed.y;
+				}
+
+				POINT* shift = (POINT*)(mapObject + 244);
+				POINT pos = oldc;
+				do
+				{
+					if (speed.x)
+					{
+						offset.x -= diff.x;
+
+						if (speed.x > 0)
+						{
+							if (offset.x < 0.0f)
+								break;
+						}
+						else
+						{
+							if (offset.x > 0.0f)
+								break;
+						}
+
+						pos.x = oldc.x + LONG(start.x - offset.x);
+						shift->x = (LONG)(offset.x * 32.0f) % 32;
+					}
+
+					if (speed.y)
+					{
+						offset.y -= diff.y;
+
+						if (speed.y > 0)
+						{
+							if (offset.y < 0.0f)
+								break;
+						}
+						else
+						{
+							if (offset.y > 0.0f)
+								break;
+						}
+
+						pos.y = oldc.y + LONG(start.y - offset.y);
+						shift->y = (LONG)(offset.y * 32.0f) % 32;
+					}
+
+					((VOID(__thiscall*)(DWORD, POINT, LONG, DWORD, DWORD))sub_SetMapCenter)(mapObject, pos, newUnk, 0, 1);
+					((VOID(__thiscall*)(DWORD, RECT))sub_DrawSizedRect_2)(object, rc);
+
+					notSleep = TRUE;
+					{
+						sleep += cursorTime;
+						((VOID(__thiscall*)(DWORD))hookSpace->move_lifeCycle)(sleep);
+					}
+					notSleep = FALSE;
+				} while (TRUE);
+
+				if (shift->x || shift->y || pos.x != newc.x || pos.x != newc.x)
+				{
+					*shift = { 0, 0 };
+
+					((VOID(__thiscall*)(DWORD, POINT, LONG, DWORD, DWORD))sub_SetMapCenter)(mapObject, newc, newUnk, 0, 1);
+					((VOID(__thiscall*)(DWORD, RECT))sub_DrawSizedRect_2)(object, rc);
+				}
+			}
+			else
+			{
+				((VOID(__thiscall*)(DWORD, POINT, LONG, DWORD, DWORD))sub_SetMapCenter)(mapObject, newc, newUnk, 0, 1);
+				((VOID(__thiscall*)(DWORD, RECT))sub_DrawSizedRect_2)(object, rc);
+			}
+		}
+		else
+		{
+			((VOID(__thiscall*)(DWORD, POINT, LONG, DWORD, DWORD))sub_SetMapCenter)(mapObject, newc, newUnk, 0, 1);
+			((VOID(__thiscall*)(DWORD, RECT))sub_DrawSizedRect_2)(object, rc);
+		}
+	}
+
+	VOID __declspec(naked) hook_004197A3()
+	{
+		__asm
+		{
+			POP EAX
+			PUSH ECX
+			PUSH ESI
+			PUSH EAX
+			JMP DrawMapRect
+		}
+	}
+
+	VOID __stdcall FakeSetCenter(LONG, LONG, LONG, DWORD, DWORD)
+	{
+	}
+#pragma endregion
 
 #pragma region Registry
 	LSTATUS __stdcall RegCreateKeyHook(HKEY hKey, LPCSTR lpSubKey, PHKEY phkResult)
@@ -1055,24 +1019,21 @@ namespace Hooks
 
 	BOOL Load()
 	{
-		hookSpace = addressArray;
-		hModule = GetModuleHandle(NULL);
-		PIMAGE_NT_HEADERS headNT = (PIMAGE_NT_HEADERS)((BYTE*)hModule + ((PIMAGE_DOS_HEADER)hModule)->e_lfanew);
-		baseOffset = (INT)hModule - (INT)headNT->OptionalHeader.ImageBase;
-
 		const AddressSpace* defaultSpace = NULL;
 		const AddressSpace* equalSpace = NULL;
 
+		mainHooker = new Hooker(GetModuleHandle(NULL));
+
+		hookSpace = addressArray;
 		DWORD hookCount = sizeof(addressArray) / sizeof(AddressSpace);
 		do
 		{
 			DWORD check1, check2, equal;
-			if (ReadDWord(hookSpace->check_1 + 1, &check1) && check1 == STYLE_FULL_OLD &&
-				ReadDWord(hookSpace->check_2 + 1, &check2) && check2 == STYLE_FULL_OLD)
+			if (mainHooker->ReadDWord(hookSpace->check_1 + 1, &check1) && check1 == STYLE_FULL_OLD && mainHooker->ReadDWord(hookSpace->check_2 + 1, &check2) && check2 == STYLE_FULL_OLD)
 			{
 				if (!hookSpace->equal_address)
 					defaultSpace = hookSpace;
-				else if (ReadDWord(hookSpace->equal_address, &equal) && equal == hookSpace->equal_value)
+				else if (mainHooker->ReadDWord(hookSpace->equal_address, &equal) && equal == hookSpace->equal_value)
 				{
 					equalSpace = hookSpace;
 					break;
@@ -1085,70 +1046,82 @@ namespace Hooks
 		hookSpace = equalSpace ? equalSpace : defaultSpace;
 		if (hookSpace)
 		{
-			Config::Load(hModule, hookSpace);
+			Config::Load(mainHooker->hModule, hookSpace);
 
+			Hooker* userHooker = new Hooker(GetModuleHandle("USER32.dll"));
 			{
-				MappedFile* file = new MappedFile(hModule);
+				userHooker->PatchExport((DWORD)PeekMessage, PeekMessageHook);
+			}
+			delete userHooker;
+			
+			{
+				mainHooker->PatchImport("PeekMessageA", PeekMessageHook);
+
+				mainHooker->PatchImport("MessageBoxA", MessageBoxHook);
+				mainHooker->PatchImport("WinHelpA", WinHelpHook);
+
+				mainHooker->PatchImport("LoadMenuA", LoadMenuHook);
+				mainHooker->PatchImport("SetMenu", SetMenuHook);
+				mainHooker->PatchImport("EnableMenuItem", EnableMenuItemHook);
+
+				mainHooker->PatchImport("Sleep", SleepHook);
+				mainHooker->PatchImport("DialogBoxParamA", DialogBoxParamHook);
+
+				mainHooker->PatchImport("CreateFileA", CreateFileHook);
+
+				mainHooker->PatchImport("RegCreateKeyA", RegCreateKeyHook);
+				mainHooker->PatchImport("RegOpenKeyExA", RegOpenKeyExHook);
+				mainHooker->PatchImport("RegCloseKey", RegCloseKeyHook);
+				mainHooker->PatchImport("RegQueryValueExA", RegQueryValueExHook);
+				mainHooker->PatchImport("RegSetValueExA", RegSetValueExHook);
+
+				mainHooker->PatchImport("DirectDrawCreate", Main::DirectDrawCreate);
+
+				AIL_waveOutOpen = (AIL_WAVEOUTOPEN)mainHooker->PatchImport("_AIL_waveOutOpen@16", AIL_waveOutOpenHook);
+				AIL_stream_position = (AIL_STREAM_POSITION)mainHooker->PatchImport("_AIL_stream_position@4", AIL_stream_positionHook);
+				AIL_open_stream = (AIL_OPEN_STREAM)mainHooker->PatchImport("_AIL_open_stream@12", AIL_open_streamHook);
+				AIL_set_stream_position = (AIL_SET_STREAM_POSITION)mainHooker->PatchImport("_AIL_set_stream_position@8", AIL_set_stream_positionHook);
+
+				if (!config.isDDraw)
 				{
-					PatchFunction(file, "MessageBoxA", MessageBoxHook);
-					PatchFunction(file, "WinHelpA", WinHelpHook);
+					mainHooker->PatchImport("AdjustWindowRect", AdjustWindowRectHook);
+					mainHooker->PatchImport("AdjustWindowRectEx", AdjustWindowRectExHook);
+					mainHooker->PatchImport("CreateWindowExA", CreateWindowExHook);
+					mainHooker->PatchImport("SetWindowLongA", SetWindowLongHook);
 
-					PatchFunction(file, "LoadMenuA", LoadMenuHook);
-					PatchFunction(file, "SetMenu", SetMenuHook);
-					PatchFunction(file, "EnableMenuItem", EnableMenuItemHook);
-
-					PatchFunction(file, "Sleep", SleepHook);
-					PatchFunction(file, "DialogBoxParamA", DialogBoxParamHook);
-					PatchFunction(file, "PeekMessageA", PeekMessageHook);
-
-					PatchFunction(file, "CreateFileA", CreateFileHook);
-
-					PatchFunction(file, "RegCreateKeyA", RegCreateKeyHook);
-					PatchFunction(file, "RegOpenKeyExA", RegOpenKeyExHook);
-					PatchFunction(file, "RegCloseKey", RegCloseKeyHook);
-					PatchFunction(file, "RegQueryValueExA", RegQueryValueExHook);
-					PatchFunction(file, "RegSetValueExA", RegSetValueExHook);
-
-					PatchFunction(file, "DirectDrawCreate", Main::DirectDrawCreate);
-
-					AIL_waveOutOpen = (AIL_WAVEOUTOPEN)PatchFunction(file, "_AIL_waveOutOpen@16", AIL_waveOutOpenHook);
-					AIL_stream_position = (AIL_STREAM_POSITION)PatchFunction(file, "_AIL_stream_position@4", AIL_stream_positionHook);
-					AIL_open_stream = (AIL_OPEN_STREAM)PatchFunction(file, "_AIL_open_stream@12", AIL_open_streamHook);
-					AIL_set_stream_position = (AIL_SET_STREAM_POSITION)PatchFunction(file, "_AIL_set_stream_position@8", AIL_set_stream_positionHook);
-
-					if (!config.isNoGL)
-					{
-						PatchFunction(file, "AdjustWindowRect", AdjustWindowRectHook);
-						PatchFunction(file, "AdjustWindowRectEx", AdjustWindowRectExHook);
-						PatchFunction(file, "CreateWindowExA", CreateWindowExHook);
-						PatchFunction(file, "SetWindowLongA", SetWindowLongHook);
-
-						PatchFunction(file, "GetDeviceCaps", GetDeviceCapsHook);
-						PatchFunction(file, "GetCursorPos", GetCursorPosHook);
-						PatchFunction(file, "ScreenToClient", ScreenToClientHook);
-						PatchFunction(file, "ShowCursor", ShowCursorHook);
-						PatchFunction(file, "SetCursor", SetCursorHook);
-					}
+					mainHooker->PatchImport("GetDeviceCaps", GetDeviceCapsHook);
+					mainHooker->PatchImport("GetCursorPos", GetCursorPosHook);
+					mainHooker->PatchImport("ScreenToClient", ScreenToClientHook);
+					mainHooker->PatchImport("ShowCursor", ShowCursorHook);
+					mainHooker->PatchImport("SetCursor", SetCursorHook);
 				}
-				delete file;
+
+				mainHooker->UnmapFile();
 			}
 
-			if (!config.isNoGL)
-				PatchNop(hookSpace->renderNop, 5); // prevent on WM_PAINT
+			if (!config.isDDraw)
+				mainHooker->PatchNop(hookSpace->renderNop, 5); // prevent on WM_PAINT
 
-			// Smotth move
+			// Smooth hero move
+			sub_DrawSizedRect_1 = mainHooker->RedirectCall(hookSpace->move_address, hook_0048017C);
+
+			// Smooth map move
 			{
-				DWORD address = hookSpace->move_address + 5 + 5 + 2 + 2;
-				DWORD offset;
-				ReadDWord(address + 1, &offset);
-
-				DWORD newAddress = address + 5 + baseOffset;
-				sub_move = newAddress + offset;
-				PatchDWord(address + 1, (DWORD)hook_move - newAddress);
+				mainHooker->PatchCall(hookSpace->move_oldCenter, hook_00419707, 2);
+				sub_SetMapCenter = mainHooker->RedirectCall(hookSpace->move_drawRect - 25, FakeSetCenter);
+				sub_DrawSizedRect_2 = mainHooker->RedirectCall(hookSpace->move_drawRect, hook_004197A3);
 			}
 
-			video_address = hookSpace->video_address + baseOffset;
-			ResetVideoTable();
+			// Reset video table
+			{
+				VideoInfo* gameInfo = (VideoInfo*)(hookSpace->video_address + mainHooker->baseOffset);
+				DWORD countInGame = hookSpace->video_count;
+				do
+				{
+					gameInfo->isBink = FALSE;
+					++gameInfo;
+				} while (--countInGame);
+			}
 
 			return TRUE;
 		}

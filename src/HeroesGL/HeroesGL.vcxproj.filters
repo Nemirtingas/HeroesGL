@@ -67,7 +67,7 @@
     <ClCompile Include="AdrSource.cpp">
       <Filter>Source Files\Sound</Filter>
     </ClCompile>
-    <ClCompile Include="MappedFile.cpp">
+    <ClCompile Include="Hooker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -141,7 +141,7 @@
     <ClInclude Include="AdrSource.h">
       <Filter>Header Files\Sound</Filter>
     </ClInclude>
-    <ClInclude Include="MappedFile.h">
+    <ClInclude Include="Hooker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,7 +1,7 @@
 /*
 	MIT License
 
-	Copyright (c) 2019 Oleksiy Ryabchun
+	Copyright (c) 2020 Oleksiy Ryabchun
 
 	Permission is hereby granted, free of charge, to any person obtaining a copy
 	of this software and associated documentation files (the "Software"), to deal
@@ -60,6 +60,51 @@ OpenDrawSurface::~OpenDrawSurface()
 		this->attachedClipper->Release();
 
 	this->ReleaseBuffer();
+}
+
+VOID OpenDrawSurface::CreateBuffer(DWORD width, DWORD height)
+{
+	if (this->hBmp)
+	{
+		DeleteObject(this->hBmp);
+		this->hBmp = NULL;
+	}
+
+	if (width && height)
+	{
+		this->width = width;
+		this->height = height;
+
+		this->clipsList = !this->index ? (UpdateRect*)MemoryAlloc(STENCIL_COUNT * sizeof(UpdateRect)) : NULL;
+		this->endClip = this->clipsList + (!this->index ? STENCIL_COUNT : 0);
+		this->poinetrClip = this->currentClip = this->clipsList;
+
+		BITMAPINFO* bmi = (BITMAPINFO*)MemoryAlloc(sizeof(BITMAPINFO) + 8);
+		MemoryZero(bmi, sizeof(BITMAPINFO) + 8);
+		{
+			bmi->bmiHeader.biSize = sizeof(BITMAPINFO) + 8; // 108
+			bmi->bmiHeader.biWidth = width;
+			bmi->bmiHeader.biHeight = -*(LONG*)&height;
+			bmi->bmiHeader.biPlanes = 1;
+			bmi->bmiHeader.biBitCount = 16;
+			bmi->bmiHeader.biCompression = BI_BITFIELDS;
+			DWORD* mask = (DWORD*)&bmi->bmiColors;
+			mask[0] = 0xF800;
+			mask[1] = 0x07E0;
+			mask[2] = 0x001F;
+
+			HDC hDc = ::GetDC(NULL);
+			this->hBmp = CreateDIBSection(hDc, bmi, 0, (VOID**)&this->indexBuffer, 0, 0);
+			::ReleaseDC(NULL, hDc);
+		}
+		MemoryFree(bmi);
+
+		if (this->hBmp)
+		{
+			this->hDc = CreateCompatibleDC(NULL);
+			SelectObject(this->hDc, this->hBmp);
+		}
+	}
 }
 
 VOID OpenDrawSurface::ReleaseBuffer()
@@ -131,51 +176,6 @@ VOID OpenDrawSurface::TakeSnapshot()
 		}
 		
 		CloseClipboard();
-	}
-}
-
-VOID OpenDrawSurface::CreateBuffer(DWORD width, DWORD height)
-{
-	if (this->hBmp)
-	{
-		DeleteObject(this->hBmp);
-		this->hBmp = NULL;
-	}
-
-	if (width && height)
-	{
-		this->width = width;
-		this->height = height;
-
-		this->clipsList = !this->index ? (UpdateRect*)MemoryAlloc(STENCIL_COUNT * sizeof(UpdateRect)) : NULL;
-		this->endClip = this->clipsList + (!this->index ? STENCIL_COUNT : 0);
-		this->poinetrClip = this->currentClip = this->clipsList;
-
-		BITMAPINFO* bmi = (BITMAPINFO*)MemoryAlloc(sizeof(BITMAPINFO) + 8);
-		MemoryZero(bmi, sizeof(BITMAPINFO) + 8);
-		{
-			bmi->bmiHeader.biSize = sizeof(BITMAPINFO) + 8; // 108
-			bmi->bmiHeader.biWidth = width;
-			bmi->bmiHeader.biHeight = -*(LONG*)&height;
-			bmi->bmiHeader.biPlanes = 1;
-			bmi->bmiHeader.biBitCount = 16;
-			bmi->bmiHeader.biCompression = BI_BITFIELDS;
-			DWORD* mask = (DWORD*)&bmi->bmiColors;
-			mask[0] = 0xF800;
-			mask[1] = 0x07E0;
-			mask[2] = 0x001F;
-
-			HDC hDc = ::GetDC(NULL);
-			this->hBmp = CreateDIBSection(hDc, bmi, 0, (VOID**)&this->indexBuffer, 0, 0);
-			::ReleaseDC(NULL, hDc);
-		}
-		MemoryFree(bmi);
-
-		if (this->hBmp)
-		{
-			this->hDc = CreateCompatibleDC(NULL);
-			SelectObject(this->hDc, this->hBmp);
-		}
 	}
 }
 

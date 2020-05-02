@@ -46,7 +46,7 @@
     <ClCompile Include="DirectDraw.cpp">
       <Filter>Source Files\Draw\Direct</Filter>
     </ClCompile>
-    <ClCompile Include="MappedFile.cpp">
+    <ClCompile Include="Hooker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -99,7 +99,7 @@
     <ClInclude Include="DirectDraw.h">
       <Filter>Header Files\Draw\Direct</Filter>
     </ClInclude>
-    <ClInclude Include="MappedFile.h">
+    <ClInclude Include="Hooker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

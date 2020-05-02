@@ -1,7 +1,7 @@
 /*
 	MIT License
 
-	Copyright (c) 2019 Oleksiy Ryabchun
+	Copyright (c) 2020 Oleksiy Ryabchun
 
 	Permission is hereby granted, free of charge, to any person obtaining a copy
 	of this software and associated documentation files (the "Software"), to deal
@@ -87,6 +87,54 @@ DOUBLE __fastcall MathRound(DOUBLE number)
 {
 	DOUBLE floorVal = MathFloor(number);
 	return floorVal + 0.5f > number ? floorVal : MathCeil(number);
+}
+
+struct Aligned {
+	Aligned* last;
+	VOID* data;
+	VOID* block;
+} * alignedList;
+
+VOID* __fastcall AlignedAlloc(size_t size)
+{
+	Aligned* entry = (Aligned*)MemoryAlloc(sizeof(Aligned));
+	entry->last = alignedList;
+	alignedList = entry;
+
+	entry->data = MemoryAlloc(size + 16);
+	entry->block = (VOID*)(((DWORD)entry->data + 16) & 0xFFFFFFF0);
+
+	return entry->block;
+}
+
+VOID __fastcall AlignedFree(VOID* block)
+{
+	Aligned* entry = alignedList;
+	if (entry)
+	{
+		if (entry->block == block)
+		{
+			Aligned* last = entry->last;
+			MemoryFree(entry->data);
+			MemoryFree(entry);
+			alignedList = last;
+			return;
+		}
+		else
+			while (entry->last)
+			{
+				if (entry->last->block == block)
+				{
+					Aligned* last = entry->last->last;
+					MemoryFree(entry->last->data);
+					MemoryFree(entry->last);
+					entry->last = last;
+					return;
+				}
+
+				entry = entry->last;
+			}
+	}
 }
 
 VOID LoadKernel32()
