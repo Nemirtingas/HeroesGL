@@ -300,7 +300,7 @@ namespace Hooks
 		if (dwStyle == STYLE_FULL_OLD)
 			dwStyle = STYLE_FULL_NEW;
 
-		hWnd = CreateWindow(lpClassName, hookSpace->windowName, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
+		hWnd = CreateWindow(lpClassName, config.title, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
 		if (hWnd)
 		{
 			Window::SetCaptureWindow(hWnd);

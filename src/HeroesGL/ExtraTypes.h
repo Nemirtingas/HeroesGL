@@ -139,7 +139,7 @@ struct AddressSpace
 	DWORD check;
 	BYTE game_version;
 	CHAR* icon;
-	BYTE resLanguage;
+	LCID resLanguage;
 	DWORD method2_nop;
 	DWORD method2_jmp;
 	DWORD setFullScreenStatus;
@@ -184,7 +184,8 @@ struct TrackInfo
 struct ConfigItems
 {
 	BOOL isDDraw;
-	DWORD language;
+	LCID language;
+	CHAR title[MAX_PATH];
 	HICON icon;
 	HFONT font;
 	UINT msgMenu;

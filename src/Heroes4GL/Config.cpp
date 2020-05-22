@@ -46,7 +46,6 @@ namespace Config
 		}
 
 		config.dialog = hookSpace->resDialog;
-		config.language = hookSpace->resLanguage;
 		config.cursor = LoadCursor(NULL, IDC_ARROW);
 		config.icon = LoadIcon(hModule, MAKEINTRESOURCE(RESOURCE_ICON));
 		config.font = (HFONT)CreateFont(16, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, ANSI_CHARSET,
@@ -78,6 +77,12 @@ namespace Config
 
 		if (!config.isExist)
 		{
+			config.language = hookSpace->resLanguage;
+			Config::Set(CONFIG_WRAPPER, "Language", *(INT*)&config.language);
+
+			StrCopy(config.title, hookSpace->windowName);
+			Config::Set(CONFIG_WRAPPER, "Title", config.title);
+
 			config.renderer = RendererAuto;
 			Config::Set(CONFIG_WRAPPER, "Renderer", *(INT*)&config.renderer);
 
@@ -123,7 +128,11 @@ namespace Config
 			Config::Set(CONFIG_KEYS, "VSync", "");
 		}
 		else
+		{
+			config.language = (LCID)Config::Get(CONFIG_WRAPPER, "Language", hookSpace->resLanguage);
+			Config::Get(CONFIG_WRAPPER, "Title", hookSpace->windowName, config.title, sizeof(config.title));
 			config.coldCPU = (BOOL)Config::Get(CONFIG_WRAPPER, "ColdCPU", TRUE);
+		}
 
 		if (!config.isDDraw)
 		{
@@ -258,7 +267,7 @@ namespace Config
 		return GetPrivateProfileInt(app, key, (INT)default, config.file);
 	}
 
-	DWORD __fastcall Get(const CHAR* app, const CHAR* key, CHAR* default, CHAR* returnString, DWORD nSize)
+	DWORD __fastcall Get(const CHAR* app, const CHAR* key, const CHAR* default, CHAR* returnString, DWORD nSize)
 	{
 		return GetPrivateProfileString(app, key, default, returnString, nSize, config.file);
 	}

@@ -146,7 +146,7 @@ struct AddressSpace
 	DWORD fullscr_nop[2];
 	DWORD clientrect_nop[2];
 	DWORD updateWindow_nop[4];
-	WORD resLanguage;
+	LCID resLanguage;
 	WORD resDialog;
 	const CHAR* windowName;
 };
@@ -160,7 +160,8 @@ struct RGNRECTDATA
 struct ConfigItems
 {
 	BOOL isDDraw;
-	DWORD language;
+	LCID language;
+	CHAR title[MAX_PATH];
 	DWORD dialog;
 	HCURSOR cursor;
 	HICON icon;

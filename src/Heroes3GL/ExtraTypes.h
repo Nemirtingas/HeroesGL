@@ -158,7 +158,7 @@ struct AddressSpace
 	DWORD bpp_address;
 	/*DWORD video_address;
 	DWORD video_count;*/
-	BYTE resLanguage;
+	LCID resLanguage;
 	DWORD move_oldCenter;
 	DWORD move_drawRect;
 	DWORD move_lifeCycle;
@@ -190,7 +190,8 @@ struct VideoFile
 struct ConfigItems
 {
 	BOOL isDDraw;
-	DWORD language;
+	LCID language;
+	CHAR title[MAX_PATH];
 	HCURSOR cursor;
 	HICON icon;
 	HFONT font;

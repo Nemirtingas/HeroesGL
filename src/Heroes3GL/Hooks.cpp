@@ -258,7 +258,7 @@ namespace Hooks
 			break;
 		}
 
-		HWND hWnd = CreateWindow(lpClassName, hookSpace->windowName, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
+		HWND hWnd = CreateWindow(lpClassName, config.title, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
 		if (hWnd)
 		{
 			Window::SetCaptureWindow(hWnd);
