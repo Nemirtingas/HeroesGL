@@ -28,8 +28,8 @@
 Hooker::Hooker(HMODULE hModule)
 {
 	this->hModule = hModule;
-	this->headNT = (PIMAGE_NT_HEADERS)((BYTE*)this->hModule + ((PIMAGE_DOS_HEADER)this->hModule)->e_lfanew);
-	this->baseOffset = (INT)this->hModule - (INT)headNT->OptionalHeader.ImageBase;
+	this->headNT = (PIMAGE_NT_HEADERS)((DWORD)this->hModule + ((PIMAGE_DOS_HEADER)this->hModule)->e_lfanew);
+	this->baseOffset = (INT)this->hModule - (INT)this->headNT->OptionalHeader.ImageBase;
 
 	this->hFile = INVALID_HANDLE_VALUE;
 	this->hMap = NULL;
@@ -48,7 +48,7 @@ BOOL Hooker::MapFile()
 		if (this->hFile == INVALID_HANDLE_VALUE)
 		{
 			CHAR filePath[MAX_PATH];
-			GetModuleFileName(hModule, filePath, MAX_PATH);
+			GetModuleFileName(this->hModule, filePath, MAX_PATH);
 			this->hFile = CreateFile(filePath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 			if (this->hFile == INVALID_HANDLE_VALUE)
 				return FALSE;
@@ -248,7 +248,7 @@ DWORD Hooker::PatchImport(const CHAR* function, VOID* addr)
 				nameThunk = (PIMAGE_THUNK_DATA)((DWORD)this->hModule + imports->OriginalFirstThunk);
 			else if (this->MapFile())
 			{
-				PIMAGE_NT_HEADERS headNT = (PIMAGE_NT_HEADERS)((BYTE*)this->mapAddress + ((PIMAGE_DOS_HEADER)this->mapAddress)->e_lfanew);
+				PIMAGE_NT_HEADERS headNT = (PIMAGE_NT_HEADERS)((DWORD)this->mapAddress + ((PIMAGE_DOS_HEADER)this->mapAddress)->e_lfanew);
 				PIMAGE_SECTION_HEADER sh = (PIMAGE_SECTION_HEADER)((DWORD)&headNT->OptionalHeader + headNT->FileHeader.SizeOfOptionalHeader);
 
 				nameThunk = NULL;

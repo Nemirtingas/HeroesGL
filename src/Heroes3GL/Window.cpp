@@ -267,8 +267,13 @@ namespace Window
 		}
 		break;
 
-		case MenuSmooth: {
-			CheckMenuItem(hMenu, IDM_SMOOTH_SCROLL, MF_BYCOMMAND | (config.smoothScroll ? MF_CHECKED : MF_UNCHECKED));
+		case MenuSmoothScroll: {
+			CheckMenuItem(hMenu, IDM_SMOOTH_SCROLL, MF_BYCOMMAND | (config.smooth.scroll ? MF_CHECKED : MF_UNCHECKED));
+		}
+		break;
+
+		case MenuSmoothMove: {
+			CheckMenuItem(hMenu, IDM_SMOOTH_MOVE, MF_BYCOMMAND | (config.smooth.move ? MF_CHECKED : MF_UNCHECKED));
 		}
 		break;
 
@@ -319,7 +324,8 @@ namespace Window
 		CheckMenu(hMenu, MenuInterpolate);
 		CheckMenu(hMenu, MenuUpscale);
 		CheckMenu(hMenu, MenuCpu);
-		CheckMenu(hMenu, MenuSmooth);
+		CheckMenu(hMenu, MenuSmoothScroll);
+		CheckMenu(hMenu, MenuSmoothMove);
 		CheckMenu(hMenu, MenuRenderer);
 	}
 
@@ -696,12 +702,22 @@ namespace Window
 			}
 
 			case IDM_SMOOTH_SCROLL: {
-				config.smoothScroll = !config.smoothScroll;
-				Config::Set(CONFIG_WRAPPER, "SmoothScroll", config.smoothScroll);
+				config.smooth.scroll = !config.smooth.scroll;
+				Config::Set(CONFIG_WRAPPER, "SmoothScroll", config.smooth.scroll);
 
 				Hooks::CheckRefreshRate();
 
-				CheckMenu(hWnd, MenuSmooth);
+				CheckMenu(hWnd, MenuSmoothScroll);
+				return NULL;
+			}
+
+			case IDM_SMOOTH_MOVE: {
+				config.smooth.move = !config.smooth.move;
+				Config::Set(CONFIG_WRAPPER, "SmoothMove", config.smooth.move);
+
+				Hooks::CheckRefreshRate();
+
+				CheckMenu(hWnd, MenuSmoothMove);
 				return NULL;
 			}
 

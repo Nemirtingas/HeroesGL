@@ -156,8 +156,8 @@ struct AddressSpace
 	DWORD move_object;
 	DWORD move_address;
 	DWORD bpp_address;
-	DWORD video_address;
-	DWORD video_count;
+	/*DWORD video_address;
+	DWORD video_count;*/
 	BYTE resLanguage;
 	DWORD move_oldCenter;
 	DWORD move_drawRect;
@@ -198,8 +198,12 @@ struct ConfigItems
 
 	BOOL singleWindow;
 	BOOL coldCPU;
-	BOOL smoothScroll;
 	RendererType renderer;
+
+	struct {
+		BOOL scroll;
+		BOOL move;
+	} smooth;
 
 	struct {
 		struct {
@@ -250,6 +254,7 @@ enum MenuType
 	MenuInterpolate,
 	MenuUpscale,
 	MenuCpu,
-	MenuSmooth,
+	MenuSmoothScroll,
+	MenuSmoothMove,
 	MenuRenderer
 };

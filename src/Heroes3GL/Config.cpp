@@ -81,8 +81,11 @@ namespace Config
 			config.coldCPU = TRUE;
 			Config::Set(CONFIG_WRAPPER, "ColdCPU", config.coldCPU);
 
-			config.smoothScroll = TRUE;
-			Config::Set(CONFIG_WRAPPER, "SmoothScroll", config.smoothScroll);
+			config.smooth.scroll = TRUE;
+			Config::Set(CONFIG_WRAPPER, "SmoothScroll", config.smooth.scroll);
+
+			config.smooth.move = TRUE;
+			Config::Set(CONFIG_WRAPPER, "SmoothMove", config.smooth.move);
 
 			config.image.aspect = TRUE;
 			Config::Set(CONFIG_WRAPPER, "ImageAspect", config.image.aspect);
@@ -125,7 +128,8 @@ namespace Config
 		else
 		{
 			config.coldCPU = (BOOL)Config::Get(CONFIG_WRAPPER, "ColdCPU", TRUE);
-			config.smoothScroll = (BOOL)Config::Get(CONFIG_WRAPPER, "SmoothScroll", TRUE);
+			config.smooth.scroll = (BOOL)Config::Get(CONFIG_WRAPPER, "SmoothScroll", TRUE);
+			config.smooth.move = (BOOL)Config::Get(CONFIG_WRAPPER, "SmoothMove", TRUE);
 		}
 
 		if (!config.isDDraw)
