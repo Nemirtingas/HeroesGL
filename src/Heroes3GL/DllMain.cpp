@@ -53,10 +53,10 @@ BOOL __stdcall DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 			}
 		} while (TRUE);
 
+		LoadKernel32();
 		if (Hooks::Load())
 		{
 			hDllModule = hModule;
-			LoadKernel32();
 
 			if (!config.isDDraw)
 			{

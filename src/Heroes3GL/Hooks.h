@@ -28,5 +28,6 @@ namespace Hooks
 {
 	BOOL __stdcall EnumChildProc(HWND hDlg, LPARAM lParam);
 	VOID __fastcall CheckRefreshRate();
+	HMENU __stdcall LoadMenuHook(HINSTANCE hInstance, LPCTSTR lpMenuName);
 	BOOL Load();
 }

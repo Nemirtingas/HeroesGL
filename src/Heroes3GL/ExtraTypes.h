@@ -202,6 +202,12 @@ struct ConfigItems
 	RendererType renderer;
 
 	struct {
+		LPCSTR name;
+		HMENU main;
+		HMENU wrapper;
+	} menu;
+
+	struct {
 		BOOL scroll;
 		BOOL move;
 	} smooth;
@@ -257,5 +263,6 @@ enum MenuType
 	MenuCpu,
 	MenuSmoothScroll,
 	MenuSmoothMove,
-	MenuRenderer
+	MenuRenderer,
+	MenuLanguage
 };

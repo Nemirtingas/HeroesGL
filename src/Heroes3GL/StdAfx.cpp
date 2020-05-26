@@ -35,6 +35,8 @@ RELEASEACTCTX ReleaseActCtxC;
 ACTIVATEACTCTX ActivateActCtxC;
 DEACTIVATEACTCTX DeactivateActCtxC;
 
+SETTHREADLANGUAGE SetThreadLanguage;
+
 SETPROCESSDPIAWARENESS SetProcessDpiAwarenessC;
 
 DWORD
@@ -146,6 +148,10 @@ VOID LoadKernel32()
 		ReleaseActCtxC = (RELEASEACTCTX)GetProcAddress(hLib, "ReleaseActCtx");
 		ActivateActCtxC = (ACTIVATEACTCTX)GetProcAddress(hLib, "ActivateActCtx");
 		DeactivateActCtxC = (DEACTIVATEACTCTX)GetProcAddress(hLib, "DeactivateActCtx");
+
+		SetThreadLanguage = (SETTHREADLANGUAGE)GetProcAddress(hLib, "SetThreadUILanguage");
+		if (!SetThreadLanguage)
+			SetThreadLanguage = (SETTHREADLANGUAGE)SetThreadLocale;
 	}
 }
 

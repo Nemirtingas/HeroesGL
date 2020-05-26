@@ -195,15 +195,6 @@ const AddressSpace addressArray[] = {
 #pragma endregion
 };
 
-const UINT menuIds[] = { IDM_FILT_OFF, IDM_FILT_LINEAR, IDM_FILT_HERMITE, IDM_FILT_CUBIC, IDM_ASPECT_RATIO, IDM_VSYNC, IDM_HELP_WRAPPER,
-	IDM_FILT_NONE, IDM_FILT_XRBZ_2X, IDM_FILT_XRBZ_3X, IDM_FILT_XRBZ_4X, IDM_FILT_XRBZ_5X, IDM_FILT_XRBZ_6X,
-	IDM_FILT_SCALEHQ_2X, IDM_FILT_SCALEHQ_4X,
-	IDM_FILT_XSAL_2X,
-	IDM_FILT_EAGLE_2X,
-	IDM_FILT_SCALENX_2X, IDM_FILT_SCALENX_3X,
-	IDM_PATCH_CPU, IDM_SMOOTH_SCROLL, IDM_SMOOTH_MOVE,
-	IDM_REND_AUTO, IDM_REND_GL1, IDM_REND_GL2, IDM_REND_GL3 };
-
 namespace Hooks
 {
 	const AddressSpace* hookSpace;
@@ -380,22 +371,24 @@ namespace Hooks
 
 	HMENU __stdcall LoadMenuHook(HINSTANCE hInstance, LPCTSTR lpMenuName)
 	{
-		HMENU hMenu = LoadMenu(hInstance, lpMenuName);
-		if (hMenu)
+		config.menu.name = lpMenuName;
+		config.menu.main = LoadMenu(hInstance, lpMenuName);
+
+		if (config.menu.main)
 		{
-			HMENU hNew = LoadMenu(hDllModule, MAKEINTRESOURCE(config.language == LNG_ENGLISH ? IDM_ENGLISH : IDM_RUSSIAN));
-			if (hNew)
+			config.menu.wrapper = LoadMenu(hDllModule, MAKEINTRESOURCE(IDM_MENU));
+			if (config.menu.wrapper)
 			{
 				DWORD i, index = 0;
 
 				HMENU hSub;
-				for (i = 0; hSub = GetSubMenu(hMenu, i);)
+				for (i = 0; hSub = GetSubMenu(config.menu.main, i);)
 				{
 					DWORD itemId = GetMenuItemID(hSub, 0);
 					if (itemId == IDM_FILE_QUIT || itemId == IDM_RES_FULL_SCREEN || itemId == IDM_HELP_MANUAL
 						|| itemId == IDM_HELP_ABOUT) // for GOG releases
 					{
-						DeleteMenu(hMenu, i, MF_BYPOSITION);
+						DeleteMenu(config.menu.main, i, MF_BYPOSITION);
 						index = i;
 					}
 					else
@@ -412,64 +405,57 @@ namespace Hooks
 				info.dwTypeData = buffer;
 
 				info.cch = sizeof(buffer);
-				if (config.keys.windowedMode && GetMenuItemInfo(hNew, IDM_RES_FULL_SCREEN, FALSE, &info))
+				if (config.keys.windowedMode && GetMenuItemInfo(config.menu.wrapper, IDM_RES_FULL_SCREEN, FALSE, &info))
 				{
 					StrPrint(buffer, "%s (F%d)", buffer, config.keys.windowedMode);
-					SetMenuItemInfo(hNew, IDM_RES_FULL_SCREEN, FALSE, &info);
+					SetMenuItemInfo(config.menu.wrapper, IDM_RES_FULL_SCREEN, FALSE, &info);
 				}
 
 				info.cch = sizeof(buffer);
-				if (config.keys.aspectRatio && GetMenuItemInfo(hNew, IDM_ASPECT_RATIO, FALSE, &info))
+				if (config.keys.aspectRatio && GetMenuItemInfo(config.menu.wrapper, IDM_ASPECT_RATIO, FALSE, &info))
 				{
 					StrPrint(buffer, "%s (F%d)", buffer, config.keys.aspectRatio);
-					SetMenuItemInfo(hNew, IDM_ASPECT_RATIO, FALSE, &info);
+					SetMenuItemInfo(config.menu.wrapper, IDM_ASPECT_RATIO, FALSE, &info);
 				}
 
 				info.cch = sizeof(buffer);
-				if (config.keys.vSync && GetMenuItemInfo(hNew, IDM_VSYNC, FALSE, &info))
+				if (config.keys.vSync && GetMenuItemInfo(config.menu.wrapper, IDM_VSYNC, FALSE, &info))
 				{
 					StrPrint(buffer, "%s (F%d)", buffer, config.keys.vSync);
-					SetMenuItemInfo(hNew, IDM_VSYNC, FALSE, &info);
+					SetMenuItemInfo(config.menu.wrapper, IDM_VSYNC, FALSE, &info);
 				}
 
-				for (i = GetMenuItemCount(hNew); i; --i)
+				for (i = GetMenuItemCount(config.menu.wrapper); i; --i)
 				{
-					hSub = GetSubMenu(hNew, i - 1);
+					hSub = GetSubMenu(config.menu.wrapper, i - 1);
 
-					GetMenuString(hNew, i - 1, buffer, sizeof(buffer), MF_BYPOSITION);
-					InsertMenu(hMenu, index, MF_BYPOSITION | MF_POPUP, (UINT_PTR)hSub, buffer);
+					GetMenuString(config.menu.wrapper, i - 1, buffer, sizeof(buffer), MF_BYPOSITION);
+					InsertMenu(config.menu.main, index, MF_BYPOSITION | MF_POPUP, (UINT_PTR)hSub, buffer);
 				}
 			}
 		}
-		return hMenu;
+		return config.menu.main;
 	}
 
 	BOOL __stdcall SetMenuHook(HWND hWnd, HMENU hMenu)
 	{
-		if (SetMenu(hWnd, hMenu))
+		if (hMenu)
 		{
-			Window::CheckMenu(hMenu);
-			return TRUE;
+			if (SetMenu(hWnd, config.menu.main))
+			{
+				Window::CheckMenu(config.menu.main);
+				return TRUE;
+			}
+
+			return FALSE;
 		}
 
-		return FALSE;
+		return SetMenu(hWnd, NULL);
 	}
 
-	BOOL __stdcall EnableMenuItemHook(HMENU hMenu, UINT uIDEnableItem, UINT uEnable)
+	BOOL __stdcall EnableMenuItemHook(HMENU, UINT, UINT)
 	{
-		BOOL found = FALSE;
-		const UINT* menu = menuIds;
-		DWORD count = sizeof(menuIds) / sizeof(UINT);
-		do
-		{
-			if (*menu++ == uIDEnableItem)
-			{
-				found = TRUE;
-				break;
-			}
-		} while (--count);
-
-		return !found && EnableMenuItem(hMenu, uIDEnableItem, uEnable);
+		return FALSE;
 	}
 
 	VOID __stdcall SleepHook(DWORD dwMilliseconds)

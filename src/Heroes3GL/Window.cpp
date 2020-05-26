@@ -277,6 +277,18 @@ namespace Window
 		}
 		break;
 
+		case MenuLanguage: {
+			MenuItemData mData;
+			mData.childId = IDM_LANG_ENGLISH;
+			if (GetMenuByChildID(hMenu, &mData))
+			{
+				UINT count = (UINT)GetMenuItemCount(mData.hMenu);
+				for (UINT i = 0; i < count; ++i)
+					CheckMenuItem(mData.hMenu, i, MF_BYPOSITION | (GetMenuItemID(mData.hMenu, i) == config.language ? MF_CHECKED : MF_UNCHECKED));
+			}
+		}
+		break;
+
 		case MenuRenderer: {
 			EnableMenuItem(hMenu, IDM_REND_GL1, MF_BYCOMMAND | (config.gl.version.real >= GL_VER_1_1 ? MF_ENABLED : (MF_DISABLED | MF_GRAYED)));
 			EnableMenuItem(hMenu, IDM_REND_GL2, MF_BYCOMMAND | (config.gl.version.real >= GL_VER_2_0 ? MF_ENABLED : (MF_DISABLED | MF_GRAYED)));
@@ -326,6 +338,7 @@ namespace Window
 		CheckMenu(hMenu, MenuCpu);
 		CheckMenu(hMenu, MenuSmoothScroll);
 		CheckMenu(hMenu, MenuSmoothMove);
+		CheckMenu(hMenu, MenuLanguage);
 		CheckMenu(hMenu, MenuRenderer);
 	}
 
@@ -726,7 +739,7 @@ namespace Window
 				if (hActCtx && hActCtx != INVALID_HANDLE_VALUE && !ActivateActCtxC(hActCtx, &cookie))
 					cookie = NULL;
 
-				DialogBoxParam(hDllModule, MAKEINTRESOURCE(config.language == LNG_ENGLISH ? (cookie ? IDD_ENGLISH : IDD_ENGLISH_OLD) : (cookie ? IDD_RUSSIAN : IDD_RUSSIAN_OLD)), hWnd, (DLGPROC)AboutProc, cookie);
+				DialogBoxParam(hDllModule, MAKEINTRESOURCE(cookie ? IDD_ABOUT : IDD_ABOUT_OLD), hWnd, (DLGPROC)AboutProc, cookie);
 
 				if (cookie)
 					DeactivateActCtxC(0, cookie);
@@ -865,6 +878,43 @@ namespace Window
 			}
 
 			default:
+				MenuItemData mData;
+				mData.childId = IDM_LANG_ENGLISH;
+				if (GetMenuByChildID(config.menu.main, &mData))
+				{
+					UINT count = (UINT)GetMenuItemCount(mData.hMenu);
+					for (UINT i = 0; i < count; ++i)
+					{
+						UINT id = GetMenuItemID(mData.hMenu, i);
+						if (id == wParam)
+						{
+							if (config.language != id)
+							{
+								config.language = id;
+								Config::Set(CONFIG_WRAPPER, "Language", *(INT*)&config.language);
+
+								HMENU hMain = config.menu.main;
+								HMENU hWrapper = config.menu.wrapper;
+
+								SetThreadLanguage(config.language);
+								Hooks::LoadMenuHook(NULL, config.menu.name);
+
+								SetMenu(hWnd, config.menu.main);
+
+								if (hWrapper)
+									DestroyMenu(hWrapper);
+
+								if (hMain)
+									DestroyMenu(hMain);
+
+								CheckMenu(config.menu.main);
+							}
+
+							return NULL;
+						}
+					}
+				}
+
 				return CallWindowProc(OldWindowProc, hWnd, uMsg, wParam, lParam);
 			}
 		}

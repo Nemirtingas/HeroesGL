@@ -55,6 +55,10 @@ extern RELEASEACTCTX ReleaseActCtxC;
 extern ACTIVATEACTCTX ActivateActCtxC;
 extern DEACTIVATEACTCTX DeactivateActCtxC;
 
+typedef DWORD(__stdcall* SETTHREADLANGUAGE)(DWORD lang);
+
+extern SETTHREADLANGUAGE SetThreadLanguage;
+
 typedef HRESULT(__stdcall* SETPROCESSDPIAWARENESS)(PROCESS_DPI_AWARENESS);
 
 extern SETPROCESSDPIAWARENESS SetProcessDpiAwarenessC;
