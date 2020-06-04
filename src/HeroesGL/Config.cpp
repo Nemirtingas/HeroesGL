@@ -74,8 +74,8 @@ namespace Config
 
 		if (!config.isExist)
 		{
-			config.language = hookSpace->resLanguage;
-			Config::Set(CONFIG_WRAPPER, "Language", *(INT*)&config.language);
+			config.language.current = config.language.futured = hookSpace->resLanguage;
+			Config::Set(CONFIG_WRAPPER, "Language", *(INT*)&config.language.current);
 
 			StrCopy(config.title, hookSpace->windowName);
 			Config::Set(CONFIG_WRAPPER, "Title", config.title);
@@ -127,7 +127,7 @@ namespace Config
 		}
 		else
 		{
-			config.language = (LCID)Config::Get(CONFIG_WRAPPER, "Language", hookSpace->resLanguage);
+			config.language.current = config.language.futured = (LCID)Config::Get(CONFIG_WRAPPER, "Language", hookSpace->resLanguage);
 			Config::Get(CONFIG_WRAPPER, "Title", hookSpace->windowName, config.title, sizeof(config.title));
 			config.coldCPU = (BOOL)Config::Get(CONFIG_WRAPPER, "ColdCPU", TRUE);
 			config.cursor.fix = (BOOL)Config::Get(CONFIG_WRAPPER, "PointerFix", TRUE);
@@ -230,7 +230,7 @@ namespace Config
 			config.keys.vSync = 0;
 		}
 
-		SetThreadLanguage(config.language);
+		SetThreadLanguage(config.language.current);
 	}
 
 	INT __fastcall Get(const CHAR* app, const CHAR* key, INT default)

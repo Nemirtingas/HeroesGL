@@ -16,6 +16,8 @@ LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 
 STRINGTABLE DISCARDABLE
 BEGIN
+	IDS_ERROR						"Ошибка"
+	IDS_INFO						"Информация"
 	IDS_ERROR_CHOOSE_PF				"Ошибка ChoosePixelFormat"
 	IDS_ERROR_SET_PF				"Ошибка SetPixelFormat"
 	IDS_ERROR_DESCRIBE_PF			"Ошибка DescribePixelFormat"
@@ -53,7 +55,7 @@ BEGIN
 			MENUITEM "&1024 x 768",					IDM_RES_1024_768
 			MENUITEM "1&280 x 1024",				IDM_RES_1280_1024
 			MENUITEM SEPARATOR
-			MENUITEM "В &полный экран",				IDM_RES_FULL_SCREEN
+			MENUITEM "&Полноэкранный режим",		IDM_RES_FULL_SCREEN
 		END
 		MENUITEM "Верт. &синхронизация",			IDM_VSYNC
 	END
@@ -63,9 +65,9 @@ BEGIN
 		BEGIN
 			MENUITEM "&Откл.",						IDM_FILT_OFF
 			MENUITEM SEPARATOR
-			MENUITEM "&Linear",						IDM_FILT_LINEAR
-			MENUITEM "&Hermite",					IDM_FILT_HERMITE
-			MENUITEM "&Cubic",						IDM_FILT_CUBIC
+			MENUITEM "&Линейная",					IDM_FILT_LINEAR
+			MENUITEM "&Эрмитова",					IDM_FILT_HERMITE
+			MENUITEM "&Кубическая",					IDM_FILT_CUBIC
 		END
 		POPUP "&Масштабирование"
 		BEGIN
@@ -181,6 +183,8 @@ IDM_MANIFEST            RT_MANIFEST             "module.manifest"
 
 STRINGTABLE DISCARDABLE
 BEGIN
+	IDS_ERROR						"Error"
+	IDS_INFO						"Information"
 	IDS_ERROR_CHOOSE_PF				"ChoosePixelFormat failed"
 	IDS_ERROR_SET_PF				"SetPixelFormat failed"
 	IDS_ERROR_DESCRIBE_PF			"DescribePixelFormat failed"
@@ -367,7 +371,7 @@ IDR_SCALENX_FRAGMENT_3X		RCDATA		DISCARDABLE		"..\\glsl\\scalenx\\fragment_3x.gl
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2020,6,4,429
+ FILEVERSION 2020,6,4,432
  PRODUCTVERSION 1,4,4,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
@@ -384,7 +388,7 @@ BEGIN
 		BLOCK "040904b0"
 		BEGIN
 			VALUE "FileDescription", "HoMM I & II - OpenGL wrapper"
-			VALUE "FileVersion", "2020.06.04.429"
+			VALUE "FileVersion", "2020.06.04.432"
 			VALUE "LegalCopyright", "© 2020 Verok (verokster@gmail.com)"
 			VALUE "OriginalFilename", "wing32.dll"
 			VALUE "ProductVersion", "1.4.4"

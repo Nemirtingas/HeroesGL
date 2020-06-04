@@ -184,7 +184,6 @@ struct TrackInfo
 struct ConfigItems
 {
 	BOOL isDDraw;
-	LCID language;
 	CHAR title[MAX_PATH];
 	HICON icon;
 	HFONT font;
@@ -193,6 +192,11 @@ struct ConfigItems
 	BOOL singleWindow;
 	BOOL coldCPU;
 	RendererType renderer;
+
+	struct {
+		LCID current;
+		LCID futured;
+	} language;
 
 	struct {
 		HCURSOR default;

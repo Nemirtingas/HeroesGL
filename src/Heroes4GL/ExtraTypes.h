@@ -111,13 +111,6 @@ struct DisplayMode
 	DWORD bpp;
 };
 
-enum FpsState
-{
-	FpsDisabled = 0,
-	FpsNormal,
-	FpsBenchmark
-};
-
 struct UpdateRect
 {
 	RECT rect;
@@ -160,7 +153,6 @@ struct RGNRECTDATA
 struct ConfigItems
 {
 	BOOL isDDraw;
-	LCID language;
 	CHAR title[MAX_PATH];
 	DWORD dialog;
 	HCURSOR cursor;
@@ -171,6 +163,11 @@ struct ConfigItems
 	BOOL singleWindow;
 	BOOL coldCPU;
 	RendererType renderer;
+
+	struct {
+		LCID current;
+		LCID futured;
+	} language;
 
 	struct {
 		struct {
@@ -195,7 +192,6 @@ struct ConfigItems
 	} image;
 
 	struct {
-		BYTE fpsCounter;
 		BYTE imageFilter;
 		BYTE windowedMode;
 		BYTE aspectRatio;

@@ -26,6 +26,7 @@
 #include "Main.h"
 #include "Config.h"
 #include "Hooks.h"
+#include "Resource.h"
 #include "DirectDraw.h"
 
 IDraw7* drawList;
@@ -77,10 +78,13 @@ namespace Main
 
 	VOID __fastcall ShowError(CHAR* message, CHAR* file, DWORD line)
 	{
+		CHAR title[64];
+		LoadString(hDllModule, IDS_ERROR, title, sizeof(title));
+
 		CHAR dest[400];
 		StrPrint(dest, "%s\n\n\nFILE %s\nLINE %d", message, file, line);
 
-		Hooks::MessageBoxHook(NULL, dest, "Error", MB_OK | MB_ICONERROR | MB_TASKMODAL);
+		Hooks::MessageBoxHook(NULL, dest, title, MB_OK | MB_ICONERROR | MB_TASKMODAL);
 
 		Exit(EXIT_FAILURE);
 	}
@@ -94,7 +98,10 @@ namespace Main
 
 	VOID __fastcall ShowInfo(CHAR* message)
 	{
-		Hooks::MessageBoxHook(NULL, message, "Information", MB_OK | MB_ICONASTERISK | MB_TASKMODAL);
+		CHAR title[64];
+		LoadString(hDllModule, IDS_INFO, title, sizeof(title));
+
+		Hooks::MessageBoxHook(NULL, message, title, MB_OK | MB_ICONASTERISK | MB_TASKMODAL);
 	}
 
 #ifdef _DEBUG

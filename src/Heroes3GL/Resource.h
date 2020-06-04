@@ -108,6 +108,9 @@
 #define IDS_ERROR_COMPILE_SHADER 308
 #define IDS_INFO_RESTART 309
 
+#define IDS_ERROR 320
+#define IDS_INFO 321
+
 // Next default values for new objects
 //
 #ifdef APSTUDIO_INVOKED

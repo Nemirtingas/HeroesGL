@@ -284,7 +284,7 @@ namespace Window
 			{
 				UINT count = (UINT)GetMenuItemCount(mData.hMenu);
 				for (UINT i = 0; i < count; ++i)
-					CheckMenuItem(mData.hMenu, i, MF_BYPOSITION | (GetMenuItemID(mData.hMenu, i) == config.language ? MF_CHECKED : MF_UNCHECKED));
+					CheckMenuItem(mData.hMenu, i, MF_BYPOSITION | (GetMenuItemID(mData.hMenu, i) == config.language.futured ? MF_CHECKED : MF_UNCHECKED));
 			}
 		}
 		break;
@@ -891,12 +891,14 @@ namespace Window
 							UINT id = GetMenuItemID(mData.hMenu, i);
 							if (id == wParam)
 							{
-								if (config.language != id)
+								if (config.language.futured != id)
 								{
-									config.language = id;
-									Config::Set(CONFIG_WRAPPER, "Language", *(INT*)&config.language);
+									config.language.futured = id;
+									Config::Set(CONFIG_WRAPPER, "Language", *(INT*)&config.language.futured);
 
-									Main::ShowInfo(IDS_INFO_RESTART);
+									if (config.language.current != id)
+										Main::ShowInfo(IDS_INFO_RESTART);
+
 									CheckMenu(hWnd, MenuLanguage);
 								}
 

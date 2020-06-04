@@ -16,6 +16,8 @@ LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 
 STRINGTABLE DISCARDABLE
 BEGIN
+	IDS_ERROR						"Ошибка"
+	IDS_INFO						"Информация"
 	IDS_ERROR_CHOOSE_PF				"Ошибка ChoosePixelFormat"
 	IDS_ERROR_SET_PF				"Ошибка SetPixelFormat"
 	IDS_ERROR_DESCRIBE_PF			"Ошибка DescribePixelFormat"
@@ -50,7 +52,7 @@ BEGIN
 			MENUITEM "OpenGL 3",					IDM_REND_GL3
 		END
 		MENUITEM SEPARATOR
-		MENUITEM "В &полный экран",					IDM_RES_FULL_SCREEN
+		MENUITEM "&Полноэкранный режим",			IDM_RES_FULL_SCREEN
 		MENUITEM "Верт. &синхронизация",			IDM_VSYNC
 	END
 	POPUP "&Изображение"
@@ -128,7 +130,7 @@ IDD_ABOUT DIALOGEX DISCARDABLE 29,23,216,190
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP
 FONT 8, "MS Sans Serif"
 BEGIN
-	CTEXT			"Герои Меча и Магии I - II\nOpenGL враппер",IDC_STATIC,0,8,216,24
+	CTEXT			"Герои Меча и Магии III\nOpenGL враппер",IDC_STATIC,0,8,216,24
 	CTEXT			"Версия %d.%d%d   Сборка %d",IDC_VERSION,0,40,216,11
 	CTEXT			"Проверить новые версии",IDC_STATIC,0,64,216,11
 	CONTROL			"",IDC_LNK_WEB,"SysLink",WS_TABSTOP,48,76,216,11
@@ -144,7 +146,7 @@ IDD_ABOUT_OLD DIALOGEX DISCARDABLE 29,23,216,190
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP
 FONT 8, "MS Sans Serif"
 BEGIN
-	CTEXT			"Герои Меча и Магии I - II\nOpenGL враппер",IDC_STATIC,0,8,216,24
+	CTEXT			"Герои Меча и Магии III\nOpenGL враппер",IDC_STATIC,0,8,216,24
 	CTEXT			"Версия %d.%d%d   Сборка %d",IDC_VERSION,0,40,216,11
 	CTEXT			"Проверить новые версии",IDC_STATIC,0,64,216,11
 	CTEXT			"",IDC_LNK_WEB,0,76,216,11
@@ -180,6 +182,8 @@ IDM_MANIFEST            RT_MANIFEST             "module.manifest"
 
 STRINGTABLE DISCARDABLE
 BEGIN
+	IDS_ERROR						"Error"
+	IDS_INFO						"Information"
 	IDS_ERROR_CHOOSE_PF				"ChoosePixelFormat failed"
 	IDS_ERROR_SET_PF				"SetPixelFormat failed"
 	IDS_ERROR_DESCRIBE_PF			"DescribePixelFormat failed"
@@ -223,9 +227,9 @@ BEGIN
 		BEGIN
 			MENUITEM "&None",						IDM_FILT_OFF
 			MENUITEM SEPARATOR
-			MENUITEM "&Linear",						IDM_FILT_LINEAR
-			MENUITEM "&Hermite",					IDM_FILT_HERMITE
-			MENUITEM "&Cubic",						IDM_FILT_CUBIC
+			MENUITEM "&Линейная",					IDM_FILT_LINEAR
+			MENUITEM "&Эрмитова",					IDM_FILT_HERMITE
+			MENUITEM "&Кубическая",					IDM_FILT_CUBIC
 		END
 		POPUP "&Upscaling"
 		BEGIN
@@ -366,7 +370,7 @@ IDR_SCALENX_FRAGMENT_3X		RCDATA		DISCARDABLE		"..\\glsl\\scalenx\\fragment_3x.gl
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2020,6,4,362
+ FILEVERSION 2020,6,4,365
  PRODUCTVERSION 1,4,4,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
@@ -383,7 +387,7 @@ BEGIN
 		BLOCK "040904b0"
 		BEGIN
 			VALUE "FileDescription", "HoMM III - OpenGL wrapper"
-			VALUE "FileVersion", "2020.06.04.362"
+			VALUE "FileVersion", "2020.06.04.365"
 			VALUE "LegalCopyright", "© 2020 Verok (verokster@gmail.com)"
 			VALUE "OriginalFilename", "ddraw.dll"
 			VALUE "ProductVersion", "1.4.4"

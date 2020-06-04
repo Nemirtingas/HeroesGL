@@ -77,8 +77,8 @@ namespace Config
 
 		if (!config.isExist)
 		{
-			config.language = hookSpace->resLanguage;
-			Config::Set(CONFIG_WRAPPER, "Language", *(INT*)&config.language);
+			config.language.current = config.language.futured = hookSpace->resLanguage;
+			Config::Set(CONFIG_WRAPPER, "Language", *(INT*)&config.language.current);
 
 			StrCopy(config.title, hookSpace->windowName);
 			Config::Set(CONFIG_WRAPPER, "Title", config.title);
@@ -116,8 +116,6 @@ namespace Config
 			config.image.xBRz = 2;
 			Config::Set(CONFIG_WRAPPER, "XBRZ", config.image.xBRz);
 
-			Config::Set(CONFIG_KEYS, "FpsCounter", "");
-
 			config.keys.imageFilter = 3;
 			Config::Set(CONFIG_KEYS, "ImageFilter", config.keys.imageFilter);
 
@@ -129,7 +127,7 @@ namespace Config
 		}
 		else
 		{
-			config.language = (LCID)Config::Get(CONFIG_WRAPPER, "Language", hookSpace->resLanguage);
+			config.language.current = config.language.futured = (LCID)Config::Get(CONFIG_WRAPPER, "Language", hookSpace->resLanguage);
 			Config::Get(CONFIG_WRAPPER, "Title", hookSpace->windowName, config.title, sizeof(config.title));
 			config.coldCPU = (BOOL)Config::Get(CONFIG_WRAPPER, "ColdCPU", TRUE);
 		}
@@ -177,14 +175,6 @@ namespace Config
 					config.image.xBRz = 6;
 
 				CHAR buffer[20];
-				if (Config::Get(CONFIG_KEYS, "FpsCounter", "", buffer, sizeof(buffer)))
-				{
-					value = Config::Get(CONFIG_KEYS, "FpsCounter", 0);
-					config.keys.fpsCounter = LOBYTE(value);
-					if (config.keys.fpsCounter > 24)
-						config.keys.fpsCounter = 0;
-				}
-
 				if (Config::Get(CONFIG_KEYS, "ImageFilter", "", buffer, sizeof(buffer)))
 				{
 					value = Config::Get(CONFIG_KEYS, "ImageFilter", 0);
@@ -233,14 +223,13 @@ namespace Config
 			config.image.scaleHQ = 2;
 			config.image.xBRz = 2;
 
-			config.keys.fpsCounter = 2;
 			config.keys.imageFilter = 3;
 			config.keys.windowedMode = 4;
 			config.keys.aspectRatio = 5;
 			config.keys.vSync = 0;
 		}
 
-		SetThreadLanguage(config.language);
+		SetThreadLanguage(config.language.current);
 	}
 
 	BOOL __fastcall Check(const CHAR* app, const CHAR* key)
