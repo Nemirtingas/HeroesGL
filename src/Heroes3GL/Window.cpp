@@ -878,39 +878,30 @@ namespace Window
 			}
 
 			default:
-				MenuItemData mData;
-				mData.childId = IDM_LANG_ENGLISH;
-				if (GetMenuByChildID(config.menu.main, &mData))
+				HMENU hMenu = GetMenu(hWnd);
+				if (hMenu)
 				{
-					UINT count = (UINT)GetMenuItemCount(mData.hMenu);
-					for (UINT i = 0; i < count; ++i)
+					MenuItemData mData;
+					mData.childId = IDM_LANG_ENGLISH;
+					if (GetMenuByChildID(hMenu, &mData))
 					{
-						UINT id = GetMenuItemID(mData.hMenu, i);
-						if (id == wParam)
+						UINT count = (UINT)GetMenuItemCount(mData.hMenu);
+						for (UINT i = 0; i < count; ++i)
 						{
-							if (config.language != id)
+							UINT id = GetMenuItemID(mData.hMenu, i);
+							if (id == wParam)
 							{
-								config.language = id;
-								Config::Set(CONFIG_WRAPPER, "Language", *(INT*)&config.language);
+								if (config.language != id)
+								{
+									config.language = id;
+									Config::Set(CONFIG_WRAPPER, "Language", *(INT*)&config.language);
 
-								HMENU hMain = config.menu.main;
-								HMENU hWrapper = config.menu.wrapper;
+									Main::ShowInfo(IDS_INFO_RESTART);
+									CheckMenu(hWnd, MenuLanguage);
+								}
 
-								SetThreadLanguage(config.language);
-								Hooks::LoadMenuHook(NULL, config.menu.name);
-
-								SetMenu(hWnd, config.menu.main);
-
-								if (hWrapper)
-									DestroyMenu(hWrapper);
-
-								if (hMain)
-									DestroyMenu(hMain);
-
-								CheckMenu(config.menu.main);
+								return NULL;
 							}
-
-							return NULL;
 						}
 					}
 				}

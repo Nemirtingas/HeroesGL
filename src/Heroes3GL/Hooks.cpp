@@ -371,24 +371,22 @@ namespace Hooks
 
 	HMENU __stdcall LoadMenuHook(HINSTANCE hInstance, LPCTSTR lpMenuName)
 	{
-		config.menu.name = lpMenuName;
-		config.menu.main = LoadMenu(hInstance, lpMenuName);
-
-		if (config.menu.main)
+		HMENU hMenu = LoadMenu(hInstance, lpMenuName);
+		if (hMenu)
 		{
-			config.menu.wrapper = LoadMenu(hDllModule, MAKEINTRESOURCE(IDM_MENU));
-			if (config.menu.wrapper)
+			HMENU hNew = LoadMenu(hDllModule, MAKEINTRESOURCE(IDM_MENU));
+			if (hNew)
 			{
 				DWORD i, index = 0;
 
 				HMENU hSub;
-				for (i = 0; hSub = GetSubMenu(config.menu.main, i);)
+				for (DWORD i = 0; hSub = GetSubMenu(hMenu, i);)
 				{
 					DWORD itemId = GetMenuItemID(hSub, 0);
 					if (itemId == IDM_FILE_QUIT || itemId == IDM_RES_FULL_SCREEN || itemId == IDM_HELP_MANUAL
 						|| itemId == IDM_HELP_ABOUT) // for GOG releases
 					{
-						DeleteMenu(config.menu.main, i, MF_BYPOSITION);
+						DeleteMenu(hMenu, i, MF_BYPOSITION);
 						index = i;
 					}
 					else
@@ -405,52 +403,48 @@ namespace Hooks
 				info.dwTypeData = buffer;
 
 				info.cch = sizeof(buffer);
-				if (config.keys.windowedMode && GetMenuItemInfo(config.menu.wrapper, IDM_RES_FULL_SCREEN, FALSE, &info))
+				if (config.keys.windowedMode && GetMenuItemInfo(hNew, IDM_RES_FULL_SCREEN, FALSE, &info))
 				{
 					StrPrint(buffer, "%s (F%d)", buffer, config.keys.windowedMode);
-					SetMenuItemInfo(config.menu.wrapper, IDM_RES_FULL_SCREEN, FALSE, &info);
+					SetMenuItemInfo(hNew, IDM_RES_FULL_SCREEN, FALSE, &info);
 				}
 
 				info.cch = sizeof(buffer);
-				if (config.keys.aspectRatio && GetMenuItemInfo(config.menu.wrapper, IDM_ASPECT_RATIO, FALSE, &info))
+				if (config.keys.aspectRatio && GetMenuItemInfo(hNew, IDM_ASPECT_RATIO, FALSE, &info))
 				{
 					StrPrint(buffer, "%s (F%d)", buffer, config.keys.aspectRatio);
-					SetMenuItemInfo(config.menu.wrapper, IDM_ASPECT_RATIO, FALSE, &info);
+					SetMenuItemInfo(hNew, IDM_ASPECT_RATIO, FALSE, &info);
 				}
 
 				info.cch = sizeof(buffer);
-				if (config.keys.vSync && GetMenuItemInfo(config.menu.wrapper, IDM_VSYNC, FALSE, &info))
+				if (config.keys.vSync && GetMenuItemInfo(hNew, IDM_VSYNC, FALSE, &info))
 				{
 					StrPrint(buffer, "%s (F%d)", buffer, config.keys.vSync);
-					SetMenuItemInfo(config.menu.wrapper, IDM_VSYNC, FALSE, &info);
+					SetMenuItemInfo(hNew, IDM_VSYNC, FALSE, &info);
 				}
 
-				for (i = GetMenuItemCount(config.menu.wrapper); i; --i)
+				for (i = GetMenuItemCount(hNew); i; --i)
 				{
-					hSub = GetSubMenu(config.menu.wrapper, i - 1);
+					hSub = GetSubMenu(hNew, i - 1);
 
-					GetMenuString(config.menu.wrapper, i - 1, buffer, sizeof(buffer), MF_BYPOSITION);
-					InsertMenu(config.menu.main, index, MF_BYPOSITION | MF_POPUP, (UINT_PTR)hSub, buffer);
+					GetMenuString(hNew, i - 1, buffer, sizeof(buffer), MF_BYPOSITION);
+					InsertMenu(hMenu, index, MF_BYPOSITION | MF_POPUP, (UINT_PTR)hSub, buffer);
 				}
 			}
 		}
-		return config.menu.main;
+
+		return hMenu;
 	}
 
 	BOOL __stdcall SetMenuHook(HWND hWnd, HMENU hMenu)
 	{
-		if (hMenu)
+		if (SetMenu(hWnd, hMenu))
 		{
-			if (SetMenu(hWnd, config.menu.main))
-			{
-				Window::CheckMenu(config.menu.main);
-				return TRUE;
-			}
-
-			return FALSE;
+			Window::CheckMenu(hMenu);
+			return TRUE;
 		}
 
-		return SetMenu(hWnd, NULL);
+		return FALSE;
 	}
 
 	BOOL __stdcall EnableMenuItemHook(HMENU, UINT, UINT)
@@ -858,8 +852,8 @@ namespace Hooks
 			{
 				DWORD sleep = timeGetTime();
 
-				POINTFLOAT start = { speed.x, speed.y };
-				POINTFLOAT offset = { start.x, start.y };
+				POINTFLOAT start = { (FLOAT)speed.x, (FLOAT)speed.y };
+				POINTFLOAT offset = { (FLOAT)start.x, (FLOAT)start.y };
 
 				FLOAT mult = (FLOAT)cursorTime / 70;
 				POINTFLOAT diff = { 0.0f, 0.0f };

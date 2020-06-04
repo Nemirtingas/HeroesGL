@@ -145,7 +145,6 @@
       <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;opengl32.lib;advapi32.lib;shell32.lib;winmm.lib;version.lib;crt.lib;msvcrt.lib;binkw32.lib</AdditionalDependencies>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <AssemblyDebug>false</AssemblyDebug>
-      <BaseAddress>0x60000000</BaseAddress>
       <MergeSections>
       </MergeSections>
       <SectionAlignment>4096</SectionAlignment>

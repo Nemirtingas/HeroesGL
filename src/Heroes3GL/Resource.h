@@ -106,6 +106,7 @@
 #define IDS_ERROR_ARB_PROFILE 306
 #define IDS_ERROR_LOAD_RESOURCE 307
 #define IDS_ERROR_COMPILE_SHADER 308
+#define IDS_INFO_RESTART 309
 
 // Next default values for new objects
 //

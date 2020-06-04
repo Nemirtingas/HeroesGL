@@ -267,6 +267,18 @@ namespace Window
 		}
 		break;
 
+		case MenuLanguage: {
+			MenuItemData mData;
+			mData.childId = IDM_LANG_ENGLISH;
+			if (GetMenuByChildID(hMenu, &mData))
+			{
+				UINT count = (UINT)GetMenuItemCount(mData.hMenu);
+				for (UINT i = 0; i < count; ++i)
+					CheckMenuItem(mData.hMenu, i, MF_BYPOSITION | (GetMenuItemID(mData.hMenu, i) == config.language ? MF_CHECKED : MF_UNCHECKED));
+			}
+		}
+		break;
+
 		case MenuRenderer: {
 			EnableMenuItem(hMenu, IDM_REND_GL1, MF_BYCOMMAND | (config.gl.version.real >= GL_VER_1_1 ? MF_ENABLED : (MF_DISABLED | MF_GRAYED)));
 			EnableMenuItem(hMenu, IDM_REND_GL2, MF_BYCOMMAND | (config.gl.version.real >= GL_VER_2_0 ? MF_ENABLED : (MF_DISABLED | MF_GRAYED)));
@@ -314,6 +326,7 @@ namespace Window
 		CheckMenu(hMenu, MenuInterpolate);
 		CheckMenu(hMenu, MenuUpscale);
 		CheckMenu(hMenu, MenuCpu);
+		CheckMenu(hMenu, MenuLanguage);
 		CheckMenu(hMenu, MenuRenderer);
 	}
 
@@ -698,13 +711,7 @@ namespace Window
 				if (hActCtx && hActCtx != INVALID_HANDLE_VALUE && !ActivateActCtxC(hActCtx, &cookie))
 					cookie = NULL;
 
-				LPARAM id;
-				if (config.language == LNG_RUSSIAN)
-					id = cookie ? IDD_RUSSIAN : IDD_RUSSIAN_OLD;
-				else
-					id = cookie ? IDD_ENGLISH : IDD_ENGLISH_OLD;
-
-				DialogBoxParam(hDllModule, MAKEINTRESOURCE(id), hWnd, (DLGPROC)AboutProc, cookie);
+				DialogBoxParam(hDllModule, MAKEINTRESOURCE(cookie ? IDD_ABOUT : IDD_ABOUT_OLD), hWnd, (DLGPROC)AboutProc, cookie);
 
 				if (cookie)
 					DeactivateActCtxC(0, cookie);
@@ -843,6 +850,34 @@ namespace Window
 			}
 
 			default:
+				HMENU hMenu = GetMenu(hWnd);
+				if (hMenu)
+				{
+					MenuItemData mData;
+					mData.childId = IDM_LANG_ENGLISH;
+					if (GetMenuByChildID(hMenu, &mData))
+					{
+						UINT count = (UINT)GetMenuItemCount(mData.hMenu);
+						for (UINT i = 0; i < count; ++i)
+						{
+							UINT id = GetMenuItemID(mData.hMenu, i);
+							if (id == wParam)
+							{
+								if (config.language != id)
+								{
+									config.language = id;
+									Config::Set(CONFIG_WRAPPER, "Language", *(INT*)&config.language);
+
+									Main::ShowInfo(IDS_INFO_RESTART);
+									CheckMenu(hWnd, MenuLanguage);
+								}
+
+								return NULL;
+							}
+						}
+					}
+				}
+
 				return CallWindowProc(Window::OldWindowProc, hWnd, uMsg, wParam, lParam);
 			}
 		}

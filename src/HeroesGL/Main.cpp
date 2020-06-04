@@ -74,16 +74,21 @@ namespace Main
 		CHAR dest[400];
 		StrPrint(dest, "%s\n\n\nFILE %s\nLINE %d", message, file, line);
 
-		ULONG_PTR cookie = NULL;
-		if (hActCtx && hActCtx != INVALID_HANDLE_VALUE && !ActivateActCtxC(hActCtx, &cookie))
-			cookie = NULL;
-
-		MessageBox(NULL, dest, "Error", MB_OK | MB_ICONERROR);
-
-		if (cookie)
-			DeactivateActCtxC(0, cookie);
+		Hooks::MessageBoxHook(NULL, dest, "Error", MB_OK | MB_ICONERROR | MB_TASKMODAL);
 
 		Exit(EXIT_FAILURE);
+	}
+
+	VOID __fastcall ShowInfo(UINT id)
+	{
+		CHAR message[256];
+		LoadString(hDllModule, id, message, sizeof(message));
+		ShowInfo(message);
+	}
+
+	VOID __fastcall ShowInfo(CHAR* message)
+	{
+		Hooks::MessageBoxHook(NULL, message, "Information", MB_OK | MB_ICONASTERISK | MB_TASKMODAL);
 	}
 
 #ifdef _DEBUG

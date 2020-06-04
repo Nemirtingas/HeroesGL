@@ -11,10 +11,29 @@ LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 
 /////////////////////////////////////////////////////////////////////////////
 //
+// String Table
+//
+
+STRINGTABLE DISCARDABLE
+BEGIN
+	IDS_ERROR_CHOOSE_PF				"Ошибка ChoosePixelFormat"
+	IDS_ERROR_SET_PF				"Ошибка SetPixelFormat"
+	IDS_ERROR_DESCRIBE_PF			"Ошибка DescribePixelFormat"
+	IDS_ERROR_NEED_PALETTE			"Нужна палитра"
+	IDS_ERROR_BAD_PF				"Неверный формат пикселя"
+	IDS_ERROR_ARB_VERSION			"Неверная версия ARB"
+	IDS_ERROR_ARB_PROFILE			"Неверный профиль ARB"
+	IDS_ERROR_LOAD_RESOURCE			"Ошибка загрузки ресурса"
+	IDS_ERROR_COMPILE_SHADER		"Ошибка компиляции шейдера"
+	IDS_INFO_RESTART				"Чтобы изменения вступили в силу, нужно перезапустите игру"
+END
+
+/////////////////////////////////////////////////////////////////////////////
+//
 // Menu
 //
 
-IDM_RUSSIAN MENU DISCARDABLE
+IDM_MENU MENU DISCARDABLE
 BEGIN
 	POPUP "&Экран"
 	BEGIN
@@ -85,6 +104,12 @@ BEGIN
 	POPUP "&Опции"
 	BEGIN
 		MENUITEM "&Холодный ЦП",					IDM_PATCH_CPU
+		MENUITEM SEPARATOR
+		POPUP "&Язык меню"
+		BEGIN
+			MENUITEM "&Английский",					IDM_LANG_ENGLISH
+			MENUITEM "&Русский",					IDM_LANG_RUSSIAN
+		END
 	END
 	POPUP "&Помощь"
 	BEGIN
@@ -100,7 +125,7 @@ END
 // Dialog
 //
 
-IDD_RUSSIAN DIALOGEX DISCARDABLE 29,23,216,190
+IDD_ABOUT DIALOGEX DISCARDABLE 29,23,216,190
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP
 FONT 8, "MS Sans Serif"
 BEGIN
@@ -116,7 +141,7 @@ BEGIN
 	DEFPUSHBUTTON	"OK",IDC_BTN_OK,85,164,50,16,WS_GROUP
 END
 
-IDD_RUSSIAN_OLD DIALOGEX DISCARDABLE 29,23,216,190
+IDD_ABOUT_OLD DIALOGEX DISCARDABLE 29,23,216,190
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP
 FONT 8, "MS Sans Serif"
 BEGIN
@@ -160,11 +185,12 @@ BEGIN
 	IDS_ERROR_SET_PF				"SetPixelFormat failed"
 	IDS_ERROR_DESCRIBE_PF			"DescribePixelFormat failed"
 	IDS_ERROR_NEED_PALETTE			"Needs palette"
-	IDS_ERROR_BAD_PF				"Bad pixel type"
+	IDS_ERROR_BAD_PF				"Bad pixel format"
 	IDS_ERROR_ARB_VERSION			"Invalid ARB version"
 	IDS_ERROR_ARB_PROFILE			"Invalid ARB profile"
 	IDS_ERROR_LOAD_RESOURCE			"Load resource failed"
 	IDS_ERROR_COMPILE_SHADER		"Compile shader failed"
+	IDS_INFO_RESTART				"In order for the changes to take effect, please restart the game"
 END
 
 /////////////////////////////////////////////////////////////////////////////
@@ -172,7 +198,7 @@ END
 // Menu
 //
 
-IDM_ENGLISH MENU DISCARDABLE
+IDM_MENU MENU DISCARDABLE
 BEGIN
 	POPUP "&Display"
 	BEGIN
@@ -243,6 +269,11 @@ BEGIN
 	POPUP "&Options"
 	BEGIN
 		MENUITEM "&Cold CPU",						IDM_PATCH_CPU
+		POPUP "Menu &Language"
+		BEGIN
+			MENUITEM "&English",					IDM_LANG_ENGLISH
+			MENUITEM "&Russian",					IDM_LANG_RUSSIAN
+		END
 	END
 	POPUP "&Help"
 	BEGIN
@@ -258,7 +289,7 @@ END
 // Dialog
 //
 
-IDD_ENGLISH DIALOGEX DISCARDABLE 29,23,216,190
+IDD_ABOUT DIALOGEX DISCARDABLE 29,23,216,190
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP
 FONT 8, "MS Sans Serif"
 BEGIN
@@ -274,7 +305,7 @@ BEGIN
 	DEFPUSHBUTTON	"OK",IDC_BTN_OK,85,164,50,16,WS_GROUP
 END
 
-IDD_ENGLISH_OLD DIALOGEX DISCARDABLE 29,23,216,190
+IDD_ABOUT_OLD DIALOGEX DISCARDABLE 29,23,216,190
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP
 FONT 8, "MS Sans Serif"
 BEGIN
@@ -336,8 +367,8 @@ IDR_SCALENX_FRAGMENT_3X		RCDATA		DISCARDABLE		"..\\glsl\\scalenx\\fragment_3x.gl
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2020,5,22,427
- PRODUCTVERSION 1,4,3,0
+ FILEVERSION 2020,6,4,429
+ PRODUCTVERSION 1,4,4,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS VS_FF_DEBUG
@@ -353,10 +384,10 @@ BEGIN
 		BLOCK "040904b0"
 		BEGIN
 			VALUE "FileDescription", "HoMM I & II - OpenGL wrapper"
-			VALUE "FileVersion", "2020.05.22.427"
+			VALUE "FileVersion", "2020.06.04.429"
 			VALUE "LegalCopyright", "© 2020 Verok (verokster@gmail.com)"
 			VALUE "OriginalFilename", "wing32.dll"
-			VALUE "ProductVersion", "1.4.3"
+			VALUE "ProductVersion", "1.4.4"
 			VALUE "ProductName", "HeroesGL"
 		END
 	END

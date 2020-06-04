@@ -33,14 +33,16 @@ extern const DisplayMode modesList[3];
 
 namespace Main
 {
-	HRESULT __stdcall  DirectDrawCreateEx(GUID* lpGuid, LPVOID* lplpDD, REFIID iid, IUnknown* pUnkOuter);
+	HRESULT __stdcall  DirectDrawCreateEx(GUID*, LPVOID*, REFIID, IUnknown*);
 
-	OpenDraw* __fastcall FindOpenDrawByWindow(HWND hWnd);
+	OpenDraw* __fastcall FindOpenDrawByWindow(HWND);
 
-	VOID __fastcall ShowError(UINT id, CHAR* file, DWORD line);
-	VOID __fastcall ShowError(CHAR* message, CHAR* file, DWORD line);
+	VOID __fastcall ShowError(UINT, CHAR*, DWORD);
+	VOID __fastcall ShowError(CHAR*, CHAR*, DWORD);
+	VOID __fastcall ShowInfo(UINT);
+	VOID __fastcall ShowInfo(CHAR*);
 
 #ifdef _DEBUG
-	VOID __fastcall CheckError(CHAR* file, DWORD line);
+	VOID __fastcall CheckError(CHAR*, DWORD);
 #endif
 }

@@ -43,7 +43,7 @@ typedef VOID(__stdcall *AIL_SET_STREAM_POSITION)(LPVOID stream, DWORD position);
 
 typedef HRESULT(__stdcall *DIRECTDRAWCREATE)(GUID* lpGUID, LPDIRECTDRAW* lplpDD, IUnknown* pUnkOuter);
 
-extern DIRECTDRAWCREATE DDCreate;
+extern DWORD pDirectDrawCreate;
 
 typedef HANDLE(__stdcall *CREATEACTCTXA)(ACTCTX* pActCtx);
 typedef VOID(__stdcall *RELEASEACTCTX)(HANDLE hActCtx);

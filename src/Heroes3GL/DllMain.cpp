@@ -37,8 +37,6 @@ BOOL __stdcall DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 	{
 	case DLL_PROCESS_ATTACH:
 	{
-		LoadDDraw();
-
 		CHAR* line = GetCommandLine();
 		do
 		{

@@ -36,8 +36,6 @@ BOOL __stdcall DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 	switch (fdwReason)
 	{
 	case DLL_PROCESS_ATTACH: {
-		LoadWinG32();
-
 		CHAR* line = GetCommandLine();
 		do
 		{
@@ -52,10 +50,10 @@ BOOL __stdcall DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 			}
 		} while (TRUE);
 
+		LoadKernel32();
 		if (Hooks::Load())
 		{
 			hDllModule = hModule;
-			LoadKernel32();
 
 			if (!config.isDDraw)
 			{

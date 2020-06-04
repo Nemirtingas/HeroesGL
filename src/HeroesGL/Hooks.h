@@ -32,7 +32,8 @@ namespace Hooks
 	extern const DWORD monoEntries[2];
 	extern const DWORD palEntries[256];
 
-	BOOL __stdcall EnumChildProc(HWND hDlg, LPARAM lParam);
+	VOID __fastcall ScalePointer(FLOAT, FLOAT);
+	BOOL __stdcall EnumChildProc(HWND, LPARAM);
+	INT __stdcall MessageBoxHook(HWND, LPCSTR, LPCSTR, UINT);
 	BOOL Load();
-	VOID __fastcall ScalePointer(FLOAT cx, FLOAT cy);
 }

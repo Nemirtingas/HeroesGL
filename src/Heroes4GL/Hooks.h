@@ -24,11 +24,8 @@
 
 #pragma once
 
-#include "mmreg.h"
-
-typedef DWORD(__stdcall *AIL_WAVEOUTOPEN)(LPVOID driver, DWORD a1, DWORD a2, LPWAVEFORMATEX waveFormat);
-
 namespace Hooks
 {
+	INT __stdcall MessageBoxHook(HWND, LPCSTR, LPCSTR, UINT);
 	BOOL Load();
 }

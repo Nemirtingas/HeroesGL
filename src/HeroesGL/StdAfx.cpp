@@ -34,31 +34,23 @@ RELEASEACTCTX ReleaseActCtxC;
 ACTIVATEACTCTX ActivateActCtxC;
 DEACTIVATEACTCTX DeactivateActCtxC;
 
+SETTHREADLANGUAGE SetThreadLanguage;
+
 SETPROCESSDPIAWARENESS SetProcessDpiAwarenessC;
 
-DWORD
-	pWinGBitBlt,
-	pWinGCreateBitmap,
-	pWinGCreateDC,
-	pWinGCreateHalftoneBrush,
-	pWinGCreateHalftonePalette,
-	pWinGGetDIBColorTable,
-	pWinGGetDIBPointer,
-	pWinGRecommendDIBFormat,
-	pWinGSetDIBColorTable,
-	pWinGStretchBlt;
+#define LIBEXP(a) DWORD p##a; VOID __declspec(naked,nothrow) __stdcall ex##a() { LoadWinG32(); _asm { jmp p##a } }
+#define LIBLOAD(lib, a) p##a = (DWORD)GetProcAddress(lib, #a);
 
-
-VOID _declspec(naked) __stdcall exWinGBitBlt() { _asm { JMP pWinGBitBlt } }
-VOID _declspec(naked) __stdcall exWinGCreateBitmap() { _asm { JMP pWinGCreateBitmap } }
-VOID _declspec(naked) __stdcall exWinGCreateDC() { _asm { JMP pWinGCreateDC } }
-VOID _declspec(naked) __stdcall exWinGCreateHalftoneBrush() { _asm { JMP pWinGCreateHalftoneBrush } }
-VOID _declspec(naked) __stdcall exWinGCreateHalftonePalette() { _asm { JMP pWinGCreateHalftonePalette } }
-VOID _declspec(naked) __stdcall exWinGGetDIBColorTable() { _asm { JMP pWinGGetDIBColorTable } }
-VOID _declspec(naked) __stdcall exWinGGetDIBPointer() { _asm { JMP pWinGGetDIBPointer } }
-VOID _declspec(naked) __stdcall exWinGRecommendDIBFormat() { _asm { JMP pWinGRecommendDIBFormat } }
-VOID _declspec(naked) __stdcall exWinGSetDIBColorTable() { _asm { JMP pWinGSetDIBColorTable } }
-VOID _declspec(naked) __stdcall exWinGStretchBlt() { _asm { JMP pWinGStretchBlt } }
+LIBEXP(WinGBitBlt)
+LIBEXP(WinGCreateBitmap)
+LIBEXP(WinGCreateDC)
+LIBEXP(WinGCreateHalftoneBrush)
+LIBEXP(WinGCreateHalftonePalette)
+LIBEXP(WinGGetDIBColorTable)
+LIBEXP(WinGGetDIBPointer)
+LIBEXP(WinGRecommendDIBFormat)
+LIBEXP(WinGSetDIBColorTable)
+LIBEXP(WinGStretchBlt)
 
 DOUBLE __fastcall MathRound(DOUBLE number)
 {
@@ -75,11 +67,22 @@ VOID LoadKernel32()
 		ReleaseActCtxC = (RELEASEACTCTX)GetProcAddress(hLib, "ReleaseActCtx");
 		ActivateActCtxC = (ACTIVATEACTCTX)GetProcAddress(hLib, "ActivateActCtx");
 		DeactivateActCtxC = (DEACTIVATEACTCTX)GetProcAddress(hLib, "DeactivateActCtx");
+
+		SetThreadLanguage = (SETTHREADLANGUAGE)GetProcAddress(hLib, "SetThreadUILanguage");
+		if (!SetThreadLanguage)
+			SetThreadLanguage = (SETTHREADLANGUAGE)SetThreadLocale;
 	}
 }
 
 VOID LoadWinG32()
 {
+	static BOOL isLoaded;
+
+	if (isLoaded)
+		return;
+
+	isLoaded = TRUE;
+
 	CHAR dir[MAX_PATH];
 	if (GetSystemDirectory(dir, MAX_PATH))
 	{
@@ -87,16 +90,16 @@ VOID LoadWinG32()
 		HMODULE hLib = LoadLibrary(dir);
 		if (hLib)
 		{
-			pWinGBitBlt = (DWORD)GetProcAddress(hLib, "WinGBitBlt");
-			pWinGCreateBitmap = (DWORD)GetProcAddress(hLib, "WinGCreateBitmap");
-			pWinGCreateDC = (DWORD)GetProcAddress(hLib, "WinGCreateDC");
-			pWinGCreateHalftoneBrush = (DWORD)GetProcAddress(hLib, "WinGCreateHalftoneBrush");
-			pWinGCreateHalftonePalette = (DWORD)GetProcAddress(hLib, "WinGCreateHalftonePalette");
-			pWinGGetDIBColorTable = (DWORD)GetProcAddress(hLib, "WinGGetDIBColorTable");
-			pWinGGetDIBPointer = (DWORD)GetProcAddress(hLib, "WinGGetDIBPointer");
-			pWinGRecommendDIBFormat = (DWORD)GetProcAddress(hLib, "WinGRecommendDIBFormat");
-			pWinGSetDIBColorTable = (DWORD)GetProcAddress(hLib, "WinGSetDIBColorTable");
-			pWinGStretchBlt = (DWORD)GetProcAddress(hLib, "WinGStretchBlt");
+			LIBLOAD(hLib, WinGBitBlt)
+			LIBLOAD(hLib, WinGCreateBitmap)
+			LIBLOAD(hLib, WinGCreateDC)
+			LIBLOAD(hLib, WinGCreateHalftoneBrush)
+			LIBLOAD(hLib, WinGCreateHalftonePalette)
+			LIBLOAD(hLib, WinGGetDIBColorTable)
+			LIBLOAD(hLib, WinGGetDIBPointer)
+			LIBLOAD(hLib, WinGRecommendDIBFormat)
+			LIBLOAD(hLib, WinGSetDIBColorTable)
+			LIBLOAD(hLib, WinGStretchBlt)
 		}
 	}
 }

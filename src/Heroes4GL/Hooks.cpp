@@ -111,16 +111,6 @@ const AddressSpace addressArray[] = {
 #pragma endregion 
 };
 
-const UINT menuIds[] = { IDM_FILT_OFF, IDM_FILT_LINEAR, IDM_FILT_HERMITE, IDM_FILT_CUBIC, IDM_ASPECT_RATIO, IDM_VSYNC, IDM_HELP_WRAPPER,
-	IDM_FILT_NONE, IDM_FILT_XRBZ_2X, IDM_FILT_XRBZ_3X, IDM_FILT_XRBZ_4X, IDM_FILT_XRBZ_5X, IDM_FILT_XRBZ_6X,
-	IDM_FILT_SCALEHQ_2X, IDM_FILT_SCALEHQ_4X,
-	IDM_FILT_XSAL_2X,
-	IDM_FILT_EAGLE_2X,
-	IDM_FILT_SCALENX_2X, IDM_FILT_SCALENX_3X,
-	IDM_PATCH_CPU,
-	IDM_REND_AUTO, IDM_REND_GL1, IDM_REND_GL2, IDM_REND_GL3
-};
-
 namespace Hooks
 {
 	const AddressSpace* hookSpace;
@@ -179,7 +169,7 @@ namespace Hooks
 			{
 				if (GetMenuItemID(hSub, 0) == IDM_FILE_NEW_GAME && DeleteMenu(hMenu, i, MF_BYPOSITION))
 				{
-					HMENU hNew = LoadMenu(hDllModule, MAKEINTRESOURCE(config.language == LNG_ENGLISH ? IDM_ENGLISH : IDM_RUSSIAN));
+					HMENU hNew = LoadMenu(hDllModule, MAKEINTRESOURCE(IDM_MENU));
 					if (hNew)
 					{
 						CHAR buffer[256];
@@ -355,21 +345,9 @@ namespace Hooks
 		return FALSE;
 	}
 
-	BOOL __stdcall EnableMenuItemHook(HMENU hMenu, UINT uIDEnableItem, UINT uEnable)
+	BOOL __stdcall EnableMenuItemHook(HMENU, UINT, UINT)
 	{
-		BOOL found = FALSE;
-		const UINT* menu = menuIds;
-		DWORD count = sizeof(menuIds) / sizeof(UINT);
-		do
-		{
-			if (*menu++ == uIDEnableItem)
-			{
-				found = TRUE;
-				break;
-			}
-		} while (--count);
-
-		return !found && EnableMenuItem(hMenu, uIDEnableItem, uEnable);
+		return FALSE;
 	}
 
 	BOOL __stdcall PeekMessageHook(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg)

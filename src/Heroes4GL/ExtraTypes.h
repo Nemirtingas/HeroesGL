@@ -220,5 +220,6 @@ enum MenuType
 	MenuInterpolate,
 	MenuUpscale,
 	MenuCpu,
-	MenuRenderer
+	MenuRenderer,
+	MenuLanguage
 };

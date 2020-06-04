@@ -27,60 +27,42 @@
 HMODULE hDllModule;
 HANDLE hActCtx;
 
-DIRECTDRAWCREATEEX DDCreateEx;
+//DIRECTDRAWCREATEEX DDCreateEx;
 
 CREATEACTCTXA CreateActCtxC;
 RELEASEACTCTX ReleaseActCtxC;
 ACTIVATEACTCTX ActivateActCtxC;
 DEACTIVATEACTCTX DeactivateActCtxC;
 
+SETTHREADLANGUAGE SetThreadLanguage;
+
 SETPROCESSDPIAWARENESS SetProcessDpiAwarenessC;
 
-DWORD
-	pAcquireDDThreadLock,
-	pCompleteCreateSysmemSurface,
-	pD3DParseUnknownCommand,
-	pDDGetAttachedSurfaceLcl,
-	pDDInternalLock,
-	pDDInternalUnlock,
-	pDSoundHelp,
-	pDirectDrawCreate,
-	pDirectDrawCreateClipper,
-	pDirectDrawEnumerateA,
-	pDirectDrawEnumerateExA,
-	pDirectDrawEnumerateExW,
-	pDirectDrawEnumerateW,
-	pDllCanUnloadNow,
-	pDllGetClassObject,
-	pGetDDSurfaceLocal,
-	pGetOLEThunkData,
-	pGetSurfaceFromDC,
-	pRegisterSpecialCase,
-	pReleaseDDThreadLock,
-	pSetAppCompatData;
+#define LIBEXP(a) DWORD p##a; VOID __declspec(naked,nothrow) __stdcall ex##a() { LoadDDraw(); _asm { jmp p##a } }
+#define LIBLOAD(lib, a) p##a = (DWORD)GetProcAddress(lib, #a);
 
-VOID _declspec(naked) __stdcall exAcquireDDThreadLock() { _asm { JMP pAcquireDDThreadLock } }
-VOID _declspec(naked) __stdcall exCompleteCreateSysmemSurface() { _asm { JMP pCompleteCreateSysmemSurface } }
-VOID _declspec(naked) __stdcall exD3DParseUnknownCommand() { _asm { JMP pD3DParseUnknownCommand } }
-VOID _declspec(naked) __stdcall exDDGetAttachedSurfaceLcl() { _asm { JMP pDDGetAttachedSurfaceLcl } }
-VOID _declspec(naked) __stdcall exDDInternalLock() { _asm { JMP pDDInternalLock } }
-VOID _declspec(naked) __stdcall exDDInternalUnlock() { _asm { JMP pDDInternalUnlock } }
-VOID _declspec(naked) __stdcall exDSoundHelp() { _asm { JMP pDSoundHelp } }
-VOID _declspec(naked) __stdcall exDirectDrawCreate() { _asm { JMP pDirectDrawCreate } }
-VOID _declspec(naked) __stdcall exDirectDrawCreateClipper() { _asm { JMP pDirectDrawCreateClipper } }
-VOID _declspec(naked) __stdcall exDirectDrawCreateEx() { _asm { JMP DDCreateEx } }
-VOID _declspec(naked) __stdcall exDirectDrawEnumerateA() { _asm { JMP pDirectDrawEnumerateA } }
-VOID _declspec(naked) __stdcall exDirectDrawEnumerateExA() { _asm { JMP pDirectDrawEnumerateExA } }
-VOID _declspec(naked) __stdcall exDirectDrawEnumerateExW() { _asm { JMP pDirectDrawEnumerateExW } }
-VOID _declspec(naked) __stdcall exDirectDrawEnumerateW() { _asm { JMP pDirectDrawEnumerateW } }
-VOID _declspec(naked) __stdcall exDllCanUnloadNow() { _asm { JMP pDllCanUnloadNow } }
-VOID _declspec(naked) __stdcall exDllGetClassObject() { _asm { JMP pDllGetClassObject } }
-VOID _declspec(naked) __stdcall exGetDDSurfaceLocal() { _asm { JMP pGetDDSurfaceLocal } }
-VOID _declspec(naked) __stdcall exGetOLEThunkData() { _asm { JMP pGetOLEThunkData } }
-VOID _declspec(naked) __stdcall exGetSurfaceFromDC() { _asm { JMP pGetSurfaceFromDC } }
-VOID _declspec(naked) __stdcall exRegisterSpecialCase() { _asm { JMP pRegisterSpecialCase } }
-VOID _declspec(naked) __stdcall exReleaseDDThreadLock() { _asm { JMP pReleaseDDThreadLock } }
-VOID _declspec(naked) __stdcall exSetAppCompatData() { _asm { JMP pSetAppCompatData } }
+LIBEXP(AcquireDDThreadLock)
+LIBEXP(CompleteCreateSysmemSurface)
+LIBEXP(D3DParseUnknownCommand)
+LIBEXP(DDGetAttachedSurfaceLcl)
+LIBEXP(DDInternalLock)
+LIBEXP(DDInternalUnlock)
+LIBEXP(DSoundHelp)
+LIBEXP(DirectDrawCreate)
+LIBEXP(DirectDrawCreateClipper)
+LIBEXP(DirectDrawCreateEx)
+LIBEXP(DirectDrawEnumerateA)
+LIBEXP(DirectDrawEnumerateExA)
+LIBEXP(DirectDrawEnumerateExW)
+LIBEXP(DirectDrawEnumerateW)
+LIBEXP(DllCanUnloadNow)
+LIBEXP(DllGetClassObject)
+LIBEXP(GetDDSurfaceLocal)
+LIBEXP(GetOLEThunkData)
+LIBEXP(GetSurfaceFromDC)
+LIBEXP(RegisterSpecialCase)
+LIBEXP(ReleaseDDThreadLock)
+LIBEXP(SetAppCompatData)
 
 DOUBLE __fastcall MathRound(DOUBLE number)
 {
@@ -97,11 +79,22 @@ VOID LoadKernel32()
 		ReleaseActCtxC = (RELEASEACTCTX)GetProcAddress(hLib, "ReleaseActCtx");
 		ActivateActCtxC = (ACTIVATEACTCTX)GetProcAddress(hLib, "ActivateActCtx");
 		DeactivateActCtxC = (DEACTIVATEACTCTX)GetProcAddress(hLib, "DeactivateActCtx");
+
+		SetThreadLanguage = (SETTHREADLANGUAGE)GetProcAddress(hLib, "SetThreadUILanguage");
+		if (!SetThreadLanguage)
+			SetThreadLanguage = (SETTHREADLANGUAGE)SetThreadLocale;
 	}
 }
 
 VOID LoadDDraw()
 {
+	static BOOL isLoaded;
+
+	if (isLoaded)
+		return;
+
+	isLoaded = TRUE;
+
 	CHAR dir[MAX_PATH];
 	if (GetSystemDirectory(dir, MAX_PATH))
 	{
@@ -109,28 +102,28 @@ VOID LoadDDraw()
 		HMODULE hLib = LoadLibrary(dir);
 		if (hLib)
 		{
-			pAcquireDDThreadLock = (DWORD)GetProcAddress(hLib, "AcquireDDThreadLock");
-			pCompleteCreateSysmemSurface = (DWORD)GetProcAddress(hLib, "CompleteCreateSysmemSurface");
-			pD3DParseUnknownCommand = (DWORD)GetProcAddress(hLib, "D3DParseUnknownCommand");
-			pDDGetAttachedSurfaceLcl = (DWORD)GetProcAddress(hLib, "DDGetAttachedSurfaceLcl");
-			pDDInternalLock = (DWORD)GetProcAddress(hLib, "DDInternalLock");
-			pDDInternalUnlock = (DWORD)GetProcAddress(hLib, "DDInternalUnlock");
-			pDSoundHelp = (DWORD)GetProcAddress(hLib, "DSoundHelp");
-			pDirectDrawCreate = (DWORD)GetProcAddress(hLib, "DirectDrawCreate");
-			pDirectDrawCreateClipper = (DWORD)GetProcAddress(hLib, "DirectDrawCreateClipper");
-			DDCreateEx = (DIRECTDRAWCREATEEX)GetProcAddress(hLib, "DirectDrawCreateEx");
-			pDirectDrawEnumerateA = (DWORD)GetProcAddress(hLib, "DirectDrawEnumerateA");
-			pDirectDrawEnumerateExA = (DWORD)GetProcAddress(hLib, "DirectDrawEnumerateExA");
-			pDirectDrawEnumerateExW = (DWORD)GetProcAddress(hLib, "DirectDrawEnumerateExW");
-			pDirectDrawEnumerateW = (DWORD)GetProcAddress(hLib, "DirectDrawEnumerateW");
-			pDllCanUnloadNow = (DWORD)GetProcAddress(hLib, "DllCanUnloadNow");
-			pDllGetClassObject = (DWORD)GetProcAddress(hLib, "DllGetClassObject");
-			pGetDDSurfaceLocal = (DWORD)GetProcAddress(hLib, "GetDDSurfaceLocal");
-			pGetOLEThunkData = (DWORD)GetProcAddress(hLib, "GetOLEThunkData");
-			pGetSurfaceFromDC = (DWORD)GetProcAddress(hLib, "GetSurfaceFromDC");
-			pRegisterSpecialCase = (DWORD)GetProcAddress(hLib, "RegisterSpecialCase");
-			pReleaseDDThreadLock = (DWORD)GetProcAddress(hLib, "ReleaseDDThreadLock");
-			pSetAppCompatData = (DWORD)GetProcAddress(hLib, "SetAppCompatData");
+			LIBLOAD(hLib, AcquireDDThreadLock);
+			LIBLOAD(hLib, CompleteCreateSysmemSurface);
+			LIBLOAD(hLib, D3DParseUnknownCommand);
+			LIBLOAD(hLib, DDGetAttachedSurfaceLcl);
+			LIBLOAD(hLib, DDInternalLock);
+			LIBLOAD(hLib, DDInternalUnlock);
+			LIBLOAD(hLib, DSoundHelp);
+			LIBLOAD(hLib, DirectDrawCreate);
+			LIBLOAD(hLib, DirectDrawCreateClipper);
+			LIBLOAD(hLib, DirectDrawCreateEx);
+			LIBLOAD(hLib, DirectDrawEnumerateA);
+			LIBLOAD(hLib, DirectDrawEnumerateExA);
+			LIBLOAD(hLib, DirectDrawEnumerateExW);
+			LIBLOAD(hLib, DirectDrawEnumerateW);
+			LIBLOAD(hLib, DllCanUnloadNow);
+			LIBLOAD(hLib, DllGetClassObject);
+			LIBLOAD(hLib, GetDDSurfaceLocal);
+			LIBLOAD(hLib, GetOLEThunkData);
+			LIBLOAD(hLib, GetSurfaceFromDC);
+			LIBLOAD(hLib, RegisterSpecialCase);
+			LIBLOAD(hLib, ReleaseDDThreadLock);
+			LIBLOAD(hLib, SetAppCompatData);
 		}
 	}
 }

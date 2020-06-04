@@ -34,12 +34,9 @@
 #define WC_DRAW "drawclass"
 #define WM_CHECK_MENU "WM_CHECK_MENU"
 
-typedef HRESULT(__stdcall* DIRECTDRAWCREATEEX)(GUID* lpGuid,
-	LPVOID* lplpDD,
-	REFIID iid,
-	IUnknown* pUnkOuter);
+typedef HRESULT(__stdcall* DIRECTDRAWCREATEEX)(GUID* lpGuid, LPVOID* lplpDD, REFIID iid, IUnknown* pUnkOuter);
 
-extern DIRECTDRAWCREATEEX DDCreateEx;
+extern DWORD pDirectDrawCreateEx;
 
 typedef HANDLE(__stdcall* CREATEACTCTXA)(ACTCTX* pActCtx);
 typedef VOID(__stdcall* RELEASEACTCTX)(HANDLE hActCtx);
@@ -50,6 +47,10 @@ extern CREATEACTCTXA CreateActCtxC;
 extern RELEASEACTCTX ReleaseActCtxC;
 extern ACTIVATEACTCTX ActivateActCtxC;
 extern DEACTIVATEACTCTX DeactivateActCtxC;
+
+typedef DWORD(__stdcall* SETTHREADLANGUAGE)(DWORD lang);
+
+extern SETTHREADLANGUAGE SetThreadLanguage;
 
 typedef HRESULT(__stdcall* SETPROCESSDPIAWARENESS)(PROCESS_DPI_AWARENESS);
 

@@ -202,12 +202,6 @@ struct ConfigItems
 	RendererType renderer;
 
 	struct {
-		LPCSTR name;
-		HMENU main;
-		HMENU wrapper;
-	} menu;
-
-	struct {
 		BOOL scroll;
 		BOOL move;
 	} smooth;

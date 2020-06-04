@@ -229,6 +229,8 @@ namespace Config
 			config.keys.aspectRatio = 5;
 			config.keys.vSync = 0;
 		}
+
+		SetThreadLanguage(config.language);
 	}
 
 	INT __fastcall Get(const CHAR* app, const CHAR* key, INT default)

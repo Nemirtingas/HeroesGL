@@ -239,6 +239,8 @@ namespace Config
 			config.keys.aspectRatio = 5;
 			config.keys.vSync = 0;
 		}
+
+		SetThreadLanguage(config.language);
 	}
 
 	BOOL __fastcall Check(const CHAR* app, const CHAR* key)
