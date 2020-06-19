@@ -34,10 +34,22 @@
 #include "Hooks.h"
 #include "OpenDraw.h"
 
+#define WM_REDRAW_CANVAS 0x8001
+
 namespace Window
 {
 	HHOOK OldKeysHook;
 	WNDPROC OldWindowProc, OldPanelProc;
+
+	BYTE __fastcall CubicInterpolate(BYTE p0, BYTE p1, BYTE p2, BYTE p3, FLOAT x)
+	{
+		INT d = INT(p1 + 0.5 * x * (p2 - p0 + x * (2 * p0 - 5 * p1 + 4 * p2 - p3 + x * (3 * (p1 - p2) + p3 - p0))));
+		if (d > 0xFF)
+			d = 0xFF;
+		else if (d < 0)
+			d = 0;
+		return LOBYTE(d);
+	}
 
 	BOOL __fastcall GetMenuByChildID(HMENU hParent, MenuItemData* mData, INT index)
 	{
@@ -262,6 +274,11 @@ namespace Window
 		}
 		break;
 
+		case MenuColors: {
+			EnableMenuItem(hMenu, IDM_COLOR_ADJUST, MF_BYCOMMAND | (config.gl.version.value >= GL_VER_2_0 ? MF_ENABLED : (MF_DISABLED | MF_GRAYED)));
+		}
+		break;
+
 		case MenuCpu: {
 			CheckMenuItem(hMenu, IDM_PATCH_CPU, MF_BYCOMMAND | (config.coldCPU ? MF_CHECKED : MF_UNCHECKED));
 		}
@@ -325,6 +342,7 @@ namespace Window
 		CheckMenu(hMenu, MenuVSync);
 		CheckMenu(hMenu, MenuInterpolate);
 		CheckMenu(hMenu, MenuUpscale);
+		CheckMenu(hMenu, MenuColors);
 		CheckMenu(hMenu, MenuCpu);
 		CheckMenu(hMenu, MenuLanguage);
 		CheckMenu(hMenu, MenuRenderer);
@@ -574,6 +592,879 @@ namespace Window
 		return DefWindowProc(hDlg, uMsg, wParam, lParam);
 	}
 
+	LRESULT __stdcall ColorAdjustmentProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+	{
+		switch (uMsg)
+		{
+		case WM_INITDIALOG: {
+			SetWindowLong(hDlg, GWL_EXSTYLE, NULL);
+			EnumChildWindows(hDlg, EnumChildProc, NULL);
+
+			SendDlgItemMessage(hDlg, IDC_TRK_HUE, TBM_SETRANGE, FALSE, MAKELPARAM(0, 360));
+			SendDlgItemMessage(hDlg, IDC_TRK_SAT, TBM_SETRANGE, FALSE, MAKELPARAM(0, 1000));
+			SendDlgItemMessage(hDlg, IDC_TRK_IN_LEFT, TBM_SETRANGE, FALSE, MAKELPARAM(0, 255));
+			SendDlgItemMessage(hDlg, IDC_TRK_IN_RIGHT, TBM_SETRANGE, FALSE, MAKELPARAM(0, 255));
+			SendDlgItemMessage(hDlg, IDC_TRK_GAMMA, TBM_SETRANGE, FALSE, MAKELPARAM(0, 1000));
+			SendDlgItemMessage(hDlg, IDC_TRK_OUT_LEFT, TBM_SETRANGE, FALSE, MAKELPARAM(0, 255));
+			SendDlgItemMessage(hDlg, IDC_TRK_OUT_RIGHT, TBM_SETRANGE, FALSE, MAKELPARAM(0, 255));
+
+			SendDlgItemMessage(hDlg, IDC_RAD_RGB, BM_SETCHECK, BST_CHECKED, NULL);
+
+			SendDlgItemMessage(hDlg, IDC_TRK_HUE, TBM_SETPOS, TRUE, DWORD(config.colors.active.hueShift * 360.0f));
+			SendDlgItemMessage(hDlg, IDC_TRK_SAT, TBM_SETPOS, TRUE, DWORD(config.colors.active.saturation * 1000.0f));
+			SendDlgItemMessage(hDlg, IDC_TRK_IN_LEFT, TBM_SETPOS, TRUE, DWORD(config.colors.active.input.left.rgb * 255.0f));
+			SendDlgItemMessage(hDlg, IDC_TRK_IN_RIGHT, TBM_SETPOS, TRUE, DWORD(config.colors.active.input.right.rgb * 255.0f));
+			SendDlgItemMessage(hDlg, IDC_TRK_GAMMA, TBM_SETPOS, TRUE, DWORD(config.colors.active.gamma.rgb * 1000.0f));
+			SendDlgItemMessage(hDlg, IDC_TRK_OUT_LEFT, TBM_SETPOS, TRUE, DWORD(config.colors.active.output.left.rgb * 255.0f));
+			SendDlgItemMessage(hDlg, IDC_TRK_OUT_RIGHT, TBM_SETPOS, TRUE, DWORD(config.colors.active.output.right.rgb * 255.0f));
+
+			CHAR text[16];
+			FLOAT val = 360.0f * config.colors.active.hueShift - 180.0f;
+			StrPrint(text, val ? "%+0.f" : "%0.f", val);
+			SendDlgItemMessage(hDlg, IDC_LBL_HUE, WM_SETTEXT, NULL, (WPARAM)text);
+
+			StrPrint(text, "%.2f", MathPower(2.0f * config.colors.active.saturation, 1.5849625007211561f));
+			SendDlgItemMessage(hDlg, IDC_LBL_SAT, WM_SETTEXT, NULL, (WPARAM)text);
+
+			StrPrint(text, "%0.f", 255.0f * config.colors.active.input.left.rgb);
+			SendDlgItemMessage(hDlg, IDC_LBL_IN_LEFT, WM_SETTEXT, NULL, (WPARAM)text);
+
+			StrPrint(text, "%0.f", 255.0f * config.colors.active.input.right.rgb);
+			SendDlgItemMessage(hDlg, IDC_LBL_IN_RIGHT, WM_SETTEXT, NULL, (WPARAM)text);
+
+			StrPrint(text, "%.2f", MathPower(2.0f * config.colors.active.gamma.rgb, 3.32f));
+			SendDlgItemMessage(hDlg, IDC_LBL_GAMMA, WM_SETTEXT, NULL, (WPARAM)text);
+
+			StrPrint(text, "%0.f", 255.0f * config.colors.active.output.left.rgb);
+			SendDlgItemMessage(hDlg, IDC_LBL_OUT_LEFT, WM_SETTEXT, NULL, (WPARAM)text);
+
+			StrPrint(text, "%0.f", 255.0f * config.colors.active.output.right.rgb);
+			SendDlgItemMessage(hDlg, IDC_LBL_OUT_RIGHT, WM_SETTEXT, NULL, (WPARAM)text);
+
+			LevelsData* levelsData = (LevelsData*)MemoryAlloc(sizeof(LevelsData));
+			MemoryZero(levelsData, sizeof(LevelsData));
+			levelsData->delta = 0.7f;
+			levelsData->values = config.colors.active;
+
+			SetWindowLong(hDlg, GWLP_USERDATA, (LONG)levelsData);
+
+			OpenDraw* ddraw = Main::FindOpenDrawByWindow(GetParent(hDlg));
+			if (ddraw && ddraw->attachedSurface && ddraw->attachedSurface->indexBuffer)
+			{
+				OpenDrawSurface* surface = ddraw->attachedSurface;
+
+				struct {
+					DWORD width;
+					DWORD height;
+				} size = {
+					surface->width,
+					surface->height
+				};
+
+				LevelColors levels[256];
+				MemoryZero(levels, sizeof(levels));
+
+				WORD* data = (WORD*)surface->indexBuffer;
+				DWORD count = size.width * size.height;
+				do
+				{
+					WORD p = *data++;
+					DWORD px = ((p & 0xF800) >> 8) | ((p & 0x07E0) << 5) | ((p & 0x001F) << 19);
+
+					BYTE* b = (BYTE*)&px;
+					++levels[*b++].red;
+					++levels[*b++].green;
+					++levels[*b].blue;
+				} while (--count);
+
+				levelsData->hDc = CreateCompatibleDC(NULL);
+				if (levelsData->hDc)
+				{
+					HWND hImg = GetDlgItem(hDlg, IDC_CANVAS);
+					RECT rc;
+					GetClientRect(hImg, &rc);
+
+					BITMAPINFO bmi;
+					MemoryZero(&bmi, sizeof(BITMAPINFO));
+					bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+					bmi.bmiHeader.biWidth = rc.right;
+					bmi.bmiHeader.biHeight = 100;
+					bmi.bmiHeader.biPlanes = 1;
+					bmi.bmiHeader.biBitCount = 32;
+					bmi.bmiHeader.biXPelsPerMeter = 1;
+					bmi.bmiHeader.biYPelsPerMeter = 1;
+
+					levelsData->hBmp = CreateDIBSection(levelsData->hDc, (BITMAPINFO*)&bmi, DIB_RGB_COLORS, (VOID**)&levelsData->data, NULL, 0);
+					if (levelsData->hBmp)
+					{
+						SelectObject(levelsData->hDc, levelsData->hBmp);
+
+						DWORD total = size.width * size.height;
+						levelsData->colors = (LevelColorsFloat*)MemoryAlloc(sizeof(LevelColorsFloat) * 256);
+
+						LevelColors* src = levels;
+						LevelColorsFloat* dst = levelsData->colors;
+						DWORD count = 256;
+						do
+						{
+							dst->red = (FLOAT)src->red / total;
+							dst->green = (FLOAT)src->green / total;
+							dst->blue = (FLOAT)src->blue / total;
+
+							++src;
+							++dst;
+						} while (--count);
+					}
+				}
+			}
+
+			SetWindowLong(hDlg, GWL_EXSTYLE, GetWindowLong(hDlg, GWL_EXSTYLE) | WS_EX_DLGMODALFRAME);
+			UpdateWindow(hDlg);
+			break;
+		}
+
+		case WM_NOTIFY: {
+			if (((NMHDR*)lParam)->code == NM_CUSTOMDRAW)
+			{
+				switch (wParam)
+				{
+				case IDC_TRK_HUE:
+				case IDC_TRK_SAT:
+				case IDC_TRK_IN_LEFT:
+				case IDC_TRK_IN_RIGHT:
+				case IDC_TRK_GAMMA:
+				case IDC_TRK_OUT_LEFT:
+				case IDC_TRK_OUT_RIGHT: {
+					NMCUSTOMDRAW* lpDraw = (NMCUSTOMDRAW*)lParam;
+
+					switch (lpDraw->dwDrawStage)
+					{
+					case CDDS_PREPAINT: {
+						SetWindowLong(hDlg, DWL_MSGRESULT, CDRF_NOTIFYITEMDRAW);
+						return CDRF_NOTIFYITEMDRAW;
+					}
+
+					case CDDS_ITEMPREPAINT: {
+
+						switch (lpDraw->dwItemSpec)
+						{
+						case TBCD_THUMB: {
+							lpDraw->rc.left += 1;
+							lpDraw->rc.top += 2;
+							lpDraw->rc.right -= 1;
+							lpDraw->rc.bottom -= 2;
+							break;
+						}
+
+						default:
+							break;
+						}
+
+						return CDRF_DODEFAULT;
+					}
+
+					default:
+						break;
+					}
+
+					break;
+				}
+
+				default:
+					break;
+				}
+			}
+
+			break;
+		}
+
+		case WM_REDRAW_CANVAS: {
+			HWND hImg = GetDlgItem(hDlg, IDC_CANVAS);
+
+			RECT rc;
+			GetWindowRect(hImg, &rc);
+
+			POINT pt = *(POINT*)&rc;
+			ScreenToClient(hDlg, &pt);
+
+			rc = { pt.x, pt.y, pt.x + (rc.right - rc.left), pt.y + (rc.bottom - rc.top) };
+			InvalidateRect(hDlg, &rc, FALSE);
+		}
+
+		case WM_DRAWITEM: {
+			if (wParam == IDC_CANVAS)
+			{
+				DRAWITEMSTRUCT* paint = (DRAWITEMSTRUCT*)lParam;
+
+				LevelsData* levelsData = (LevelsData*)GetWindowLong(hDlg, GWLP_USERDATA);
+				if (levelsData->colors)
+				{
+					LevelColorsFloat prep[260];
+					{
+						FLOAT h = 2.0f * config.colors.active.hueShift - 1.0f;
+						FLOAT s = (FLOAT)MathPower(2.0f * config.colors.active.saturation, 1.5849625007211561f);
+
+						FLOAT vsu = s * (FLOAT)MathCosinus(h * M_PI);
+						FLOAT vsw = s * (FLOAT)MathSinus(h * M_PI);
+
+						LevelColorsFloat mat[3] = {
+							{ 0.299f + 0.701f * vsu + 0.168f * vsw,
+								0.587f - 0.587f * vsu + 0.330f * vsw,
+								0.114f - 0.114f * vsu - 0.497f * vsw },
+							{ 0.299f - 0.299f * vsu - 0.328f * vsw,
+								0.587f + 0.413f * vsu + 0.035f * vsw,
+								0.114f - 0.114f * vsu + 0.292f * vsw },
+							{ 0.299f - 0.300f * vsu + 1.25f * vsw,
+								0.587f - 0.588f * vsu - 1.05f * vsw,
+								0.114f + 0.886f * vsu - 0.203f * vsw }
+						};
+
+						MemoryZero(prep, sizeof(prep));
+
+						struct {
+							Levels input;
+							Levels gamma;
+							Levels output;
+						} levels;
+
+						for (DWORD i = 0; i < 4; ++i)
+						{
+							levels.input.chanel[i] = config.colors.active.input.right.chanel[i] - config.colors.active.input.left.chanel[i];
+							levels.gamma.chanel[i] = 1.0f / (FLOAT)MathPower(2.0f * config.colors.active.gamma.chanel[i], 3.32f);
+							levels.output.chanel[i] = config.colors.active.output.right.chanel[i] - config.colors.active.output.left.chanel[i];
+						}
+
+						LevelColorsFloat* src = levelsData->colors;
+						for (DWORD i = 0; i < 256; ++i, ++src)
+						{
+							FLOAT dx = (FLOAT)i / 255.0f;
+
+							LevelColorsFloat* mt = mat;
+							for (DWORD j = 0; j < 3; ++j, ++mt)
+							{
+								FLOAT k = dx;
+								for (DWORD s = 2, idx = j + 1; s; --s, idx = 0)
+								{
+									k = (k - config.colors.active.input.left.chanel[idx]) / levels.input.chanel[idx];
+									k = min(1.0f, max(0.0f, k));
+									k = (FLOAT)MathPower(k, levels.gamma.chanel[idx]);
+									k = k * levels.output.chanel[idx] + config.colors.active.output.left.chanel[idx];
+									k = min(1.0f, max(0.0f, k));
+								}
+
+								prep[(DWORD)(k * 255.0f) + 2].chanel[j] += mt->red * src->red + mt->green * src->green + mt->blue * src->blue;
+							}
+						}
+					}
+
+					prep[1] = prep[2];
+					prep[258] = prep[257];
+
+					LevelColorsFloat floats[259];
+					for (DWORD y = 4; y; --y)
+					{
+						{
+							LevelColorsFloat* src = prep;
+							LevelColorsFloat* dst = floats + 1;
+							DWORD count = 257;
+							do
+							{
+								for (DWORD i = 0; i < 3; ++i)
+									dst->chanel[i] = FLOAT((src[0].chanel[i] + src[3].chanel[i]) * (0.125 / 6.0) + (src[1].chanel[i] + src[2].chanel[i]) * (2.875 / 6.0));
+
+								++src;
+								++dst;
+							} while (--count);
+						}
+						floats[0] = floats[1];
+						floats[258] = floats[257];
+
+						{
+							LevelColorsFloat* src = floats;
+							LevelColorsFloat* dst = prep + 2;
+							DWORD count = 256;
+							do
+							{
+								for (DWORD i = 0; i < 3; ++i)
+									dst->chanel[i] = FLOAT((src[0].chanel[i] + src[3].chanel[i]) * (0.125 / 6.0) + (src[1].chanel[i] + src[2].chanel[i]) * (2.875 / 6.0));
+
+								++src;
+								++dst;
+							} while (--count);
+						}
+						prep[1] = prep[2];
+						prep[258] = prep[257];
+					}
+
+					{
+						LevelColorsFloat* src = prep;
+						LevelColorsFloat* dst = floats + 1;
+						DWORD count = 257;
+						do
+						{
+							for (DWORD i = 0; i < 3; ++i)
+								dst->chanel[i] = min(1.0f, max(0.0f, FLOAT((src[0].chanel[i] + src[3].chanel[i]) * (0.125 / 6.0) + (src[1].chanel[i] + src[2].chanel[i]) * (2.875 / 6.0))));
+
+							++src;
+							++dst;
+						} while (--count);
+					}
+
+					FLOAT max = 0.0;
+					{
+						FLOAT* data = (FLOAT*)(floats + 1);
+						DWORD count = 257 * 3;
+						do
+						{
+							*data = (FLOAT)MathPower(*data, levelsData->delta);
+							max += *data++;
+						} while (--count);
+					}
+
+					if (max > 0.0)
+					{
+						LevelColors levels[259];
+						MemoryZero(levels, sizeof(levels));
+
+						{
+							max /= FLOAT(256 / 4 * 3);
+
+							FLOAT* src = (FLOAT*)(floats + 1);
+							DWORD* dst = (DWORD*)(levels + 1);
+							DWORD count = 257 * 3;
+							do
+								*dst++ = DWORD(*src++ / max * 100.0f);
+							while (--count);
+
+							levels[0] = levels[1];
+							levels[258] = levels[257];
+						}
+
+						DWORD bmpData[100 * 516];
+						{
+							MemoryZero(bmpData, 100 * 516 * sizeof(DWORD));
+
+							INT index;
+							struct {
+								DWORD line;
+								DWORD back;
+							} light, dark;
+
+							if (SendDlgItemMessage(hDlg, IDC_RAD_RED, BM_GETCHECK, NULL, NULL) == BST_CHECKED)
+							{
+								index = 0;
+								dark = { 0xA0, 0x30 };
+								light = { 0xFF, 0xC0 };
+							}
+							else if (SendDlgItemMessage(hDlg, IDC_RAD_GREEN, BM_GETCHECK, NULL, NULL) == BST_CHECKED)
+							{
+								index = 1;
+								dark = { 0xA0, 0x30 };
+								light = { 0xFF, 0xC0 };
+							}
+							else if (SendDlgItemMessage(hDlg, IDC_RAD_BLUE, BM_GETCHECK, NULL, NULL) == BST_CHECKED)
+							{
+								index = 2;
+								dark = { 0xA0, 0x30 };
+								light = { 0xFF, 0xC0 };
+							}
+							else
+							{
+								index = -1;
+								dark = { 0xD0, 0x50 };
+							}
+
+							DWORD* dst = bmpData + 1;
+							for (DWORD i = 0; i < 100; ++i)
+							{
+								LevelColors* src = levels + 1;
+								DWORD count = 257;
+								do
+								{
+									LevelColors* neighbor = src - 1;
+									DWORD iter = 2;
+									do
+									{
+										DWORD pix = 0;
+										for (DWORD j = 0, x = 16; j < 3; ++j, x -= 8)
+										{
+											if (j != index)
+											{
+												if (i < src->chanel[j])
+												{
+													DWORD min = neighbor->chanel[j] + 1;
+													if (min > src->chanel[j])
+														min = src->chanel[j];
+
+													pix |= (i + 1 >= min ? dark.line : dark.back) << x;
+												}
+												else
+													pix |= 0x20 << x;
+											}
+										}
+
+										if (index + 1)
+										{
+											DWORD shift = (2 - index) * 8;
+											if (i < src->chanel[index])
+											{
+												DWORD min = neighbor->chanel[index] + 1;
+												if (min > src->chanel[index])
+													min = src->chanel[index];
+
+												if (i + 1 >= min)
+													pix = light.line << shift;
+												else
+													pix |= light.back << shift;
+											}
+											else
+												pix |= 0x20 << shift;
+										}
+
+										*dst++ = pix;
+										neighbor = src + 1;
+									} while (--iter);
+
+									++src;
+								} while (--count);
+
+								dst += 2;
+							}
+						}
+
+						HWND hImg = GetDlgItem(hDlg, IDC_CANVAS);
+
+						RECT rc;
+						GetClientRect(hImg, &rc);
+
+						for (LONG i = 0; i < rc.right; ++i)
+						{
+							FLOAT pos = (FLOAT)i / rc.right * 514.0f;
+							DWORD index = DWORD(pos);
+							pos -= (FLOAT)index;
+
+							DWORD* dest = levelsData->data + i;
+							for (DWORD j = 0; j < 100; ++j)
+							{
+								BYTE* src = (BYTE*)&bmpData[j * 516 + index];
+								BYTE* dst = (BYTE*)dest;
+
+								for (DWORD j = 0; j < 3; ++j, ++src)
+									dst[j] = CubicInterpolate(src[0], src[4], src[8], src[12], pos);
+
+								dest += rc.right;
+							}
+						}
+
+						BitBlt(paint->hDC, 0, 0, rc.right, 100, levelsData->hDc, 0, 0, SRCCOPY);
+						return TRUE;
+					}
+				}
+
+				FillRect(paint->hDC, &paint->rcItem, (HBRUSH)GetStockObject(BLACK_BRUSH));
+				return TRUE;
+			}
+
+			break;
+		}
+
+		case WM_COMMAND: {
+			switch (wParam)
+			{
+			case IDC_BTN_OK: {
+				LevelsData* levelsData = (LevelsData*)GetWindowLong(hDlg, GWLP_USERDATA);
+				levelsData->values = config.colors.active;
+
+				Config::Set(CONFIG_COLORS, "HueSat", MAKELONG(DWORD(config.colors.active.hueShift * 1000.0f), DWORD(config.colors.active.saturation * 1000.0f)));
+				Config::Set(CONFIG_COLORS, "RgbInput", MAKELONG(DWORD(config.colors.active.input.left.rgb * 1000.0f), DWORD(config.colors.active.input.right.rgb * 1000.0f)));
+				Config::Set(CONFIG_COLORS, "RedInput", MAKELONG(DWORD(config.colors.active.input.left.red * 1000.0f), DWORD(config.colors.active.input.right.red * 1000.0f)));
+				Config::Set(CONFIG_COLORS, "GreenInput", MAKELONG(DWORD(config.colors.active.input.left.green * 1000.0f), DWORD(config.colors.active.input.right.green * 1000.0f)));
+				Config::Set(CONFIG_COLORS, "BlueInput", MAKELONG(DWORD(config.colors.active.input.left.blue * 1000.0f), DWORD(config.colors.active.input.right.blue * 1000.0f)));
+				Config::Set(CONFIG_COLORS, "RgbGamma", DWORD(config.colors.active.gamma.rgb * 1000.0f));
+				Config::Set(CONFIG_COLORS, "RedGamma", DWORD(config.colors.active.gamma.red * 1000.0f));
+				Config::Set(CONFIG_COLORS, "GreenGamma", DWORD(config.colors.active.gamma.green * 1000.0f));
+				Config::Set(CONFIG_COLORS, "BlueGamma", DWORD(config.colors.active.gamma.blue * 1000.0f));
+				Config::Set(CONFIG_COLORS, "RgbOutput", MAKELONG(DWORD(config.colors.active.output.left.rgb * 1000.0f), DWORD(config.colors.active.output.right.rgb * 1000.0f)));
+				Config::Set(CONFIG_COLORS, "RedOutput", MAKELONG(DWORD(config.colors.active.output.left.red * 1000.0f), DWORD(config.colors.active.output.right.red * 1000.0f)));
+				Config::Set(CONFIG_COLORS, "GreenOutput", MAKELONG(DWORD(config.colors.active.output.left.green * 1000.0f), DWORD(config.colors.active.output.right.green * 1000.0f)));
+				Config::Set(CONFIG_COLORS, "BlueOutput", MAKELONG(DWORD(config.colors.active.output.left.blue * 1000.0f), DWORD(config.colors.active.output.right.blue * 1000.0f)));
+
+				SendMessage(hDlg, WM_CLOSE, NULL, NULL);
+				return NULL;
+			}
+
+			case IDC_BTN_CANCEL: {
+				SendMessage(hDlg, WM_CLOSE, NULL, NULL);
+				return NULL;
+			}
+
+			case IDC_BTN_RESET: {
+				config.colors.active.hueShift = 0.5f;
+				config.colors.active.saturation = 0.5f;
+
+				for (DWORD i = 0; i < 4; ++i)
+				{
+					config.colors.active.input.left.chanel[i] = 0.0f;
+					config.colors.active.input.right.chanel[i] = 1.0f;
+					config.colors.active.gamma.chanel[i] = 0.5f;
+					config.colors.active.output.left.chanel[i] = 0.0f;
+					config.colors.active.output.right.chanel[i] = 1.0f;
+				}
+
+				SendDlgItemMessage(hDlg, IDC_RAD_BLUE, BM_SETCHECK, BST_UNCHECKED, NULL);
+				SendDlgItemMessage(hDlg, IDC_RAD_GREEN, BM_SETCHECK, BST_UNCHECKED, NULL);
+				SendDlgItemMessage(hDlg, IDC_RAD_RED, BM_SETCHECK, BST_UNCHECKED, NULL);
+				SendDlgItemMessage(hDlg, IDC_RAD_RGB, BM_SETCHECK, BST_CHECKED, NULL);
+
+				SendDlgItemMessage(hDlg, IDC_TRK_HUE, TBM_SETPOS, TRUE, 180);
+				SendDlgItemMessage(hDlg, IDC_TRK_SAT, TBM_SETPOS, TRUE, 500);
+				SendDlgItemMessage(hDlg, IDC_TRK_IN_LEFT, TBM_SETPOS, TRUE, 0);
+				SendDlgItemMessage(hDlg, IDC_TRK_IN_RIGHT, TBM_SETPOS, TRUE, 255);
+				SendDlgItemMessage(hDlg, IDC_TRK_GAMMA, TBM_SETPOS, TRUE, 500);
+				SendDlgItemMessage(hDlg, IDC_TRK_OUT_LEFT, TBM_SETPOS, TRUE, 0);
+				SendDlgItemMessage(hDlg, IDC_TRK_OUT_RIGHT, TBM_SETPOS, TRUE, 255);
+
+				SendDlgItemMessage(hDlg, IDC_LBL_HUE, WM_SETTEXT, NULL, (WPARAM) "0");
+				SendDlgItemMessage(hDlg, IDC_LBL_SAT, WM_SETTEXT, NULL, (WPARAM) "1.00");
+				SendDlgItemMessage(hDlg, IDC_LBL_IN_LEFT, WM_SETTEXT, NULL, (WPARAM) "0");
+				SendDlgItemMessage(hDlg, IDC_LBL_IN_RIGHT, WM_SETTEXT, NULL, (WPARAM) "255");
+				SendDlgItemMessage(hDlg, IDC_LBL_GAMMA, WM_SETTEXT, NULL, (WPARAM) "1.00");
+				SendDlgItemMessage(hDlg, IDC_LBL_OUT_LEFT, WM_SETTEXT, NULL, (WPARAM) "0");
+				SendDlgItemMessage(hDlg, IDC_LBL_OUT_RIGHT, WM_SETTEXT, NULL, (WPARAM) "255");
+
+				SendMessage(hDlg, WM_REDRAW_CANVAS, NULL, NULL);
+				OpenDraw* ddraw = Main::FindOpenDrawByWindow(GetParent(hDlg));
+				if (ddraw)
+				{
+					SetEvent(ddraw->hDrawEvent);
+					Sleep(0);
+				}
+
+				return NULL;
+			}
+
+			case IDC_BTN_AUTO: {
+				config.colors.active.hueShift = 0.5f;
+				config.colors.active.saturation = 0.5f;
+
+				for (DWORD i = 0; i < 4; ++i)
+				{
+					config.colors.active.input.left.chanel[i] = 0.0f;
+					config.colors.active.input.right.chanel[i] = 1.0f;
+					config.colors.active.gamma.chanel[i] = 0.5f;
+					config.colors.active.output.left.chanel[i] = 0.0f;
+					config.colors.active.output.right.chanel[i] = 1.0f;
+				}
+
+				SendDlgItemMessage(hDlg, IDC_RAD_BLUE, BM_SETCHECK, BST_UNCHECKED, NULL);
+				SendDlgItemMessage(hDlg, IDC_RAD_GREEN, BM_SETCHECK, BST_UNCHECKED, NULL);
+				SendDlgItemMessage(hDlg, IDC_RAD_RED, BM_SETCHECK, BST_UNCHECKED, NULL);
+				SendDlgItemMessage(hDlg, IDC_RAD_RGB, BM_SETCHECK, BST_CHECKED, NULL);
+
+				SendDlgItemMessage(hDlg, IDC_TRK_HUE, TBM_SETPOS, TRUE, 180);
+				SendDlgItemMessage(hDlg, IDC_TRK_SAT, TBM_SETPOS, TRUE, 500);
+				SendDlgItemMessage(hDlg, IDC_TRK_IN_LEFT, TBM_SETPOS, TRUE, 0);
+				SendDlgItemMessage(hDlg, IDC_TRK_IN_RIGHT, TBM_SETPOS, TRUE, 255);
+				SendDlgItemMessage(hDlg, IDC_TRK_GAMMA, TBM_SETPOS, TRUE, 500);
+				SendDlgItemMessage(hDlg, IDC_TRK_OUT_LEFT, TBM_SETPOS, TRUE, 0);
+				SendDlgItemMessage(hDlg, IDC_TRK_OUT_RIGHT, TBM_SETPOS, TRUE, 255);
+
+				SendDlgItemMessage(hDlg, IDC_LBL_HUE, WM_SETTEXT, NULL, (WPARAM) "0");
+				SendDlgItemMessage(hDlg, IDC_LBL_SAT, WM_SETTEXT, NULL, (WPARAM) "1.00");
+				SendDlgItemMessage(hDlg, IDC_LBL_IN_LEFT, WM_SETTEXT, NULL, (WPARAM) "0");
+				SendDlgItemMessage(hDlg, IDC_LBL_IN_RIGHT, WM_SETTEXT, NULL, (WPARAM) "255");
+				SendDlgItemMessage(hDlg, IDC_LBL_GAMMA, WM_SETTEXT, NULL, (WPARAM) "1.00");
+				SendDlgItemMessage(hDlg, IDC_LBL_OUT_LEFT, WM_SETTEXT, NULL, (WPARAM) "0");
+				SendDlgItemMessage(hDlg, IDC_LBL_OUT_RIGHT, WM_SETTEXT, NULL, (WPARAM) "255");
+
+				LevelsData* levelsData = (LevelsData*)GetWindowLong(hDlg, GWLP_USERDATA);
+				if (levelsData->colors)
+				{
+					{
+						LevelColorsFloat found = { 0.0, 0.0, 0.0 };
+						BOOL success[3] = { FALSE, FALSE, FALSE };
+						DWORD exit = 0;
+						LevelColorsFloat* data = levelsData->colors;
+
+						for (DWORD i = 0; i < 256; ++i, ++data)
+						{
+							for (DWORD j = 0; j < 3; ++j)
+							{
+								if (!success[j])
+								{
+									found.chanel[j] += data->chanel[j];
+									if (found.chanel[j] > 0.007f)
+									{
+										success[j] = TRUE;
+										++exit;
+										config.colors.active.input.left.chanel[j + 1] = (FLOAT)i / 255.0f;
+									}
+								}
+							}
+
+							if (exit == 3)
+								break;
+						};
+					}
+
+					{
+						LevelColorsFloat found = { 0.0, 0.0, 0.0 };
+						BOOL success[3] = { FALSE, FALSE, FALSE };
+						DWORD exit = 0;
+						LevelColorsFloat* data = &levelsData->colors[255];
+
+						for (DWORD i = 255; i >= 0; --i, --data)
+						{
+							for (DWORD j = 0; j < 3; ++j)
+							{
+								if (!success[j])
+								{
+									found.chanel[j] += data->chanel[j];
+									if (found.chanel[j] > 0.007f)
+									{
+										success[j] = TRUE;
+										++exit;
+										config.colors.active.input.right.chanel[j + 1] = (FLOAT)i / 255.0f;
+									}
+								}
+							}
+
+							if (exit == 3)
+								break;
+						};
+					}
+				}
+
+				SendMessage(hDlg, WM_REDRAW_CANVAS, NULL, NULL);
+				OpenDraw* ddraw = Main::FindOpenDrawByWindow(GetParent(hDlg));
+				if (ddraw)
+				{
+					SetEvent(ddraw->hDrawEvent);
+					Sleep(0);
+				}
+
+				return NULL;
+			}
+
+			case IDC_RAD_RGB:
+			case IDC_RAD_RED:
+			case IDC_RAD_GREEN:
+			case IDC_RAD_BLUE: {
+				DWORD index = (DWORD)wParam - IDC_RAD_RGB;
+
+				SendDlgItemMessage(hDlg, IDC_TRK_IN_LEFT, TBM_SETPOS, TRUE, DWORD(config.colors.active.input.left.chanel[index] * 255.0f));
+				SendDlgItemMessage(hDlg, IDC_TRK_IN_RIGHT, TBM_SETPOS, TRUE, DWORD(config.colors.active.input.right.chanel[index] * 255.0f));
+				SendDlgItemMessage(hDlg, IDC_TRK_GAMMA, TBM_SETPOS, TRUE, DWORD(config.colors.active.gamma.chanel[index] * 1000.0f));
+				SendDlgItemMessage(hDlg, IDC_TRK_OUT_LEFT, TBM_SETPOS, TRUE, DWORD(config.colors.active.output.left.chanel[index] * 255.0f));
+				SendDlgItemMessage(hDlg, IDC_TRK_OUT_RIGHT, TBM_SETPOS, TRUE, DWORD(config.colors.active.output.right.chanel[index] * 255.0f));
+
+				CHAR text[16];
+
+				StrPrint(text, "%0.f", 255.0f * config.colors.active.input.left.chanel[index]);
+				SendDlgItemMessage(hDlg, IDC_LBL_IN_LEFT, WM_SETTEXT, NULL, (WPARAM)text);
+
+				StrPrint(text, "%0.f", 255.0f * config.colors.active.input.right.chanel[index]);
+				SendDlgItemMessage(hDlg, IDC_LBL_IN_RIGHT, WM_SETTEXT, NULL, (WPARAM)text);
+
+				StrPrint(text, "%.2f", MathPower(2.0f * config.colors.active.gamma.chanel[index], 3.32f));
+				SendDlgItemMessage(hDlg, IDC_LBL_GAMMA, WM_SETTEXT, NULL, (WPARAM)text);
+
+				StrPrint(text, "%0.f", 255.0f * config.colors.active.output.left.chanel[index]);
+				SendDlgItemMessage(hDlg, IDC_LBL_OUT_LEFT, WM_SETTEXT, NULL, (WPARAM)text);
+
+				StrPrint(text, "%0.f", 255.0f * config.colors.active.output.right.chanel[index]);
+				SendDlgItemMessage(hDlg, IDC_LBL_OUT_RIGHT, WM_SETTEXT, NULL, (WPARAM)text);
+
+				SendMessage(hDlg, WM_REDRAW_CANVAS, NULL, NULL);
+				return NULL;
+			}
+
+			default:
+				break;
+			}
+
+			break;
+		}
+
+		case WM_MOUSEWHEEL: {
+			HWND hImg = GetDlgItem(hDlg, IDC_CANVAS);
+
+			RECT rc;
+			GetClientRect(hImg, &rc);
+
+			POINT pt = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+			ScreenToClient(hImg, &pt);
+			if (PtInRect(&rc, pt))
+			{
+				LevelsData* levelsData = (LevelsData*)GetWindowLong(hDlg, GWLP_USERDATA);
+				FLOAT dlt = levelsData->delta + 0.025f * GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA;
+				if (dlt > 0.0f && dlt < 1.0f)
+				{
+					levelsData->delta = dlt;
+					SendMessage(hDlg, WM_REDRAW_CANVAS, NULL, NULL);
+				}
+			}
+
+			break;
+		}
+
+		case WM_HSCROLL: {
+			DWORD value = LOWORD(wParam) == SB_THUMBTRACK || LOWORD(wParam) == SB_THUMBPOSITION ? HIWORD(wParam) : SendMessage((HWND)lParam, TBM_GETPOS, NULL, NULL);
+			CHAR text[16];
+			INT id = GetDlgCtrlID((HWND)lParam);
+			switch (id)
+			{
+			case IDC_TRK_HUE: {
+				config.colors.active.hueShift = (FLOAT)value / 360.0f;
+
+				DWORD val = value - 180;
+				StrPrint(text, val ? "%+d" : "%d", val);
+				SendDlgItemMessage(hDlg, IDC_LBL_HUE, WM_SETTEXT, NULL, (WPARAM)text);
+				break;
+			}
+			case IDC_TRK_SAT: {
+				config.colors.active.saturation = 0.001f * value;
+
+				StrPrint(text, "%.2f", MathPower(0.002f * value, 1.5849625007211561f));
+				SendDlgItemMessage(hDlg, IDC_LBL_SAT, WM_SETTEXT, NULL, (WPARAM)text);
+				break;
+			}
+			case IDC_TRK_IN_LEFT: {
+				DWORD idx;
+				if (SendDlgItemMessage(hDlg, IDC_RAD_RED, BM_GETCHECK, NULL, NULL) == BST_CHECKED)
+					idx = 1;
+				else if (SendDlgItemMessage(hDlg, IDC_RAD_GREEN, BM_GETCHECK, NULL, NULL) == BST_CHECKED)
+					idx = 2;
+				else if (SendDlgItemMessage(hDlg, IDC_RAD_BLUE, BM_GETCHECK, NULL, NULL) == BST_CHECKED)
+					idx = 3;
+				else
+					idx = 0;
+
+				DWORD comp = SendDlgItemMessage(hDlg, IDC_TRK_IN_RIGHT, TBM_GETPOS, NULL, NULL);
+				if (value > comp)
+				{
+					value = comp;
+					SendDlgItemMessage(hDlg, IDC_TRK_IN_LEFT, TBM_SETPOS, TRUE, value);
+				}
+
+				StrPrint(text, "%d", value);
+				SendDlgItemMessage(hDlg, IDC_LBL_IN_LEFT, WM_SETTEXT, NULL, (WPARAM)text);
+
+				config.colors.active.input.left.chanel[idx] = (FLOAT)value / 255.0f;
+				break;
+			}
+			case IDC_TRK_IN_RIGHT: {
+				DWORD idx;
+				if (SendDlgItemMessage(hDlg, IDC_RAD_RED, BM_GETCHECK, NULL, NULL) == BST_CHECKED)
+					idx = 1;
+				else if (SendDlgItemMessage(hDlg, IDC_RAD_GREEN, BM_GETCHECK, NULL, NULL) == BST_CHECKED)
+					idx = 2;
+				else if (SendDlgItemMessage(hDlg, IDC_RAD_BLUE, BM_GETCHECK, NULL, NULL) == BST_CHECKED)
+					idx = 3;
+				else
+					idx = 0;
+
+				DWORD comp = SendDlgItemMessage(hDlg, IDC_TRK_IN_LEFT, TBM_GETPOS, NULL, NULL);
+				if (value < comp)
+				{
+					value = comp;
+					SendDlgItemMessage(hDlg, IDC_TRK_IN_RIGHT, TBM_SETPOS, TRUE, value);
+				}
+
+				StrPrint(text, "%d", value);
+				SendDlgItemMessage(hDlg, IDC_LBL_IN_RIGHT, WM_SETTEXT, NULL, (WPARAM)text);
+
+				config.colors.active.input.right.chanel[idx] = (FLOAT)value / 255.0f;
+				break;
+			}
+			case IDC_TRK_GAMMA: {
+				DWORD idx;
+				if (SendDlgItemMessage(hDlg, IDC_RAD_RED, BM_GETCHECK, NULL, NULL) == BST_CHECKED)
+					idx = 1;
+				else if (SendDlgItemMessage(hDlg, IDC_RAD_GREEN, BM_GETCHECK, NULL, NULL) == BST_CHECKED)
+					idx = 2;
+				else if (SendDlgItemMessage(hDlg, IDC_RAD_BLUE, BM_GETCHECK, NULL, NULL) == BST_CHECKED)
+					idx = 3;
+				else
+					idx = 0;
+
+				config.colors.active.gamma.chanel[idx] = 0.001f * value;
+
+				StrPrint(text, "%.2f", MathPower(0.002f * value, 3.32f));
+				SendDlgItemMessage(hDlg, IDC_LBL_GAMMA, WM_SETTEXT, NULL, (WPARAM)text);
+				break;
+			}
+			case IDC_TRK_OUT_LEFT: {
+				DWORD idx;
+				if (SendDlgItemMessage(hDlg, IDC_RAD_RED, BM_GETCHECK, NULL, NULL) == BST_CHECKED)
+					idx = 1;
+				else if (SendDlgItemMessage(hDlg, IDC_RAD_GREEN, BM_GETCHECK, NULL, NULL) == BST_CHECKED)
+					idx = 2;
+				else if (SendDlgItemMessage(hDlg, IDC_RAD_BLUE, BM_GETCHECK, NULL, NULL) == BST_CHECKED)
+					idx = 3;
+				else
+					idx = 0;
+
+				StrPrint(text, "%d", value);
+				SendDlgItemMessage(hDlg, IDC_LBL_OUT_LEFT, WM_SETTEXT, NULL, (WPARAM)text);
+
+				config.colors.active.output.left.chanel[idx] = (FLOAT)value / 255.0f;
+				break;
+			}
+			case IDC_TRK_OUT_RIGHT: {
+				DWORD idx;
+				if (SendDlgItemMessage(hDlg, IDC_RAD_RED, BM_GETCHECK, NULL, NULL) == BST_CHECKED)
+					idx = 1;
+				else if (SendDlgItemMessage(hDlg, IDC_RAD_GREEN, BM_GETCHECK, NULL, NULL) == BST_CHECKED)
+					idx = 2;
+				else if (SendDlgItemMessage(hDlg, IDC_RAD_BLUE, BM_GETCHECK, NULL, NULL) == BST_CHECKED)
+					idx = 3;
+				else
+					idx = 0;
+
+				StrPrint(text, "%d", value);
+				SendDlgItemMessage(hDlg, IDC_LBL_OUT_RIGHT, WM_SETTEXT, NULL, (WPARAM)text);
+
+				config.colors.active.output.right.chanel[idx] = (FLOAT)value / 255.0f;
+				break;
+			}
+			default:
+				break;
+			}
+
+			SendMessage(hDlg, WM_REDRAW_CANVAS, NULL, NULL);
+			OpenDraw* ddraw = Main::FindOpenDrawByWindow(GetParent(hDlg));
+			if (ddraw)
+			{
+				SetEvent(ddraw->hDrawEvent);
+				Sleep(0);
+			}
+
+			return NULL;
+		}
+
+		case WM_CLOSE: {
+			LevelsData* levelsData = (LevelsData*)GetWindowLong(hDlg, GWLP_USERDATA);
+			config.colors.active = levelsData->values;
+			if (levelsData->colors)
+			{
+				MemoryFree(levelsData->colors);
+				DeleteObject(levelsData->hBmp);
+				DeleteDC(levelsData->hDc);
+			}
+
+			MemoryFree(levelsData);
+
+			EndDialog(hDlg, TRUE);
+		}
+
+		default:
+			break;
+		}
+
+		return DefWindowProc(hDlg, uMsg, wParam, lParam);
+	}
+
 	LRESULT __stdcall WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		switch (uMsg)
@@ -640,12 +1531,20 @@ namespace Window
 
 		case WM_ACTIVATEAPP: {
 			OpenDraw* ddraw = Main::FindOpenDrawByWindow(hWnd);
-			if (ddraw && ddraw->windowState != WinStateWindowed)
+			if (ddraw)
 			{
-				if ((BOOL)wParam)
-					ddraw->RenderStart();
+				if (ddraw->windowState != WinStateWindowed)
+				{
+					if ((BOOL)wParam)
+						ddraw->RenderStart();
+					else
+						ddraw->RenderStop();
+				}
 				else
-					ddraw->RenderStop();
+				{
+					config.colors.current = (BOOL)wParam ? &config.colors.active : &inactiveColors;
+					SetEvent(ddraw->hDrawEvent);
+				}
 			}
 
 			CallWindowProc(OldWindowProc, hWnd, WM_ACTIVATE, wParam, lParam);
@@ -767,6 +1666,11 @@ namespace Window
 				return CallWindowProc(OldWindowProc, hWnd, WM_KEYDOWN, VK_F4, lParam);
 
 			case IDM_HELP_WRAPPER: {
+				config.colors.current = &inactiveColors;
+				OpenDraw* ddraw = Main::FindOpenDrawByWindow(hWnd);
+				if (ddraw)
+					SetEvent(ddraw->hDrawEvent);
+
 				ULONG_PTR cookie = NULL;
 				if (hActCtx && hActCtx != INVALID_HANDLE_VALUE && !ActivateActCtxC(hActCtx, &cookie))
 					cookie = NULL;
@@ -776,17 +1680,43 @@ namespace Window
 				if (cookie)
 					DeactivateActCtxC(0, cookie);
 
+				config.colors.current = &config.colors.active;
+				if (ddraw)
+					SetEvent(ddraw->hDrawEvent);
+
 				SetForegroundWindow(hWnd);
 				return NULL;
 			}
 
 			case IDM_HELP_ABOUT: {
-				INT_PTR res;
+				config.colors.current = &inactiveColors;
+				OpenDraw* ddraw = Main::FindOpenDrawByWindow(hWnd);
+				if (ddraw)
+					SetEvent(ddraw->hDrawEvent);
+
 				ULONG_PTR cookie = NULL;
 				if (hActCtx && hActCtx != INVALID_HANDLE_VALUE && !ActivateActCtxC(hActCtx, &cookie))
 					cookie = NULL;
 
-				res = DialogBoxParam(hDllModule, MAKEINTRESOURCE(config.dialog), hWnd, (DLGPROC)AboutAppProc, NULL);
+				DialogBoxParam(hDllModule, MAKEINTRESOURCE(config.dialog), hWnd, (DLGPROC)AboutAppProc, NULL);
+
+				if (cookie)
+					DeactivateActCtxC(0, cookie);
+
+				config.colors.current = &config.colors.active;
+				if (ddraw)
+					SetEvent(ddraw->hDrawEvent);
+
+				SetForegroundWindow(hWnd);
+				return NULL;
+			}
+
+			case IDM_COLOR_ADJUST: {
+				ULONG_PTR cookie = NULL;
+				if (hActCtx && hActCtx != INVALID_HANDLE_VALUE && !ActivateActCtxC(hActCtx, &cookie))
+					cookie = NULL;
+
+				DialogBoxParam(hDllModule, MAKEINTRESOURCE(IDD_COLOR_ADJUSTMENT), hWnd, (DLGPROC)ColorAdjustmentProc, cookie);
 
 				if (cookie)
 					DeactivateActCtxC(0, cookie);

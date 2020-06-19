@@ -51,10 +51,10 @@ BOOL __stdcall DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 		} while (TRUE);
 
 		LoadKernel32();
+
+		hDllModule = hModule;
 		if (Hooks::Load())
 		{
-			hDllModule = hModule;
-
 			if (!config.isDDraw)
 			{
 				Window::SetCaptureKeys(TRUE);
@@ -97,6 +97,8 @@ BOOL __stdcall DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 
 			timeBeginPeriod(1);
 		}
+		else
+			hDllModule = NULL;
 
 		break;
 	}

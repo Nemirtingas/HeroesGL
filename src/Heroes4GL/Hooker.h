@@ -59,5 +59,5 @@ public:
 	BOOL PatchDWord(DWORD, DWORD);
 	BOOL PatchByte(DWORD, BYTE);
 	DWORD PatchImport(const CHAR*, VOID*);
-	DWORD PatchExport(DWORD, VOID*);
+	DWORD PatchExport(const CHAR*, VOID*);
 };

@@ -22,21 +22,27 @@
 	SOFTWARE.
 */
 
-uniform vec2 texSize;
+#pragma once
 
-#if __VERSION__ >= 130
-	#define COMPAT_IN in
-	#define COMPAT_OUT out
-#else
-	#define COMPAT_IN attribute 
-	#define COMPAT_OUT varying 
-#endif
+#include "Allocation.h"
+#include "ShaderProgram.h"
 
-COMPAT_IN vec4 vCoord;
-COMPAT_IN vec2 vTex;
-COMPAT_OUT vec2 fTex;
+class ShaderGroup : public Allocation {
+private:
+	const CHAR* version;
+	DWORD vertexName;
+	DWORD fragmentName;
+	DWORD flags;
+	GLfloat* mvp;
+	Adjustment* colors;
+	BOOL update;
+	ShaderProgram* current;
+	ShaderProgram* list;
 
-void main() {
-	gl_Position = vCoord;
-	fTex = vTex;
-}
+public:
+	ShaderGroup(const CHAR*, DWORD, DWORD, DWORD, GLfloat*);
+	~ShaderGroup();
+
+	BOOL Check();
+	VOID Use(DWORD);
+};

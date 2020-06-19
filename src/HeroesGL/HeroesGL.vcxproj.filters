@@ -70,6 +70,12 @@
     <ClCompile Include="Hooker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ShaderGroup.cpp">
+      <Filter>Source Files\Shader</Filter>
+    </ClCompile>
+    <ClCompile Include="ShaderProgram.cpp">
+      <Filter>Source Files\Shader</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Resource.h">
@@ -144,6 +150,12 @@
     <ClInclude Include="Hooker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ShaderGroup.h">
+      <Filter>Header Files\Shader</Filter>
+    </ClInclude>
+    <ClInclude Include="ShaderProgram.h">
+      <Filter>Header Files\Shader</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header Files">
@@ -184,6 +196,12 @@
     </Filter>
     <Filter Include="Source Files\Sound">
       <UniqueIdentifier>{a5b26cd7-e3f7-4847-9f4b-3abe192a234e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Shader">
+      <UniqueIdentifier>{4b424a74-8f73-467b-a61c-c193fa4f1167}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Shader">
+      <UniqueIdentifier>{99005216-6961-4b9d-a483-35cab56f2d9d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

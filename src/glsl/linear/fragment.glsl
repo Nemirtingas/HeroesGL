@@ -23,6 +23,15 @@
 */
 
 uniform sampler2D tex01;
+#ifdef LEVELS
+uniform float hue;
+uniform float sat;
+uniform vec4 in_left;
+uniform vec4 in_right;
+uniform vec4 gamma;
+uniform vec4 out_left;
+uniform vec4 out_right;
+#endif
 
 #if __VERSION__ >= 130
 	#define COMPAT_IN in
@@ -36,6 +45,46 @@ uniform sampler2D tex01;
 
 COMPAT_IN vec2 fTex;
 
+#ifdef LEVELS
+vec3 satHue(vec3 color)
+{
+	const mat3 mrgb = mat3(	  1.0,    1.0,    1.0,
+							0.956, -0.272, -1.107,
+							0.621, -0.647,  1.705 );
+
+	const mat3 myiq = mat3(	0.299,  0.596,  0.211,
+							0.587, -0.274, -0.523,
+							0.114, -0.321,  0.311 );
+
+	float su = sat * cos(hue);
+	float sw = sat * sin(hue);
+
+	mat3 mhsv = mat3(1.0, 0.0,  0.0,
+					 0.0, su, sw,
+					 0.0, -sw,  su );
+
+	return mrgb * mhsv * myiq * color;
+}
+
+vec3 levels(vec3 color)
+{
+	color = clamp((color - in_left.rgb) / (in_right.rgb - in_left.rgb), 0.0, 1.0);
+	color = pow(color, gamma.rgb);
+	color = clamp(color * (out_right.rgb - out_left.rgb) + out_left.rgb, 0.0, 1.0);
+
+	color = clamp((color - in_left.aaa) / (in_right.aaa - in_left.aaa), 0.0, 1.0);
+	color = pow(color, gamma.aaa);
+	return clamp(color * (out_right.aaa - out_left.aaa) + out_left.aaa, 0.0, 1.0);
+}
+#endif
+
 void main() {
-	FRAG_COLOR = COMPAT_TEXTURE(tex01, fTex);
+	vec3 color = COMPAT_TEXTURE(tex01, fTex).rgb;
+
+#ifdef LEVELS
+	color = satHue(color);
+	color = levels(color);
+#endif
+	
+	FRAG_COLOR = vec4(color, 1.0);
 }

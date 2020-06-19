@@ -117,17 +117,58 @@ struct UpdateRect
 	BOOL isActive;
 };
 
-struct ShaderProgram
+union Levels
 {
-	GLuint id;
-	const CHAR* version;
-	DWORD vertexName;
-	DWORD fragmentName;
-	GLfloat* mvp;
 	struct {
-		GLint location;
-		DWORD value;
-	} texSize;
+		FLOAT rgb;
+		FLOAT red;
+		FLOAT green;
+		FLOAT blue;
+	};
+	FLOAT chanel[4];
+};
+
+struct Adjustment {
+	FLOAT hueShift;
+	FLOAT saturation;
+	struct {
+		Levels left;
+		Levels right;
+	} input;
+	Levels gamma;
+	struct {
+		Levels left;
+		Levels right;
+	} output;
+};
+
+union LevelColors
+{
+	struct {
+		DWORD red;
+		DWORD green;
+		DWORD blue;
+	};
+	DWORD chanel[3];
+};
+
+union LevelColorsFloat
+{
+	struct {
+		FLOAT red;
+		FLOAT green;
+		FLOAT blue;
+	};
+	FLOAT chanel[3];
+};
+
+struct LevelsData {
+	HDC hDc;
+	HBITMAP hBmp;
+	DWORD* data;
+	LevelColorsFloat* colors;
+	FLOAT delta;
+	Adjustment values;
 };
 
 struct AddressSpace
@@ -141,7 +182,7 @@ struct AddressSpace
 	DWORD updateWindow_nop[4];
 	LCID resLanguage;
 	WORD resDialog;
-	const CHAR* windowName;
+	DWORD windowName;
 };
 
 struct RGNRECTDATA
@@ -198,6 +239,11 @@ struct ConfigItems
 		BYTE vSync;
 	} keys;
 
+	struct {
+		const Adjustment* current;
+		Adjustment active;
+	} colors;
+
 	BOOL isExist;
 	CHAR file[MAX_PATH];
 };
@@ -215,6 +261,7 @@ enum MenuType
 	MenuVSync,
 	MenuInterpolate,
 	MenuUpscale,
+	MenuColors,
 	MenuCpu,
 	MenuRenderer,
 	MenuLanguage

@@ -110,17 +110,58 @@ struct UpdateRect
 	BOOL isActive;
 };
 
-struct ShaderProgram
+union Levels
 {
-	GLuint id;
-	const CHAR* version;
-	DWORD vertexName;
-	DWORD fragmentName;
-	GLfloat* mvp;
 	struct {
-		GLint location;
-		DWORD value;
-	} texSize;
+		FLOAT rgb;
+		FLOAT red;
+		FLOAT green;
+		FLOAT blue;
+	};
+	FLOAT chanel[4];
+};
+
+struct Adjustment {
+	FLOAT hueShift;
+	FLOAT saturation;
+	struct {
+		Levels left;
+		Levels right;
+	} input;
+	Levels gamma;
+	struct {
+		Levels left;
+		Levels right;
+	} output;
+};
+
+union LevelColors
+{
+	struct {
+		DWORD red;
+		DWORD green;
+		DWORD blue;
+	};
+	DWORD chanel[3];
+};
+
+union LevelColorsFloat
+{
+	struct {
+		FLOAT red;
+		FLOAT green;
+		FLOAT blue;
+	};
+	FLOAT chanel[3];
+};
+
+struct LevelsData {
+	HDC hDc;
+	HBITMAP hBmp;
+	DWORD* data;
+	LevelColorsFloat* colors;
+	FLOAT delta;
+	Adjustment values;
 };
 
 struct AppSettings
@@ -138,6 +179,7 @@ struct AddressSpace
 {
 	DWORD check;
 	BYTE game_version;
+	DWORD entry;
 	CHAR* icon;
 	LCID resLanguage;
 	DWORD method2_nop;
@@ -169,7 +211,7 @@ struct AddressSpace
 	DWORD fadein_update_2;
 	DWORD fadeout_tick;
 	DWORD fadeout_update;
-	const CHAR* windowName;
+	DWORD windowName;
 };
 
 struct TrackInfo
@@ -240,6 +282,11 @@ struct ConfigItems
 		BYTE vSync;
 	} keys;
 
+	struct {
+		const Adjustment* current;
+		Adjustment active;
+	} colors;
+
 	BOOL isExist;
 	CHAR file[MAX_PATH];
 };
@@ -264,6 +311,7 @@ enum MenuType
 	MenuVSync,
 	MenuInterpolate,
 	MenuUpscale,
+	MenuColors,
 	MenuCpu,
 	MenuRenderer,
 	MenuLanguage

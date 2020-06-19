@@ -49,6 +49,12 @@
     <ClCompile Include="Hooker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ShaderGroup.cpp">
+      <Filter>Source Files\Shader</Filter>
+    </ClCompile>
+    <ClCompile Include="ShaderProgram.cpp">
+      <Filter>Source Files\Shader</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Resource.h">
@@ -102,6 +108,12 @@
     <ClInclude Include="Hooker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ShaderGroup.h">
+      <Filter>Header Files\Shader</Filter>
+    </ClInclude>
+    <ClInclude Include="ShaderProgram.h">
+      <Filter>Header Files\Shader</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header Files">
@@ -136,6 +148,12 @@
     </Filter>
     <Filter Include="Source Files\Draw\Open">
       <UniqueIdentifier>{0eb1e642-cba5-4583-908a-569f77f37fe0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Shader">
+      <UniqueIdentifier>{d7eea9c1-6dfe-4785-9d7d-b11a184f9fa0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Shader">
+      <UniqueIdentifier>{e72cfc40-9795-461c-ae8a-7c59d243e6e8}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

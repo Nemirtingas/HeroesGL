@@ -2,7 +2,6 @@
 //
 #include "resource.h"
 #include "afxres.h"
-
 /////////////////////////////////////////////////////////////////////////////
 // Russian (Russia) resources
 
@@ -29,6 +28,9 @@ BEGIN
 	IDS_ERROR_LOAD_RESOURCE			"Ошибка загрузки ресурса"
 	IDS_ERROR_COMPILE_SHADER		"Ошибка компиляции шейдера"
 	IDS_INFO_RESTART				"Чтобы изменения вступили в силу, нужно перезапустите игру"
+	IDS_HOMM_4						"Герои Меча и Магии IV"
+	IDS_HOMM_4_GS					"Герои Меча и Магии IV: Грядущая Буря"
+	IDS_HOMM_4_WOW					"Герои Меча и Магии IV: Вихри Войны"
 END
 
 /////////////////////////////////////////////////////////////////////////////
@@ -56,8 +58,8 @@ BEGIN
 			MENUITEM "OpenGL 3",					IDM_REND_GL3
 		END
 		MENUITEM SEPARATOR
-		MENUITEM "&Полноэкранный режим",			IDM_RES_FULL_SCREEN
-		MENUITEM "Верт. &синхронизация",			IDM_VSYNC
+		MENUITEM "&Полноэкранный режим\a",			IDM_RES_FULL_SCREEN
+		MENUITEM "Верт. &синхронизация\a",			IDM_VSYNC
 	END
 	POPUP "&Изображение"
 	BEGIN
@@ -69,7 +71,7 @@ BEGIN
 			MENUITEM "&Эрмитова",					IDM_FILT_HERMITE
 			MENUITEM "&Кубическая",					IDM_FILT_CUBIC
 		END
-		POPUP "&Маштабирование"
+		POPUP "&Маcштабирование"
 		BEGIN
 			MENUITEM "&Откл.",						IDM_FILT_NONE
 			MENUITEM SEPARATOR
@@ -101,7 +103,9 @@ BEGIN
 			END
 		END
 		MENUITEM SEPARATOR
-		MENUITEM "Сохр. &пропорции",				IDM_ASPECT_RATIO
+		MENUITEM "Настройка &цвета...",				IDM_COLOR_ADJUST
+		MENUITEM SEPARATOR
+		MENUITEM "Сохранить &пропорции\a",			IDM_ASPECT_RATIO
 	END
 	POPUP "&Опции"
 	BEGIN
@@ -111,12 +115,13 @@ BEGIN
 		BEGIN
 			MENUITEM "&Английский",					IDM_LANG_ENGLISH
 			MENUITEM "&Русский",					IDM_LANG_RUSSIAN
+			MENUITEM "&Украинский",					IDM_LANG_UKRAINIAN
 		END
 	END
 	POPUP "&Помощь"
 	BEGIN
-		MENUITEM "О &враппере",						IDM_HELP_WRAPPER
-		MENUITEM "О &программе",					IDM_HELP_ABOUT
+		MENUITEM "О &враппере...",					IDM_HELP_WRAPPER
+		MENUITEM "О &программе...",					IDM_HELP_ABOUT
 	END
 END
 
@@ -202,9 +207,249 @@ BEGIN
 	CTEXT "Все другие торговые знаки принадлежат их соответствующим владельцам.  (с) Бука. Все права защищены. На территории РФ издается компанией 'Бука'.",IDC_STATIC,26,76,189,8
 END
 
+IDD_COLOR_ADJUSTMENT DIALOGEX DISCARDABLE 29,23,287,280
+STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Настройка цвета"
+FONT 8, "MS Sans Serif"
+BEGIN
+    GROUPBOX        "",IDC_STATIC,8,8,271,123
+    CONTROL         "",IDC_CANVAS,"Static",SS_OWNERDRAW,18,21,251,62
+    RTEXT           "Тон",IDC_STATIC,9,94,45,8
+    LTEXT           "",IDC_LBL_HUE,233,94,45,8
+    CONTROL         "",IDC_TRK_HUE,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,58,92,171,15
+    RTEXT           "Цвет",IDC_STATIC,9,110,45,8
+    LTEXT           "",IDC_LBL_SAT,233,110,45,8
+    CONTROL         "",IDC_TRK_SAT,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,58,108,171,15
+    GROUPBOX        "",IDC_STATIC,8,135,271,117
+    CONTROL         "RGB",IDC_RAD_RGB,"Button",BS_AUTORADIOBUTTON,55,148,39,10
+    CONTROL         "Красный",IDC_RAD_RED,"Button",BS_AUTORADIOBUTTON,95,148,50,10
+    CONTROL         "Зеленый",IDC_RAD_GREEN,"Button",BS_AUTORADIOBUTTON,152,148,50,10
+    CONTROL         "Синий",IDC_RAD_BLUE,"Button",BS_AUTORADIOBUTTON,209,148,40,10
+    RTEXT           "Вход L",IDC_STATIC,9,167,45,8
+    LTEXT           "",IDC_LBL_IN_LEFT,233,167,45,8
+    CONTROL         "",IDC_TRK_IN_LEFT,"msctls_trackbar32",TBS_NOTICKS | WS_TABSTOP,58,165,171,15
+	RTEXT           "Вход R",IDC_STATIC,9,183,45,8
+    LTEXT           "",IDC_LBL_IN_RIGHT,233,183,45,8
+	CONTROL         "",IDC_TRK_IN_RIGHT,"msctls_trackbar32",TBS_TOP | TBS_NOTICKS | WS_TABSTOP,58,181,171,15
+    RTEXT           "Гамма",IDC_STATIC,9,199,45,8
+    LTEXT           "",IDC_LBL_GAMMA,233,199,45,8
+    CONTROL         "",IDC_TRK_GAMMA,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,58,197,171,15
+    RTEXT           "Выход L",IDC_STATIC,9,215,45,8
+    LTEXT           "",IDC_LBL_OUT_LEFT,233,215,45,8
+    CONTROL         "",IDC_TRK_OUT_LEFT,"msctls_trackbar32",TBS_NOTICKS | WS_TABSTOP,58,213,171,15
+	RTEXT           "Выход R",IDC_STATIC,9,231,45,8
+    LTEXT           "",IDC_LBL_OUT_RIGHT,233,231,45,8
+    CONTROL         "",IDC_TRK_OUT_RIGHT,"msctls_trackbar32",TBS_TOP | TBS_NOTICKS | WS_TABSTOP,58,229,171,15
+    PUSHBUTTON      "Сброс",IDC_BTN_RESET,10,257,50,16
+	PUSHBUTTON      "Авто",IDC_BTN_AUTO,65,257,50,16
+    PUSHBUTTON      "Отмена",IDC_BTN_CANCEL,225,257,50,16
+    DEFPUSHBUTTON   "OK",IDC_BTN_OK,170,257,50,16
+END
+
 #endif    // Russian (Russia) resources
 /////////////////////////////////////////////////////////////////////////////
 
+/////////////////////////////////////////////////////////////////////////////
+// Ukrainian (Ukraine) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_RUS)
+LANGUAGE LANG_UKRAINIAN, SUBLANG_DEFAULT
+#pragma code_page(1251)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE DISCARDABLE
+BEGIN
+	IDS_ERROR						"Помилка"
+	IDS_INFO						"Інформація"
+	IDS_ERROR_CHOOSE_PF				"Помилка ChoosePixelFormat"
+	IDS_ERROR_SET_PF				"Помилка SetPixelFormat"
+	IDS_ERROR_DESCRIBE_PF			"Помилка DescribePixelFormat"
+	IDS_ERROR_NEED_PALETTE			"Потрібна палітра"
+	IDS_ERROR_BAD_PF				"Хибний формат пікселя"
+	IDS_ERROR_ARB_VERSION			"Хибна версія ARB"
+	IDS_ERROR_ARB_PROFILE			"Хибний профіль ARB"
+	IDS_ERROR_LOAD_RESOURCE			"Помилка завантаження ресурса"
+	IDS_ERROR_COMPILE_SHADER		"Помилка компіляції шейдера"
+	IDS_INFO_RESTART				"Щоб зміни вступили в силу, потрібно перезапустити гру"
+	IDS_HOMM_4						"Герої Меча та Магії IV"
+	IDS_HOMM_4_GS					"Герої Меча та Магії IV: Прийдешня Буря"
+	IDS_HOMM_4_WOW					"Герої Меча та Магії IV: Вітри Війни"
+END
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDM_MENU MENU DISCARDABLE
+BEGIN
+	POPUP "&Файл"
+	BEGIN
+		MENUITEM "&Нова гра",						IDM_FILE_NEW_GAME
+		MENUITEM "&Завантажити гру",					IDM_FILE_LOAD_GAME
+		MENUITEM "&Зберегти гру",					IDM_FILE_SAVE_GAME
+		MENUITEM "&Выхід",							IDM_FILE_EXIT
+	END
+	POPUP "&Екран"
+	BEGIN
+		POPUP "&Рендерер"
+		BEGIN
+			MENUITEM "Авто",						IDM_REND_AUTO
+			MENUITEM SEPARATOR
+			MENUITEM "OpenGL 1",					IDM_REND_GL1
+			MENUITEM "OpenGL 2",					IDM_REND_GL2
+			MENUITEM "OpenGL 3",					IDM_REND_GL3
+		END
+		MENUITEM SEPARATOR
+		MENUITEM "&Повноекранний режим\a",			IDM_RES_FULL_SCREEN
+		MENUITEM "Верт. &синхронізація\a",			IDM_VSYNC
+	END
+	POPUP "&Зображення"
+	BEGIN
+		POPUP "&Інтерполяція\a"
+		BEGIN
+			MENUITEM "&Вимк.",						IDM_FILT_OFF
+			MENUITEM SEPARATOR
+			MENUITEM "&Лінійна",					IDM_FILT_LINEAR
+			MENUITEM "&Ермітова",					IDM_FILT_HERMITE
+			MENUITEM "&Кубічна",					IDM_FILT_CUBIC
+		END
+		POPUP "&Масштабування"
+		BEGIN
+			MENUITEM "&Вимк.",						IDM_FILT_NONE
+			MENUITEM SEPARATOR
+			POPUP "&ScaleNx"
+			BEGIN
+				MENUITEM "x2",						IDM_FILT_SCALENX_2X
+				MENUITEM "x3",						IDM_FILT_SCALENX_3X
+			END
+			POPUP "Super &Eagle"
+			BEGIN
+				MENUITEM "x2",						IDM_FILT_EAGLE_2X
+			END
+			POPUP "x&SaI"
+			BEGIN
+				MENUITEM "x2",						IDM_FILT_XSAL_2X
+			END
+			POPUP "Scale&HQ"
+			BEGIN
+				MENUITEM "x2",						IDM_FILT_SCALEHQ_2X
+				MENUITEM "x4",						IDM_FILT_SCALEHQ_4X
+			END
+			POPUP "x&BRz"
+			BEGIN
+				MENUITEM "x2",						IDM_FILT_XRBZ_2X
+				MENUITEM "x3",						IDM_FILT_XRBZ_3X
+				MENUITEM "x4",						IDM_FILT_XRBZ_4X
+				MENUITEM "x5",						IDM_FILT_XRBZ_5X
+				MENUITEM "x6",						IDM_FILT_XRBZ_6X
+			END
+		END
+		MENUITEM SEPARATOR
+		MENUITEM "Налаштування &кольору...",		IDM_COLOR_ADJUST
+		MENUITEM SEPARATOR
+		MENUITEM "Зберегти &пропорції\a",				IDM_ASPECT_RATIO
+	END
+	POPUP "&Опції"
+	BEGIN
+		MENUITEM "&Холодний ЦП",					IDM_PATCH_CPU
+		MENUITEM SEPARATOR
+		POPUP "&Мова меню"
+		BEGIN
+			MENUITEM "&Англійскька",				IDM_LANG_ENGLISH
+			MENUITEM "&Російська",					IDM_LANG_RUSSIAN
+			MENUITEM "&Українська",					IDM_LANG_UKRAINIAN
+		END
+	END
+	POPUP "&Довідка"
+	BEGIN
+		MENUITEM "Про &враппер...",					IDM_HELP_WRAPPER
+		MENUITEM "Про &програму...",				IDM_HELP_ABOUT
+	END
+END
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_ABOUT DIALOGEX DISCARDABLE 29,23,216,190
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP
+FONT 8, "MS Sans Serif"
+BEGIN
+	CTEXT			"Герої Меча та Магії IV\nOpenGL враппер",IDC_STATIC,0,8,216,24
+	CTEXT			"Версия %d.%d%d   Сборка %d",IDC_VERSION,0,40,216,11
+	CTEXT			"Перевірити нові версії",IDC_STATIC,0,64,216,11
+	CONTROL			"",IDC_LNK_WEB,"SysLink",WS_TABSTOP,48,76,216,11
+	CTEXT			"Стати Патроном",IDC_STATIC,0,96,216,11
+	CONTROL			"",IDC_LNK_PATRON,"SysLink",WS_TABSTOP,40,108,216,16
+	CTEXT			"Copyright © %d %s",IDC_COPYRIGHT,0,128,216,11
+	CONTROL			"",IDC_LNK_EMAIL,"SysLink",WS_TABSTOP,64,140,216,11
+	ICON			"",IDC_STATIC,11,23,27,27
+	DEFPUSHBUTTON	"OK",IDC_BTN_OK,85,164,50,16,WS_GROUP
+END
+
+IDD_ABOUT_OLD DIALOGEX DISCARDABLE 29,23,216,190
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP
+FONT 8, "MS Sans Serif"
+BEGIN
+	CTEXT			"Герої Меча та Магії IV\nOpenGL враппер",IDC_STATIC,0,8,216,24
+	CTEXT			"Версия %d.%d%d   Сборка %d",IDC_VERSION,0,40,216,11
+	CTEXT			"Перевірити нові версії",IDC_STATIC,0,64,216,11
+	CTEXT			"",IDC_LNK_WEB,0,76,216,11
+	CTEXT			"Стати Патроном",IDC_STATIC,0,96,216,11
+	CTEXT			"",IDC_LNK_PATRON,0,108,216,16
+	CTEXT			"Copyright © %d %s",IDC_COPYRIGHT,0,128,216,11
+	CTEXT			"",IDC_LNK_EMAIL,0,140,216,11
+	ICON			"",IDC_STATIC,11,23,27,27
+	DEFPUSHBUTTON	"OK",IDC_BTN_OK,85,164,50,16,WS_GROUP
+END
+
+IDD_COLOR_ADJUSTMENT DIALOGEX DISCARDABLE 29,23,287,280
+STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Настройка цвета"
+FONT 8, "MS Sans Serif"
+BEGIN
+    GROUPBOX        "",IDC_STATIC,8,8,271,123
+    CONTROL         "",IDC_CANVAS,"Static",SS_OWNERDRAW,18,21,251,62
+    RTEXT           "Тон",IDC_STATIC,9,94,45,8
+    LTEXT           "",IDC_LBL_HUE,233,94,45,8
+    CONTROL         "",IDC_TRK_HUE,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,58,92,171,15
+    RTEXT           "Колір",IDC_STATIC,9,110,45,8
+    LTEXT           "",IDC_LBL_SAT,233,110,45,8
+    CONTROL         "",IDC_TRK_SAT,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,58,108,171,15
+    GROUPBOX        "",IDC_STATIC,8,135,271,117
+    CONTROL         "RGB",IDC_RAD_RGB,"Button",BS_AUTORADIOBUTTON,55,148,39,10
+    CONTROL         "Червоний",IDC_RAD_RED,"Button",BS_AUTORADIOBUTTON,95,148,50,10
+    CONTROL         "Зелений",IDC_RAD_GREEN,"Button",BS_AUTORADIOBUTTON,152,148,50,10
+    CONTROL         "Синій",IDC_RAD_BLUE,"Button",BS_AUTORADIOBUTTON,209,148,40,10
+    RTEXT           "Вхід L",IDC_STATIC,9,167,45,8
+    LTEXT           "",IDC_LBL_IN_LEFT,233,167,45,8
+    CONTROL         "",IDC_TRK_IN_LEFT,"msctls_trackbar32",TBS_NOTICKS | WS_TABSTOP,58,165,171,15
+	RTEXT           "Вхід R",IDC_STATIC,9,183,45,8
+    LTEXT           "",IDC_LBL_IN_RIGHT,233,183,45,8
+	CONTROL         "",IDC_TRK_IN_RIGHT,"msctls_trackbar32",TBS_TOP | TBS_NOTICKS | WS_TABSTOP,58,181,171,15
+    RTEXT           "Гамма",IDC_STATIC,9,199,45,8
+    LTEXT           "",IDC_LBL_GAMMA,233,199,45,8
+    CONTROL         "",IDC_TRK_GAMMA,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,58,197,171,15
+    RTEXT           "Вихід L",IDC_STATIC,9,215,45,8
+    LTEXT           "",IDC_LBL_OUT_LEFT,233,215,45,8
+    CONTROL         "",IDC_TRK_OUT_LEFT,"msctls_trackbar32",TBS_NOTICKS | WS_TABSTOP,58,213,171,15
+	RTEXT           "Вихід R",IDC_STATIC,9,231,45,8
+    LTEXT           "",IDC_LBL_OUT_RIGHT,233,231,45,8
+    CONTROL         "",IDC_TRK_OUT_RIGHT,"msctls_trackbar32",TBS_TOP | TBS_NOTICKS | WS_TABSTOP,58,229,171,15
+    PUSHBUTTON      "Скинути",IDC_BTN_RESET,10,257,50,16
+	PUSHBUTTON      "Авто",IDC_BTN_AUTO,65,257,50,16
+    PUSHBUTTON      "Відміна",IDC_BTN_CANCEL,225,257,50,16
+    DEFPUSHBUTTON   "OK",IDC_BTN_OK,170,257,50,16
+END
+
+#endif    // Ukrainian (Ukraine) resources
+/////////////////////////////////////////////////////////////////////////////
 
 /////////////////////////////////////////////////////////////////////////////
 // English (United States) resources
@@ -239,6 +484,9 @@ BEGIN
 	IDS_ERROR_LOAD_RESOURCE			"Load resource failed"
 	IDS_ERROR_COMPILE_SHADER		"Compile shader failed"
 	IDS_INFO_RESTART				"In order for the changes to take effect, please restart the game"
+	IDS_HOMM_4						"Heroes of Might and Magic IV"
+	IDS_HOMM_4_GS					"Heroes of Might and Magic IV: The Gathering Storm"
+	IDS_HOMM_4_WOW					"Heroes of Might and Magic IV: Winds of War"
 END
 
 /////////////////////////////////////////////////////////////////////////////
@@ -266,8 +514,8 @@ BEGIN
 			MENUITEM "OpenGL 3",					IDM_REND_GL3
 		END
 		MENUITEM SEPARATOR
-		MENUITEM "Full &Screen",					IDM_RES_FULL_SCREEN
-		MENUITEM "Enable &VSync",					IDM_VSYNC
+		MENUITEM "Full &Screen\a",					IDM_RES_FULL_SCREEN
+		MENUITEM "Enable &VSync\a",					IDM_VSYNC
 	END
 	POPUP "&Image"
 	BEGIN
@@ -311,21 +559,25 @@ BEGIN
 			END
 		END
 		MENUITEM SEPARATOR
+		MENUITEM "&Color Adjustment...",			IDM_COLOR_ADJUST
+		MENUITEM SEPARATOR
 		MENUITEM "Keep &Aspect Ratio\a",			IDM_ASPECT_RATIO
 	END
 	POPUP "&Options"
 	BEGIN
 		MENUITEM "&Cold CPU",						IDM_PATCH_CPU
+		MENUITEM SEPARATOR
 		POPUP "Menu &Language"
 		BEGIN
 			MENUITEM "&English",					IDM_LANG_ENGLISH
 			MENUITEM "&Russian",					IDM_LANG_RUSSIAN
+			MENUITEM "&Ukrainian",					IDM_LANG_UKRAINIAN
 		END
 	END
 	POPUP "&Help"
 	BEGIN
-		MENUITEM "About &Wrapper",					IDM_HELP_WRAPPER
-		MENUITEM "About &Application",				IDM_HELP_ABOUT
+		MENUITEM "About &Wrapper...",				IDM_HELP_WRAPPER
+		MENUITEM "About &Application...",			IDM_HELP_ABOUT
 	END
 END
 
@@ -506,6 +758,45 @@ BEGIN
 	CTEXT "3DO, Heroes, New World Computing, and their respective logos are trademarks and/or service marks of The 3DO Company in the U.S. and other countries. All other trademarks belong to their respective owners.",IDC_STATIC,26,44,189,40
 END
 
+IDD_COLOR_ADJUSTMENT DIALOGEX DISCARDABLE 29,23,287,280
+STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Color Adjustment"
+FONT 8, "MS Sans Serif"
+BEGIN
+    GROUPBOX        "",IDC_STATIC,8,8,271,123
+    CONTROL         "",IDC_CANVAS,"Static",SS_OWNERDRAW,18,21,251,62
+    RTEXT           "Hue shift",IDC_STATIC,9,94,45,8
+    LTEXT           "",IDC_LBL_HUE,233,94,45,8
+    CONTROL         "",IDC_TRK_HUE,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,58,92,171,15
+    RTEXT           "Saturation",IDC_STATIC,9,110,45,8
+    LTEXT           "",IDC_LBL_SAT,233,110,45,8
+    CONTROL         "",IDC_TRK_SAT,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,58,108,171,15
+    GROUPBOX        "",IDC_STATIC,8,135,271,117
+    CONTROL         "RGB",IDC_RAD_RGB,"Button",BS_AUTORADIOBUTTON,65,148,39,10
+    CONTROL         "Red",IDC_RAD_RED,"Button",BS_AUTORADIOBUTTON,105,148,39,10
+    CONTROL         "Green",IDC_RAD_GREEN,"Button",BS_AUTORADIOBUTTON,145,148,39,10
+    CONTROL         "Blue",IDC_RAD_BLUE,"Button",BS_AUTORADIOBUTTON,185,148,39,10
+    RTEXT           "Input L",IDC_STATIC,9,167,45,8
+    LTEXT           "",IDC_LBL_IN_LEFT,233,167,45,8
+    CONTROL         "",IDC_TRK_IN_LEFT,"msctls_trackbar32",TBS_NOTICKS | WS_TABSTOP,58,165,171,15
+	RTEXT           "Input R",IDC_STATIC,9,183,45,8
+    LTEXT           "",IDC_LBL_IN_RIGHT,233,183,45,8
+	CONTROL         "",IDC_TRK_IN_RIGHT,"msctls_trackbar32",TBS_TOP | TBS_NOTICKS | WS_TABSTOP,58,181,171,15
+    RTEXT           "Gamma",IDC_STATIC,9,199,45,8
+    LTEXT           "",IDC_LBL_GAMMA,233,199,45,8
+    CONTROL         "",IDC_TRK_GAMMA,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,58,197,171,15
+    RTEXT           "Output L",IDC_STATIC,9,215,45,8
+    LTEXT           "",IDC_LBL_OUT_LEFT,233,215,45,8
+    CONTROL         "",IDC_TRK_OUT_LEFT,"msctls_trackbar32",TBS_NOTICKS | WS_TABSTOP,58,213,171,15
+	RTEXT           "Output R",IDC_STATIC,9,231,45,8
+    LTEXT           "",IDC_LBL_OUT_RIGHT,233,231,45,8
+    CONTROL         "",IDC_TRK_OUT_RIGHT,"msctls_trackbar32",TBS_TOP | TBS_NOTICKS | WS_TABSTOP,58,229,171,15
+    PUSHBUTTON      "Reset",IDC_BTN_RESET,10,257,50,16
+	PUSHBUTTON      "Auto",IDC_BTN_AUTO,65,257,50,16
+    PUSHBUTTON      "Cancel",IDC_BTN_CANCEL,225,257,50,16
+    DEFPUSHBUTTON   "OK",IDC_BTN_OK,170,257,50,16
+END
+
 /////////////////////////////////////////////////////////////////////////////
 //
 // RCDATA
@@ -517,10 +808,8 @@ IDR_STENCIL_FRAGMENT		RCDATA		DISCARDABLE		"..\\glsl\\stencil\\fragment.glsl"
 IDR_LINEAR_VERTEX			RCDATA		DISCARDABLE		"..\\glsl\\linear\\vertex.glsl"
 IDR_LINEAR_FRAGMENT			RCDATA		DISCARDABLE		"..\\glsl\\linear\\fragment.glsl"
 
-IDR_HERMITE_VERTEX			RCDATA		DISCARDABLE		"..\\glsl\\hermite\\vertex.glsl"
 IDR_HERMITE_FRAGMENT		RCDATA		DISCARDABLE		"..\\glsl\\hermite\\fragment.glsl"
 
-IDR_CUBIC_VERTEX			RCDATA		DISCARDABLE		"..\\glsl\\cubic\\vertex.glsl"
 IDR_CUBIC_FRAGMENT			RCDATA		DISCARDABLE		"..\\glsl\\cubic\\fragment.glsl"
 
 IDR_XSAL_VERTEX				RCDATA		DISCARDABLE		"..\\glsl\\xsal\\vertex.glsl"
@@ -552,8 +841,8 @@ IDR_SCALENX_FRAGMENT_3X		RCDATA		DISCARDABLE		"..\\glsl\\scalenx\\fragment_3x.gl
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2020,6,4,305
- PRODUCTVERSION 1,3,5,0
+ FILEVERSION 2020,6,19,329
+ PRODUCTVERSION 1,3,6,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS VS_FF_DEBUG
@@ -569,10 +858,10 @@ BEGIN
 		BLOCK "040904b0"
 		BEGIN
 			VALUE "FileDescription", "HoMM IV - OpenGL wrapper"
-			VALUE "FileVersion", "2020.06.04.305"
+			VALUE "FileVersion", "2020.06.19.329"
 			VALUE "LegalCopyright", "© 2020 Verok (verokster@gmail.com)"
 			VALUE "OriginalFilename", "ddraw.dll"
-			VALUE "ProductVersion", "1.3.5"
+			VALUE "ProductVersion", "1.3.6"
 			VALUE "ProductName", "Heroes4GL"
 		END
 	END

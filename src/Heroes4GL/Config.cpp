@@ -27,6 +27,67 @@
 
 ConfigItems config;
 
+Adjustment activeColors;
+const Adjustment inactiveColors = {
+	0.5f,
+	0.0f,
+
+	0.0f,
+	0.15200001f,
+	0.0700000003f,
+	0.0f,
+
+	1.0f,
+	1.0f,
+	1.0f,
+	1.0f,
+
+	0.5f,
+	0.604000032f,
+	0.539000034f,
+	0.478000015f,
+
+	0.0430000015f,
+	0.0f,
+	0.0f,
+	0.0f,
+
+	1.0f,
+	1.0f,
+	1.0f,
+	1.0f
+};
+
+const Adjustment defaultColors = {
+	0.5f,
+	0.5f,
+
+	0.0f,
+	0.0f,
+	0.0f,
+	0.0f,
+
+	1.0f,
+	1.0f,
+	1.0f,
+	1.0f,
+
+	0.5f,
+	0.5f,
+	0.5f,
+	0.5f,
+
+	0.0f,
+	0.0f,
+	0.0f,
+	0.0f,
+
+	1.0f,
+	1.0f,
+	1.0f,
+	1.0f
+};
+
 CHAR keysBuffer[4096];
 
 namespace Config
@@ -79,9 +140,10 @@ namespace Config
 		{
 			config.language.current = config.language.futured = hookSpace->resLanguage;
 			Config::Set(CONFIG_WRAPPER, "Language", *(INT*)&config.language.current);
+			SetThreadLanguage(config.language.current);
 
-			StrCopy(config.title, hookSpace->windowName);
-			Config::Set(CONFIG_WRAPPER, "Title", config.title);
+			LoadString(hDllModule, hookSpace->windowName, config.title, sizeof(config.title));
+			Config::Set(CONFIG_WRAPPER, "Title", "");
 
 			config.renderer = RendererAuto;
 			Config::Set(CONFIG_WRAPPER, "Renderer", *(INT*)&config.renderer);
@@ -116,6 +178,54 @@ namespace Config
 			config.image.xBRz = 2;
 			Config::Set(CONFIG_WRAPPER, "XBRZ", config.image.xBRz);
 
+			config.colors.active.hueShift = 0.5f;
+			config.colors.active.saturation = 0.5f;
+			Config::Set(CONFIG_COLORS, "HueSat", 0x01F401F4);
+
+			config.colors.active.input.left.rgb = 0.0f;
+			config.colors.active.input.right.rgb = 1.0f;
+			Config::Set(CONFIG_COLORS, "RgbInput", 0x03E80000);
+
+			config.colors.active.input.left.red = 0.0f;
+			config.colors.active.input.right.red = 1.0f;
+			Config::Set(CONFIG_COLORS, "RedInput", 0x03E80000);
+
+			config.colors.active.input.left.green = 0.0f;
+			config.colors.active.input.right.green = 1.0f;
+			Config::Set(CONFIG_COLORS, "GreenInput", 0x03E80000);
+
+			config.colors.active.input.left.blue = 0.0f;
+			config.colors.active.input.right.blue = 1.0f;
+			Config::Set(CONFIG_COLORS, "BlueInput", 0x03E80000);
+
+			config.colors.active.gamma.rgb = 0.5f;
+			Config::Set(CONFIG_COLORS, "RgbGamma", 500);
+
+			config.colors.active.gamma.red = 0.5f;
+			Config::Set(CONFIG_COLORS, "RedGamma", 500);
+
+			config.colors.active.gamma.green = 0.5f;
+			Config::Set(CONFIG_COLORS, "GreenGamma", 500);
+
+			config.colors.active.gamma.blue = 0.5f;
+			Config::Set(CONFIG_COLORS, "BlueGamma", 500);
+
+			config.colors.active.output.left.rgb = 0.0f;
+			config.colors.active.output.right.rgb = 1.0f;
+			Config::Set(CONFIG_COLORS, "RgbOutput", 0x03E80000);
+
+			config.colors.active.output.left.red = 0.0f;
+			config.colors.active.output.right.red = 1.0f;
+			Config::Set(CONFIG_COLORS, "RedOutput", 0x03E80000);
+
+			config.colors.active.output.left.green = 0.0f;
+			config.colors.active.output.right.green = 1.0f;
+			Config::Set(CONFIG_COLORS, "GreenOutput", 0x03E80000);
+
+			config.colors.active.output.left.blue = 0.0f;
+			config.colors.active.output.right.blue = 1.0f;
+			Config::Set(CONFIG_COLORS, "BlueOutput", 0x03E80000);
+
 			config.keys.imageFilter = 3;
 			Config::Set(CONFIG_KEYS, "ImageFilter", config.keys.imageFilter);
 
@@ -128,7 +238,12 @@ namespace Config
 		else
 		{
 			config.language.current = config.language.futured = (LCID)Config::Get(CONFIG_WRAPPER, "Language", hookSpace->resLanguage);
-			Config::Get(CONFIG_WRAPPER, "Title", hookSpace->windowName, config.title, sizeof(config.title));
+			SetThreadLanguage(config.language.current);
+
+			Config::Get(CONFIG_WRAPPER, "Title", "", config.title, sizeof(config.title));
+			if (!StrLength(config.title))
+				LoadString(hDllModule, hookSpace->windowName, config.title, sizeof(config.title));
+			
 			config.coldCPU = (BOOL)Config::Get(CONFIG_WRAPPER, "ColdCPU", TRUE);
 		}
 
@@ -173,6 +288,111 @@ namespace Config
 				config.image.xBRz = Config::Get(CONFIG_WRAPPER, "XBRZ", 2);
 				if (config.image.xBRz < 2 || config.image.xBRz > 6)
 					config.image.xBRz = 6;
+
+				value = Config::Get(CONFIG_COLORS, "HueSat", 0x01F401F4);
+				config.colors.active.hueShift = 0.001f * min(1000, max(0, LOWORD(value)));
+				config.colors.active.saturation = 0.001f * min(1000, max(0, HIWORD(value)));
+
+				value = Config::Get(CONFIG_COLORS, "RgbInput", 0x03E80000);
+				if (LOWORD(value) < HIWORD(value))
+				{
+					config.colors.active.input.left.rgb = 0.001f * min(1000, max(0, LOWORD(value)));
+					config.colors.active.input.right.rgb = 0.001f * min(1000, max(0, HIWORD(value)));
+				}
+				else
+				{
+					config.colors.active.input.left.rgb = 0.0f;
+					config.colors.active.input.right.rgb = 1.0f;
+				}
+
+				value = Config::Get(CONFIG_COLORS, "RedInput", 0x03E80000);
+				if (LOWORD(value) < HIWORD(value))
+				{
+					config.colors.active.input.left.red = 0.001f * min(1000, max(0, LOWORD(value)));
+					config.colors.active.input.right.red = 0.001f * min(1000, max(0, HIWORD(value)));
+				}
+				else
+				{
+					config.colors.active.input.left.red = 0.0f;
+					config.colors.active.input.right.red = 1.0f;
+				}
+
+				value = Config::Get(CONFIG_COLORS, "GreenInput", 0x03E80000);
+				if (LOWORD(value) < HIWORD(value))
+				{
+					config.colors.active.input.left.green = 0.001f * min(1000, max(0, LOWORD(value)));
+					config.colors.active.input.right.green = 0.001f * min(1000, max(0, HIWORD(value)));
+				}
+				else
+				{
+					config.colors.active.input.left.green = 0.0f;
+					config.colors.active.input.right.green = 1.0f;
+				}
+
+				value = Config::Get(CONFIG_COLORS, "BlueInput", 0x03E80000);
+				if (LOWORD(value) < HIWORD(value))
+				{
+					config.colors.active.input.left.blue = 0.001f * min(1000, max(0, LOWORD(value)));
+					config.colors.active.input.right.blue = 0.001f * min(1000, max(0, HIWORD(value)));
+				}
+				else
+				{
+					config.colors.active.input.left.blue = 0.0f;
+					config.colors.active.input.right.blue = 1.0f;
+				}
+
+				config.colors.active.gamma.rgb = 0.001f * min(1000, max(0, Config::Get(CONFIG_COLORS, "RgbGamma", 500)));
+				config.colors.active.gamma.red = 0.001f * min(1000, max(0, Config::Get(CONFIG_COLORS, "RedGamma", 500)));
+				config.colors.active.gamma.green = 0.001f * min(1000, max(0, Config::Get(CONFIG_COLORS, "GreenGamma", 500)));
+				config.colors.active.gamma.blue = 0.001f * min(1000, max(0, Config::Get(CONFIG_COLORS, "BlueGamma", 500)));
+
+				value = Config::Get(CONFIG_COLORS, "RgbOutput", 0x03E80000);
+				if (LOWORD(value) < HIWORD(value))
+				{
+					config.colors.active.output.left.rgb = 0.001f * min(1000, max(0, LOWORD(value)));
+					config.colors.active.output.right.rgb = 0.001f * min(1000, max(0, HIWORD(value)));
+				}
+				else
+				{
+					config.colors.active.output.left.rgb = 0.0f;
+					config.colors.active.output.right.rgb = 1.0f;
+				}
+
+				value = Config::Get(CONFIG_COLORS, "RedOutput", 0x03E80000);
+				if (LOWORD(value) < HIWORD(value))
+				{
+					config.colors.active.output.left.red = 0.001f * min(1000, max(0, LOWORD(value)));
+					config.colors.active.output.right.red = 0.001f * min(1000, max(0, HIWORD(value)));
+				}
+				else
+				{
+					config.colors.active.output.left.red = 0.0f;
+					config.colors.active.output.right.red = 1.0f;
+				}
+
+				value = Config::Get(CONFIG_COLORS, "GreenOutput", 0x03E80000);
+				if (LOWORD(value) < HIWORD(value))
+				{
+					config.colors.active.output.left.green = 0.001f * min(1000, max(0, LOWORD(value)));
+					config.colors.active.output.right.green = 0.001f * min(1000, max(0, HIWORD(value)));
+				}
+				else
+				{
+					config.colors.active.output.left.green = 0.0f;
+					config.colors.active.output.right.green = 1.0f;
+				}
+
+				value = Config::Get(CONFIG_COLORS, "BlueOutput", 0x03E80000);
+				if (LOWORD(value) < HIWORD(value))
+				{
+					config.colors.active.output.left.blue = 0.001f * min(1000, max(0, LOWORD(value)));
+					config.colors.active.output.right.blue = 0.001f * min(1000, max(0, HIWORD(value)));
+				}
+				else
+				{
+					config.colors.active.output.left.blue = 0.0f;
+					config.colors.active.output.right.blue = 1.0f;
+				}
 
 				CHAR buffer[20];
 				if (Config::Get(CONFIG_KEYS, "ImageFilter", "", buffer, sizeof(buffer)))
@@ -229,7 +449,7 @@ namespace Config
 			config.keys.vSync = 0;
 		}
 
-		SetThreadLanguage(config.language.current);
+		config.colors.current = &config.colors.active;
 	}
 
 	BOOL __fastcall Check(const CHAR* app, const CHAR* key)

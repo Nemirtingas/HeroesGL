@@ -234,9 +234,7 @@ BOOL Hooker::PatchByte(DWORD addr, BYTE value)
 
 DWORD Hooker::PatchImport(const CHAR* function, VOID* addr)
 {
-	DWORD res = NULL;
-
-	PIMAGE_DATA_DIRECTORY dataDir = &headNT->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
+	PIMAGE_DATA_DIRECTORY dataDir = &this->headNT->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
 	if (dataDir->Size)
 	{
 		PIMAGE_IMPORT_DESCRIPTOR imports = (PIMAGE_IMPORT_DESCRIPTOR)((DWORD)this->hModule + dataDir->VirtualAddress);
@@ -265,44 +263,52 @@ DWORD Hooker::PatchImport(const CHAR* function, VOID* addr)
 				}
 
 				if (!nameThunk)
-					return res;
+					return NULL;
 			}
 			else
-				return res;
+				return NULL;
 
 			for (; nameThunk->u1.AddressOfData; ++nameThunk, ++addressThunk)
 			{
 				PIMAGE_IMPORT_BY_NAME name = PIMAGE_IMPORT_BY_NAME((DWORD)this->hModule + nameThunk->u1.AddressOfData);
 
 				WORD hint;
-				if (this->ReadWord((INT)name - this->baseOffset, &hint) && !StrCompare((CHAR*)name->Name, function))
+				if (this->ReadWord((INT)name - this->baseOffset, &hint) && !strcmp((CHAR*)name->Name, function))
 				{
+					DWORD res;
 					if (this->ReadDWord((INT)&addressThunk->u1.AddressOfData - this->baseOffset, &res))
+					{
 						this->PatchDWord((INT)&addressThunk->u1.AddressOfData - this->baseOffset, (DWORD)addr);
+						return res;
+					}
 
-					return res;
+					return NULL;
 				}
 			}
 		}
 	}
 
-	return res;
+	return NULL;
 }
 
-DWORD Hooker::PatchExport(DWORD function, VOID* addr)
+DWORD Hooker::PatchExport(const CHAR* function, VOID* addr)
 {
-	PIMAGE_DATA_DIRECTORY dataDir = &headNT->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT];
-	if (dataDir->Size)
+	DWORD func = (DWORD)GetProcAddress(this->hModule, function);
+	if (func)
 	{
-		PIMAGE_EXPORT_DIRECTORY exports = (PIMAGE_EXPORT_DIRECTORY)((DWORD)this->hModule + dataDir->VirtualAddress);
+		PIMAGE_DATA_DIRECTORY dataDir = &this->headNT->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT];
+		if (dataDir->Size)
 		{
-			DWORD* functions = (DWORD*)((DWORD)this->hModule + exports->AddressOfFunctions);
+			PIMAGE_EXPORT_DIRECTORY exports = (PIMAGE_EXPORT_DIRECTORY)((DWORD)this->hModule + dataDir->VirtualAddress);
+			{
+				DWORD* functions = (DWORD*)((DWORD)this->hModule + exports->AddressOfFunctions);
 
-			for (DWORD i = 0; i < exports->NumberOfFunctions; ++i)
-				if (function == (DWORD)this->hModule + functions[i])
-					return this->PatchDWord((DWORD)&functions[i] - this->baseOffset, (DWORD)addr - (DWORD)this->hModule);
+				for (DWORD i = 0; i < exports->NumberOfFunctions; ++i)
+					if (func == (DWORD)this->hModule + functions[i])
+						return this->PatchDWord((DWORD)&functions[i] - this->baseOffset, (DWORD)addr - (DWORD)this->hModule);
+			}
 		}
 	}
 
-	return FALSE;
+	return NULL;
 }

@@ -1,8 +1,4 @@
 /*
-	Cubic fragment shader
-	based on libretro Cubic shader
-	https://github.com/libretro/glsl-shaders/tree/master/cubic/shaders
-
 	MIT License
 
 	Copyright (c) 2020 Oleksiy Ryabchun
@@ -28,6 +24,15 @@
 
 uniform sampler2D tex01;
 uniform vec2 texSize;
+#ifdef LEVELS
+uniform float hue;
+uniform float sat;
+uniform vec4 in_left;
+uniform vec4 in_right;
+uniform vec4 gamma;
+uniform vec4 out_left;
+uniform vec4 out_right;
+#endif
 
 #if __VERSION__ >= 130
 	#define COMPAT_IN in
@@ -41,7 +46,11 @@ uniform vec2 texSize;
 
 COMPAT_IN vec2 fTex;
 
-void weights(vec2 t, out vec4 x, out vec4 y) {
+vec4 cubic(sampler2D tex, vec2 coord) {
+	vec2 uv = coord * texSize - 0.5;
+	vec2 texel = floor(uv) - 0.5;
+	vec2 t = fract(uv);
+
 	vec2 t2 = t * t;
 	vec2 t3 = t2 * t;
 
@@ -53,20 +62,68 @@ void weights(vec2 t, out vec4 x, out vec4 y) {
 	const vec4 p2 = vec4(+0.0, +0.5, +2.0, -1.5);
 	const vec4 p3 = vec4(+0.0,  0.0, -0.5, +0.5);
 
-	x = vec4(dot(xs, p0), dot(xs, p1), dot(xs, p2), dot(xs, p3));
-	y = vec4(dot(ys, p0), dot(ys, p1), dot(ys, p2), dot(ys, p3));
+	vec4 x = vec4(dot(xs, p0), dot(xs, p1), dot(xs, p2), dot(xs, p3));
+	vec4 y = vec4(dot(ys, p0), dot(ys, p1), dot(ys, p2), dot(ys, p3));
+
+	vec4 color = x.r * y.r * COMPAT_TEXTURE(tex, (texel + vec2(0.0, 0.0)) / texSize) +
+		x.g * y.r * COMPAT_TEXTURE(tex, (texel + vec2(1.0, 0.0)) / texSize) +
+		x.b * y.r * COMPAT_TEXTURE(tex, (texel + vec2(2.0, 0.0)) / texSize) +
+		x.a * y.r * COMPAT_TEXTURE(tex, (texel + vec2(3.0, 0.0)) / texSize);
+
+	color += x.r * y.g * COMPAT_TEXTURE(tex, (texel + vec2(0.0, 1.0)) / texSize) +
+		x.g * y.g * COMPAT_TEXTURE(tex, (texel + vec2(1.0, 1.0)) / texSize) +
+		x.b * y.g * COMPAT_TEXTURE(tex, (texel + vec2(2.0, 1.0)) / texSize) +
+		x.a * y.g * COMPAT_TEXTURE(tex, (texel + vec2(3.0, 1.0)) / texSize);
+
+	color += x.r * y.b * COMPAT_TEXTURE(tex, (texel + vec2(0.0, 2.0)) / texSize) +
+		x.g * y.b * COMPAT_TEXTURE(tex, (texel + vec2(1.0, 2.0)) / texSize) +
+		x.b * y.b * COMPAT_TEXTURE(tex, (texel + vec2(2.0, 2.0)) / texSize) +
+		x.a * y.b * COMPAT_TEXTURE(tex, (texel + vec2(3.0, 2.0)) / texSize);
+
+	return color + x.r * y.a * COMPAT_TEXTURE(tex, (texel + vec2(0.0, 3.0)) / texSize) +
+		x.g * y.a * COMPAT_TEXTURE(tex, (texel + vec2(1.0, 3.0)) / texSize) +
+		x.b * y.a * COMPAT_TEXTURE(tex, (texel + vec2(2.0, 3.0)) / texSize) +
+		x.a * y.a * COMPAT_TEXTURE(tex, (texel + vec2(3.0, 3.0)) / texSize);
 }
 
-void main() {
-	vec2 texel = floor(fTex);
-	
-	vec4 x, y;
-	weights(fTex - texel, x, y);
+#ifdef LEVELS
+vec3 satHue(vec3 color) {
+	const mat3 mrgb = mat3(	  1.0,    1.0,    1.0,
+							0.956, -0.272, -1.107,
+							0.621, -0.647,  1.705 );
 
-	texel -= 0.5;
-	vec3 color = vec3(0.0);
-	for(int j = 0; j < 4; ++j) for(int i = 0; i < 4; ++i)
-		color += x[i] * y[j] * COMPAT_TEXTURE(tex01, (texel + vec2(i, j)) / texSize).rgb;
+	const mat3 myiq = mat3(	0.299,  0.596,  0.211,
+							0.587, -0.274, -0.523,
+							0.114, -0.321,  0.311 );
+
+	float su = sat * cos(hue);
+	float sw = sat * sin(hue);
+
+	mat3 mhsv = mat3(1.0, 0.0,  0.0,
+					 0.0, su, sw,
+					 0.0, -sw,  su );
+
+	return mrgb * mhsv * myiq * color;
+}
+
+vec3 levels(vec3 color) {
+	color = clamp((color - in_left.rgb) / (in_right.rgb - in_left.rgb), 0.0, 1.0);
+	color = pow(color, gamma.rgb);
+	color = clamp(color * (out_right.rgb - out_left.rgb) + out_left.rgb, 0.0, 1.0);
+
+	color = clamp((color - in_left.aaa) / (in_right.aaa - in_left.aaa), 0.0, 1.0);
+	color = pow(color, gamma.aaa);
+	return clamp(color * (out_right.aaa - out_left.aaa) + out_left.aaa, 0.0, 1.0);
+}
+#endif
+
+void main() {
+	vec3 color = cubic(tex01, fTex).rgb;
+
+#ifdef LEVELS
+	color = satHue(color);
+	color = levels(color);
+#endif
 
 	FRAG_COLOR = vec4(color, 1.0);
 } 

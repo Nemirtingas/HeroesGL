@@ -170,8 +170,10 @@ typedef VOID(__stdcall *GLGETSHADERINFOLOG)(GLuint shader, GLsizei maxLength, GL
 typedef VOID(__stdcall* GLBINDATTRIBLOCATION)(GLuint program, GLuint index, const GLchar* name);
 typedef GLuint(__stdcall *GLGETUNIFORMLOCATION)(GLuint program, const GLchar* name);
 
-typedef VOID(__stdcall *GLUNIFORM1I)(GLint location, GLint v0);
-typedef VOID(__stdcall *GLUNIFORM2F)(GLint location, GLfloat v0, GLfloat v1);
+typedef VOID(__stdcall* GLUNIFORM1I)(GLint location, GLint v0);
+typedef VOID(__stdcall* GLUNIFORM1F)(GLint location, GLfloat v0);
+typedef VOID(__stdcall* GLUNIFORM2F)(GLint location, GLfloat v0, GLfloat v1);
+typedef VOID(__stdcall* GLUNIFORM4F)(GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3);
 typedef GLuint(__stdcall *GLUNIFORMMATRIX4FV)(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value);
 
 typedef VOID(__stdcall *GLGENVERTEXARRAYS)(GLsizei n, GLuint* arrays);
@@ -255,7 +257,9 @@ extern GLBINDATTRIBLOCATION GLBindAttribLocation;
 extern GLGETUNIFORMLOCATION GLGetUniformLocation;
 
 extern GLUNIFORM1I GLUniform1i;
+extern GLUNIFORM1F GLUniform1f;
 extern GLUNIFORM2F GLUniform2f;
+extern GLUNIFORM4F GLUniform4f;
 extern GLUNIFORMMATRIX4FV GLUniformMatrix4fv;
 
 extern GLGENVERTEXARRAYS GLGenVertexArrays;
@@ -280,5 +284,5 @@ namespace GL
 	VOID __fastcall PreparePixelFormatDescription(PIXELFORMATDESCRIPTOR*);
 	INT __fastcall PreparePixelFormat(PIXELFORMATDESCRIPTOR*);
 	VOID __fastcall ResetPixelFormat(HWND);
-	GLuint __fastcall CompileShaderSource(DWORD, const CHAR*, GLenum);
+	GLuint __fastcall CompileShaderSource(DWORD, CHAR*, GLenum);
 }

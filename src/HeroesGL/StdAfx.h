@@ -33,6 +33,7 @@
 
 #define WC_DRAW "drawclass"
 #define WM_CHECK_MENU "WM_CHECK_MENU"
+#define STACK_SIZE 0x100000
 
 #define RES_WIDTH 640
 #define RES_HEIGHT 480
@@ -74,6 +75,8 @@ extern "C"
 	_CRTIMP int __cdecl fclose(FILE*);
 }
 
+#define M_PI 3.14159265358979323846
+
 #define MemoryAlloc(size) malloc(size)
 #define MemoryFree(block) free(block)
 #define MemorySet(dst, val, size) memset(dst, val, size)
@@ -82,6 +85,9 @@ extern "C"
 #define MemoryCompare(buf1, buf2, size) memcmp(buf1, buf2, size)
 #define MathCeil(x) ceil(x)
 #define MathFloor(x) floor(x)
+#define MathPower(a, b) pow(a, b)
+#define MathSinus(x) sin(x)
+#define MathCosinus(x) cos(x)
 #define StrPrint(buf, fmt, ...) sprintf(buf, fmt, __VA_ARGS__)
 #define StrCompare(str1, str2) strcmp(str1, str2)
 #define StrCompareInsensitive(str1, str2) _stricmp(str1, str2)

@@ -30,6 +30,7 @@
 #include "Hooks.h"
 #include "Config.h"
 #include "Window.h"
+#include "ShaderGroup.h"
 
 DWORD __fastcall GetPow2(DWORD value)
 {
@@ -37,55 +38,6 @@ DWORD __fastcall GetPow2(DWORD value)
 	while (res < value)
 		res <<= 1;
 	return res;
-}
-
-VOID __fastcall UseShaderProgram(ShaderProgram* program, DWORD texSize)
-{
-	if (!program->id)
-	{
-		program->id = GLCreateProgram();
-
-		GLBindAttribLocation(program->id, 0, "vCoord");
-		GLBindAttribLocation(program->id, 1, "vTexCoord");
-
-		GLuint vShader = GL::CompileShaderSource(program->vertexName, program->version, GL_VERTEX_SHADER);
-		GLuint fShader = GL::CompileShaderSource(program->fragmentName, program->version, GL_FRAGMENT_SHADER);
-		{
-			GLAttachShader(program->id, vShader);
-			GLAttachShader(program->id, fShader);
-			{
-				GLLinkProgram(program->id);
-			}
-			GLDetachShader(program->id, fShader);
-			GLDetachShader(program->id, vShader);
-		}
-		GLDeleteShader(fShader);
-		GLDeleteShader(vShader);
-
-		GLUseProgram(program->id);
-		
-		if (program->mvp)
-			GLUniformMatrix4fv(GLGetUniformLocation(program->id, "mvp"), 1, GL_FALSE, program->mvp);
-
-		GLUniform1i(GLGetUniformLocation(program->id, "tex01"), 0);
-
-		program->texSize.location = GLGetUniformLocation(program->id, "texSize");
-		if (program->texSize.location >= 0)
-		{
-			program->texSize.value = texSize;
-			GLUniform2f(program->texSize.location, (FLOAT)LOWORD(texSize), (FLOAT)HIWORD(texSize));
-		}
-	}
-	else
-	{
-		GLUseProgram(program->id);
-
-		if (program->texSize.location >= 0 && program->texSize.value != texSize)
-		{
-			program->texSize.value = texSize;
-			GLUniform2f(program->texSize.location, (FLOAT)LOWORD(texSize), (FLOAT)HIWORD(texSize));
-		}
-	}
 }
 
 DWORD __stdcall RenderThread(LPVOID lpParameter)
@@ -273,598 +225,598 @@ VOID OpenDraw::RenderOld()
 			do
 			{
 				OpenDrawSurface* surface = this->attachedSurface;
-				if (surface)
+				if (!surface)
+					continue;
+
+				OpenDrawPalette* palette = surface->attachedPalette;
+				if (!palette)
+					continue;
+
+				if (isVSync != config.image.vSync)
 				{
-					OpenDrawPalette* palette = surface->attachedPalette;
-					if (palette)
+					isVSync = config.image.vSync;
+					if (WGLSwapInterval)
+						WGLSwapInterval(isVSync);
+				}
+
+				UpdateRect* updateClip = surface->poinetrClip;
+				UpdateRect* finClip = surface->currentClip;
+				surface->poinetrClip = finClip;
+
+				if (this->CheckView())
+				{
+					GLViewport(this->viewport.rectangle.x, this->viewport.rectangle.y, this->viewport.rectangle.width, this->viewport.rectangle.height);
+					clear = 0;
+				}
+
+				if (clear++ <= 1)
+					GLClear(GL_COLOR_BUFFER_BIT);
+
+				DWORD glFilter = 0;
+				FilterState state = this->filterState;
+				this->filterState.flags = FALSE;
+				if (state.flags)
+					glFilter = state.interpolation == InterpolateNearest ? GL_NEAREST : GL_LINEAR;
+
+				pointer = &pointersList[pointer == pointersList];
+				if (config.cursor.index && !config.cursor.hidden)
+				{
+					DWORD ptrIndex = config.cursor.index - 1;
+
+					iconInfo = &((ICONINFO*)Hooks::hookSpace->icons_info)[ptrIndex];
+					maskInfo = &((BITMAP*)Hooks::hookSpace->masks_info)[ptrIndex];
+					colorInfo = Hooks::hookSpace->colors_info && maskInfo->bmHeight == maskInfo->bmWidth
+						? &((BITMAP*)Hooks::hookSpace->colors_info)[ptrIndex]
+						: NULL;
+
+					GetCursorPos(&pointer->pos);
+					ScreenToClient(this->hWnd, &pointer->pos);
+
+					pointer->pos.x = (LONG)((FLOAT)((pointer->pos.x - this->viewport.rectangle.x) * this->width) / this->viewport.rectangle.width) - iconInfo->xHotspot;
+					pointer->pos.y = (LONG)((FLOAT)((pointer->pos.y - this->viewport.rectangle.y) * this->height) / this->viewport.rectangle.height) - iconInfo->yHotspot;
+
+					pointer->size.cx = 32;
+					pointer->size.cy = 32;
+
+					if (pointer->pos.x < 0)
 					{
-						if (isVSync != config.image.vSync)
-						{
-							isVSync = config.image.vSync;
-							if (WGLSwapInterval)
-								WGLSwapInterval(isVSync);
-						}
-
-						UpdateRect* updateClip = surface->poinetrClip;
-						UpdateRect* finClip = surface->currentClip;
-						surface->poinetrClip = finClip;
-
-						if (this->CheckView())
-						{
-							GLViewport(this->viewport.rectangle.x, this->viewport.rectangle.y, this->viewport.rectangle.width, this->viewport.rectangle.height);
-							clear = 0;
-						}
-
-						if (clear++ <= 1)
-							GLClear(GL_COLOR_BUFFER_BIT);
-
-						DWORD glFilter = 0;
-						FilterState state = this->filterState;
-						this->filterState.flags = FALSE;
-						if (state.flags)
-							glFilter = state.interpolation == InterpolateNearest ? GL_NEAREST : GL_LINEAR;
-
-						pointer = &pointersList[pointer == pointersList];
-						if (config.cursor.index && !config.cursor.hidden)
-						{
-							DWORD ptrIndex = config.cursor.index - 1;
-
-							iconInfo = &((ICONINFO*)Hooks::hookSpace->icons_info)[ptrIndex];
-							maskInfo = &((BITMAP*)Hooks::hookSpace->masks_info)[ptrIndex];
-							colorInfo = Hooks::hookSpace->colors_info && maskInfo->bmHeight == maskInfo->bmWidth
-								? &((BITMAP*)Hooks::hookSpace->colors_info)[ptrIndex]
-								: NULL;
-
-							GetCursorPos(&pointer->pos);
-							ScreenToClient(this->hWnd, &pointer->pos);
-
-							pointer->pos.x = (LONG)((FLOAT)((pointer->pos.x - this->viewport.rectangle.x) * this->width) / this->viewport.rectangle.width) - iconInfo->xHotspot;
-							pointer->pos.y = (LONG)((FLOAT)((pointer->pos.y - this->viewport.rectangle.y) * this->height) / this->viewport.rectangle.height) - iconInfo->yHotspot;
-
-							pointer->size.cx = 32;
-							pointer->size.cy = 32;
-
-							if (pointer->pos.x < 0)
-							{
-								pointer->offset.x = -pointer->pos.x;
-								pointer->size.cx += pointer->pos.x;
-								pointer->pos.x = 0;
-							}
-							else
-								pointer->offset.x = 0;
-
-							if (pointer->pos.y < 0)
-							{
-								pointer->offset.y = -pointer->pos.y;
-								pointer->size.cy += pointer->pos.y;
-								pointer->pos.y = 0;
-							}
-							else
-								pointer->offset.y = 0;
-
-							if (pointer->size.cx > 0 && pointer->size.cy > 0)
-							{
-								if (pointer->pos.x + pointer->size.cx >= *(INT*)&this->width)
-									pointer->size.cx = this->width - pointer->pos.x;
-
-								if (pointer->pos.y + pointer->size.cy >= *(INT*)&this->height)
-									pointer->size.cy = this->height - pointer->pos.y;
-
-								if (pointer->size.cx > 0 && pointer->size.cy > 0)
-									pointer->isActive = TRUE;
-							}
-						}
-
-						if (palette->isChanged || first)
-						{
-							palette->isChanged = FALSE;
-							first = FALSE;
-
-							updateClip = (finClip == surface->clipsList ? surface->endClip : finClip) - 1;
-							updateClip->rect.left = 0;
-							updateClip->rect.top = 0;
-							updateClip->rect.right = this->width;
-							updateClip->rect.bottom = this->height;
-							updateClip->isActive = TRUE;
-						}
-
-						DWORD count = frameCount;
-						frame = frames;
-						while (count--)
-						{
-							if (frameCount == 1)
-							{
-								if (glFilter)
-								{
-									GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glFilter);
-									GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, glFilter);
-								}
-
-								while (updateClip != finClip)
-								{
-									if (updateClip->isActive)
-									{
-										RECT update = updateClip->rect;
-										DWORD texWidth = update.right - update.left;
-										DWORD texHeight = update.bottom - update.top;
-
-										if (texWidth == this->width)
-											GLTexSubImage2D(GL_TEXTURE_2D, 0, 0, update.top, texWidth, texHeight, GL_RGBA, GL_UNSIGNED_BYTE, surface->pixelBuffer + update.top * texWidth);
-										else
-										{
-											DWORD* source = surface->pixelBuffer + update.top * this->width + update.left;
-											DWORD* dest = (DWORD*)frameBuffer;
-											DWORD copyHeight = texHeight;
-											do
-											{
-												MemoryCopy(dest, source, texWidth << 2);
-												source += this->width;
-												dest += texWidth;
-											} while (--copyHeight);
-
-											GLTexSubImage2D(GL_TEXTURE_2D, 0, update.left, update.top, texWidth, texHeight, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
-										}
-									}
-
-									if (++updateClip == surface->endClip)
-										updateClip = surface->clipsList;
-								}
-
-								// Clear prev pointer
-								Pointer* prevPointer = &pointersList[pointer == pointersList];
-								if (prevPointer->isActive)
-								{
-									DWORD* source = surface->pixelBuffer + prevPointer->pos.y * this->width + prevPointer->pos.x;
-									DWORD* dest = (DWORD*)frameBuffer;
-
-									LONG copyHeight = prevPointer->size.cy;
-									do
-									{
-										MemoryCopy(dest, source, prevPointer->size.cx << 2);
-										source += this->width;
-										dest += prevPointer->size.cx;
-									} while (--copyHeight);
-
-									GLTexSubImage2D(GL_TEXTURE_2D, 0, prevPointer->pos.x, prevPointer->pos.y, prevPointer->size.cx, prevPointer->size.cy, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
-								}
-
-								// Update pointer
-								if (pointer->isActive)
-								{
-									DWORD* source = surface->pixelBuffer + pointer->pos.y * this->width + pointer->pos.x;
-									DWORD* dst = (DWORD*)frameBuffer;
-
-									DWORD initMask = 8 - (pointer->offset.x % 8);
-									DWORD initOffset = pointer->offset.x & (8 - 1);
-
-									INT shadowIdx = pointer->offset.y - SHADOW_OFFSET;
-									LONG copyHeight = pointer->size.cy;
-
-									if (colorInfo)
-									{
-										BYTE* sourceColor = (BYTE*)colorInfo->bmBits + pointer->offset.y * colorInfo->bmWidthBytes + pointer->offset.x;
-										BYTE* sourceMask = (BYTE*)maskInfo->bmBits + pointer->offset.y * maskInfo->bmWidthBytes;
-										BYTE* shadowMask = (BYTE*)sourceMask - SHADOW_OFFSET * maskInfo->bmWidthBytes;
-
-										do
-										{
-											DWORD* src = source;
-											BYTE* srcColor = sourceColor;
-											BYTE* srcMask = sourceMask;
-											BYTE* shadMask = shadowMask;
-
-											BYTE xorMask = *srcMask++;
-											BYTE shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
-
-											xorMask <<= initOffset;
-											shdMask <<= initOffset;
-
-											DWORD countMask = initMask;
-											LONG copyWidth = pointer->size.cx;
-											do
-											{
-												if (xorMask & 0x80)
-												{
-													DWORD color = *src;
-
-													if (!(shdMask & 0x80))
-													{
-														BYTE* cp = (BYTE*)&color;
-														DWORD cc = 3;
-														do
-															*cp++ >>= 1;
-														while (--cc);
-													}
-
-													*dst = color;
-												}
-												else
-													*dst = _byteswap_ulong(_rotl(Hooks::palEntries[*srcColor], 8));
-
-												if (--countMask)
-												{
-													xorMask <<= 1;
-													shdMask <<= 1;
-												}
-												else
-												{
-													countMask = 8;
-													xorMask = *srcMask++;
-													shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
-												}
-
-												++src;
-												++srcColor;
-												++dst;
-											} while (--copyWidth);
-
-											source += this->width;
-											sourceColor += colorInfo->bmWidthBytes;
-											sourceMask += maskInfo->bmWidthBytes;
-											shadowMask += maskInfo->bmWidthBytes;
-
-											++shadowIdx;
-										} while (--copyHeight);
-									}
-									else
-									{
-										BYTE* sourceMask = (BYTE*)maskInfo->bmBits + pointer->offset.y * maskInfo->bmWidthBytes;
-										BYTE* shadowMask = (BYTE*)sourceMask - SHADOW_OFFSET * maskInfo->bmWidthBytes;
-										BYTE* colorMask = (BYTE*)sourceMask + 32 * maskInfo->bmWidthBytes;
-
-										do
-										{
-											DWORD* src = source;
-											BYTE* clrMask = colorMask;
-											BYTE* srcMask = sourceMask;
-											BYTE* shadMask = shadowMask;
-
-											BYTE andMask = *clrMask++;
-											BYTE xorMask = *srcMask++;
-											BYTE shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
-
-											andMask <<= initOffset;
-											xorMask <<= initOffset;
-											shdMask <<= initOffset;
-
-											DWORD countMask = initMask;
-											LONG copyWidth = pointer->size.cx;
-											do
-											{
-												if (xorMask & 0x80)
-												{
-													DWORD color = *src;
-
-													if (!(shdMask & 0x80))
-													{
-														BYTE* cp = (BYTE*)&color;
-														DWORD cc = 3;
-														do
-															*cp++ >>= 1;
-														while (--cc);
-													}
-
-													*dst = color;
-												}
-												else
-													*dst = (andMask & 0x80) ? 0xFFFFFFFF : 0xFF000000;
-
-												if (--countMask)
-												{
-													andMask <<= 1;
-													xorMask <<= 1;
-													shdMask <<= 1;
-												}
-												else
-												{
-													countMask = 8;
-													andMask = *clrMask++;
-													xorMask = *srcMask++;
-													shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
-												}
-
-												++src;
-												++dst;
-											} while (--copyWidth);
-
-											source += this->width;
-
-											colorMask += maskInfo->bmWidthBytes;
-											sourceMask += maskInfo->bmWidthBytes;
-											shadowMask += maskInfo->bmWidthBytes;
-
-											++shadowIdx;
-										} while (--copyHeight);
-									}
-
-									GLTexSubImage2D(GL_TEXTURE_2D, 0, pointer->pos.x, pointer->pos.y, pointer->size.cx, pointer->size.cy, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
-								}
-							}
-							else
-							{
-								GLBindTexture(GL_TEXTURE_2D, frame->id);
-
-								if (glFilter)
-								{
-									GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glFilter);
-									GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, glFilter);
-								}
-
-								Rect* rect = &frame->rect;
-								INT rect_right = rect->x + rect->width;
-								INT rect_bottom = rect->y + rect->height;
-
-								UpdateRect* update = updateClip;
-								while (update != finClip)
-								{
-									if (update->isActive)
-									{
-										RECT clip = {
-											rect->x > update->rect.left ? rect->x : update->rect.left,
-											rect->y > update->rect.top ? rect->y : update->rect.top,
-											rect_right < update->rect.right ? rect_right : update->rect.right,
-											rect_bottom < update->rect.bottom ? rect_bottom : update->rect.bottom
-										};
-
-										INT clipWidth = clip.right - clip.left;
-										INT clipHeight = clip.bottom - clip.top;
-										if (clipWidth > 0 && clipHeight > 0)
-										{
-											DWORD* source = surface->pixelBuffer + clip.top * this->width + clip.left;
-											DWORD* dest = (DWORD*)frameBuffer;
-											INT copyHeight = clipHeight;
-											do
-											{
-												MemoryCopy(dest, source, clipWidth << 2);
-												source += this->width;
-												dest += clipWidth;
-											} while (--copyHeight);
-
-											GLTexSubImage2D(GL_TEXTURE_2D, 0, clip.left - rect->x, clip.top - rect->y, clipWidth, clipHeight, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
-										}
-									}
-
-									if (++update == surface->endClip)
-										update = surface->clipsList;
-								}
-
-								// Clear prev pointer
-								Pointer* prevPointer = &pointersList[pointer == pointersList];
-								if (prevPointer->isActive)
-								{
-									INT ptr_right = prevPointer->pos.x + prevPointer->size.cx;
-									INT ptr_bottom = prevPointer->pos.y + prevPointer->size.cy;
-
-									RECT clip = {
-										rect->x > prevPointer->pos.x ? rect->x : prevPointer->pos.x,
-										rect->y > prevPointer->pos.y ? rect->y : prevPointer->pos.y,
-										rect_right < ptr_right ? rect_right : ptr_right,
-										rect_bottom < ptr_bottom ? rect_bottom : ptr_bottom
-									};
-
-									INT clipWidth = clip.right - clip.left;
-									INT clipHeight = clip.bottom - clip.top;
-									if (clipWidth > 0 && clipHeight > 0)
-									{
-										DWORD* source = surface->pixelBuffer + clip.top * this->width + clip.left;
-										DWORD* dest = (DWORD*)frameBuffer;
-										INT copyHeight = clipHeight;
-										do
-										{
-											MemoryCopy(dest, source, clipWidth << 2);
-											source += this->width;
-											dest += clipWidth;
-										} while (--copyHeight);
-
-										GLTexSubImage2D(GL_TEXTURE_2D, 0, clip.left - rect->x, clip.top - rect->y, clipWidth, clipHeight, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
-									}
-								}
-
-								// Update pointer
-								if (pointer->isActive)
-								{
-									INT ptr_right = pointer->pos.x + pointer->size.cx;
-									INT ptr_bottom = pointer->pos.y + pointer->size.cy;
-
-									RECT clip = {
-										rect->x > pointer->pos.x ? rect->x : pointer->pos.x,
-										rect->y > pointer->pos.y ? rect->y : pointer->pos.y,
-										rect_right < ptr_right ? rect_right : ptr_right,
-										rect_bottom < ptr_bottom ? rect_bottom : ptr_bottom
-									};
-
-									INT clipWidth = clip.right - clip.left;
-									INT clipHeight = clip.bottom - clip.top;
-									if (clipWidth > 0 && clipHeight > 0)
-									{
-										DWORD* source = surface->pixelBuffer + clip.top * this->width + clip.left;
-										DWORD* dst = (DWORD*)frameBuffer;
-
-										POINT offset = {
-											clip.left - pointer->pos.x,
-											clip.top - pointer->pos.y
-										};
-
-										DWORD initMask = 8 - (offset.x % 8);
-										DWORD initOffset = offset.x & (8 - 1);
-
-										INT shadowIdx = offset.y - SHADOW_OFFSET;
-										INT copyHeight = clipHeight;
-										if (colorInfo)
-										{
-											BYTE* sourceColor = (BYTE*)colorInfo->bmBits + offset.y * colorInfo->bmWidthBytes + offset.x;
-											BYTE* sourceMask = (BYTE*)maskInfo->bmBits + offset.y * maskInfo->bmWidthBytes + (offset.x / 8);
-											BYTE* shadowMask = (BYTE*)sourceMask - SHADOW_OFFSET * maskInfo->bmWidthBytes;
-
-											do
-											{
-												DWORD* src = source;
-												BYTE* srcColor = sourceColor;
-												BYTE* srcMask = sourceMask;
-												BYTE* shadMask = shadowMask;
-
-												BYTE xorMask = *srcMask++;
-												BYTE shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
-
-												xorMask <<= initOffset;
-												shdMask <<= initOffset;
-
-												DWORD countMask = initMask;
-												LONG copyWidth = clipWidth;
-												do
-												{
-													if (xorMask & 0x80)
-													{
-														DWORD color = *src;
-
-														if (!(shdMask & 0x80))
-														{
-															BYTE* cp = (BYTE*)&color;
-															DWORD cc = 3;
-															do
-																*cp++ >>= 1;
-															while (--cc);
-														}
-
-														*dst = color;
-													}
-													else
-														*dst = _byteswap_ulong(_rotl(Hooks::palEntries[*srcColor], 8));
-
-													if (--countMask)
-													{
-														xorMask <<= 1;
-														shdMask <<= 1;
-													}
-													else
-													{
-														countMask = 8;
-														xorMask = *srcMask++;
-														shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
-													}
-
-													++src;
-													++srcColor;
-													++dst;
-												} while (--copyWidth);
-
-												source += this->width;
-												sourceColor += colorInfo->bmWidthBytes;
-												sourceMask += maskInfo->bmWidthBytes;
-												shadowMask += maskInfo->bmWidthBytes;
-
-												++shadowIdx;
-											} while (--copyHeight);
-										}
-										else
-										{
-											BYTE* sourceMask = (BYTE*)maskInfo->bmBits + offset.y * maskInfo->bmWidthBytes + (offset.x / 8);
-											BYTE* shadowMask = (BYTE*)sourceMask - SHADOW_OFFSET * maskInfo->bmWidthBytes;
-											BYTE* colorMask = (BYTE*)sourceMask + 32 * maskInfo->bmWidthBytes;
-
-											do
-											{
-												DWORD* src = source;
-												BYTE* clrMask = colorMask;
-												BYTE* srcMask = sourceMask;
-												BYTE* shadMask = shadowMask;
-
-												BYTE andMask = *clrMask++;
-												BYTE xorMask = *srcMask++;
-												BYTE shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
-
-												andMask <<= initOffset;
-												xorMask <<= initOffset;
-												shdMask <<= initOffset;
-
-												DWORD countMask = initMask;
-												LONG copyWidth = clipWidth;
-												do
-												{
-													if (xorMask & 0x80)
-													{
-														DWORD color = *src;
-
-														if (!(shdMask & 0x80))
-														{
-															BYTE* cp = (BYTE*)&color;
-															DWORD cc = 3;
-															do
-																*cp++ >>= 1;
-															while (--cc);
-														}
-
-														*dst = color;
-													}
-													else
-														*dst = (andMask & 0x80) ? 0xFFFFFFFF : 0xFF000000;
-
-													if (--countMask)
-													{
-														andMask <<= 1;
-														xorMask <<= 1;
-														shdMask <<= 1;
-													}
-													else
-													{
-														countMask = 8;
-														andMask = *clrMask++;
-														xorMask = *srcMask++;
-														shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
-													}
-
-													++src;
-													++dst;
-												} while (--copyWidth);
-
-												source += this->width;
-
-												colorMask += maskInfo->bmWidthBytes;
-												sourceMask += maskInfo->bmWidthBytes;
-												shadowMask += maskInfo->bmWidthBytes;
-
-												++shadowIdx;
-											} while (--copyHeight);
-										}
-
-										GLTexSubImage2D(GL_TEXTURE_2D, 0, clip.left - rect->x, clip.top - rect->y, clipWidth, clipHeight, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
-									}
-								}
-							}
-
-							GLBegin(GL_TRIANGLE_FAN);
-							{
-								GLTexCoord2f(0.0f, 0.0f);
-								GLVertex2s(frame->rect.x, frame->rect.y);
-
-								GLTexCoord2f(frame->tSize.width, 0.0f);
-								GLVertex2s(frame->vSize.width, frame->rect.y);
-
-								GLTexCoord2f(frame->tSize.width, frame->tSize.height);
-								GLVertex2s(frame->vSize.width, frame->vSize.height);
-
-								GLTexCoord2f(0.0f, frame->tSize.height);
-								GLVertex2s(frame->rect.x, frame->vSize.height);
-							}
-							GLEnd();
-							++frame;
-						}
-
-						pointersList[pointer == pointersList].isActive = FALSE;
-
-						if (this->isTakeSnapshot)
-						{
-							this->isTakeSnapshot = FALSE;
-							surface->TakeSnapshot(this->width, this->height);
-						}
-
-						SwapBuffers(this->hDc);
-						GLFinish();
-
-						if (clear >= 2)
-							WaitForSingleObject(this->hDrawEvent, INFINITE);
+						pointer->offset.x = -pointer->pos.x;
+						pointer->size.cx += pointer->pos.x;
+						pointer->pos.x = 0;
+					}
+					else
+						pointer->offset.x = 0;
+
+					if (pointer->pos.y < 0)
+					{
+						pointer->offset.y = -pointer->pos.y;
+						pointer->size.cy += pointer->pos.y;
+						pointer->pos.y = 0;
+					}
+					else
+						pointer->offset.y = 0;
+
+					if (pointer->size.cx > 0 && pointer->size.cy > 0)
+					{
+						if (pointer->pos.x + pointer->size.cx >= *(INT*)&this->width)
+							pointer->size.cx = this->width - pointer->pos.x;
+
+						if (pointer->pos.y + pointer->size.cy >= *(INT*)&this->height)
+							pointer->size.cy = this->height - pointer->pos.y;
+
+						if (pointer->size.cx > 0 && pointer->size.cy > 0)
+							pointer->isActive = TRUE;
 					}
 				}
+
+				if (palette->isChanged || first)
+				{
+					palette->isChanged = FALSE;
+					first = FALSE;
+
+					updateClip = (finClip == surface->clipsList ? surface->endClip : finClip) - 1;
+					updateClip->rect.left = 0;
+					updateClip->rect.top = 0;
+					updateClip->rect.right = this->width;
+					updateClip->rect.bottom = this->height;
+					updateClip->isActive = TRUE;
+				}
+
+				DWORD count = frameCount;
+				frame = frames;
+				while (count--)
+				{
+					if (frameCount == 1)
+					{
+						if (glFilter)
+						{
+							GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glFilter);
+							GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, glFilter);
+						}
+
+						while (updateClip != finClip)
+						{
+							if (updateClip->isActive)
+							{
+								RECT update = updateClip->rect;
+								DWORD texWidth = update.right - update.left;
+								DWORD texHeight = update.bottom - update.top;
+
+								if (texWidth == this->width)
+									GLTexSubImage2D(GL_TEXTURE_2D, 0, 0, update.top, texWidth, texHeight, GL_RGBA, GL_UNSIGNED_BYTE, surface->pixelBuffer + update.top * texWidth);
+								else
+								{
+									DWORD* source = surface->pixelBuffer + update.top * this->width + update.left;
+									DWORD* dest = (DWORD*)frameBuffer;
+									DWORD copyHeight = texHeight;
+									do
+									{
+										MemoryCopy(dest, source, texWidth << 2);
+										source += this->width;
+										dest += texWidth;
+									} while (--copyHeight);
+
+									GLTexSubImage2D(GL_TEXTURE_2D, 0, update.left, update.top, texWidth, texHeight, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
+								}
+							}
+
+							if (++updateClip == surface->endClip)
+								updateClip = surface->clipsList;
+						}
+
+						// Clear prev pointer
+						Pointer* prevPointer = &pointersList[pointer == pointersList];
+						if (prevPointer->isActive)
+						{
+							DWORD* source = surface->pixelBuffer + prevPointer->pos.y * this->width + prevPointer->pos.x;
+							DWORD* dest = (DWORD*)frameBuffer;
+
+							LONG copyHeight = prevPointer->size.cy;
+							do
+							{
+								MemoryCopy(dest, source, prevPointer->size.cx << 2);
+								source += this->width;
+								dest += prevPointer->size.cx;
+							} while (--copyHeight);
+
+							GLTexSubImage2D(GL_TEXTURE_2D, 0, prevPointer->pos.x, prevPointer->pos.y, prevPointer->size.cx, prevPointer->size.cy, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
+						}
+
+						// Update pointer
+						if (pointer->isActive)
+						{
+							DWORD* source = surface->pixelBuffer + pointer->pos.y * this->width + pointer->pos.x;
+							DWORD* dst = (DWORD*)frameBuffer;
+
+							DWORD initMask = 8 - (pointer->offset.x % 8);
+							DWORD initOffset = pointer->offset.x & (8 - 1);
+
+							INT shadowIdx = pointer->offset.y - SHADOW_OFFSET;
+							LONG copyHeight = pointer->size.cy;
+
+							if (colorInfo)
+							{
+								BYTE* sourceColor = (BYTE*)colorInfo->bmBits + pointer->offset.y * colorInfo->bmWidthBytes + pointer->offset.x;
+								BYTE* sourceMask = (BYTE*)maskInfo->bmBits + pointer->offset.y * maskInfo->bmWidthBytes;
+								BYTE* shadowMask = (BYTE*)sourceMask - SHADOW_OFFSET * maskInfo->bmWidthBytes;
+
+								do
+								{
+									DWORD* src = source;
+									BYTE* srcColor = sourceColor;
+									BYTE* srcMask = sourceMask;
+									BYTE* shadMask = shadowMask;
+
+									BYTE xorMask = *srcMask++;
+									BYTE shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
+
+									xorMask <<= initOffset;
+									shdMask <<= initOffset;
+
+									DWORD countMask = initMask;
+									LONG copyWidth = pointer->size.cx;
+									do
+									{
+										if (xorMask & 0x80)
+										{
+											DWORD color = *src;
+
+											if (!(shdMask & 0x80))
+											{
+												BYTE* cp = (BYTE*)&color;
+												DWORD cc = 3;
+												do
+													*cp++ >>= 1;
+												while (--cc);
+											}
+
+											*dst = color;
+										}
+										else
+											*dst = _byteswap_ulong(_rotl(Hooks::palEntries[*srcColor], 8));
+
+										if (--countMask)
+										{
+											xorMask <<= 1;
+											shdMask <<= 1;
+										}
+										else
+										{
+											countMask = 8;
+											xorMask = *srcMask++;
+											shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
+										}
+
+										++src;
+										++srcColor;
+										++dst;
+									} while (--copyWidth);
+
+									source += this->width;
+									sourceColor += colorInfo->bmWidthBytes;
+									sourceMask += maskInfo->bmWidthBytes;
+									shadowMask += maskInfo->bmWidthBytes;
+
+									++shadowIdx;
+								} while (--copyHeight);
+							}
+							else
+							{
+								BYTE* sourceMask = (BYTE*)maskInfo->bmBits + pointer->offset.y * maskInfo->bmWidthBytes;
+								BYTE* shadowMask = (BYTE*)sourceMask - SHADOW_OFFSET * maskInfo->bmWidthBytes;
+								BYTE* colorMask = (BYTE*)sourceMask + 32 * maskInfo->bmWidthBytes;
+
+								do
+								{
+									DWORD* src = source;
+									BYTE* clrMask = colorMask;
+									BYTE* srcMask = sourceMask;
+									BYTE* shadMask = shadowMask;
+
+									BYTE andMask = *clrMask++;
+									BYTE xorMask = *srcMask++;
+									BYTE shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
+
+									andMask <<= initOffset;
+									xorMask <<= initOffset;
+									shdMask <<= initOffset;
+
+									DWORD countMask = initMask;
+									LONG copyWidth = pointer->size.cx;
+									do
+									{
+										if (xorMask & 0x80)
+										{
+											DWORD color = *src;
+
+											if (!(shdMask & 0x80))
+											{
+												BYTE* cp = (BYTE*)&color;
+												DWORD cc = 3;
+												do
+													*cp++ >>= 1;
+												while (--cc);
+											}
+
+											*dst = color;
+										}
+										else
+											*dst = (andMask & 0x80) ? 0xFFFFFFFF : 0xFF000000;
+
+										if (--countMask)
+										{
+											andMask <<= 1;
+											xorMask <<= 1;
+											shdMask <<= 1;
+										}
+										else
+										{
+											countMask = 8;
+											andMask = *clrMask++;
+											xorMask = *srcMask++;
+											shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
+										}
+
+										++src;
+										++dst;
+									} while (--copyWidth);
+
+									source += this->width;
+
+									colorMask += maskInfo->bmWidthBytes;
+									sourceMask += maskInfo->bmWidthBytes;
+									shadowMask += maskInfo->bmWidthBytes;
+
+									++shadowIdx;
+								} while (--copyHeight);
+							}
+
+							GLTexSubImage2D(GL_TEXTURE_2D, 0, pointer->pos.x, pointer->pos.y, pointer->size.cx, pointer->size.cy, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
+						}
+					}
+					else
+					{
+						GLBindTexture(GL_TEXTURE_2D, frame->id);
+
+						if (glFilter)
+						{
+							GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glFilter);
+							GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, glFilter);
+						}
+
+						Rect* rect = &frame->rect;
+						INT rect_right = rect->x + rect->width;
+						INT rect_bottom = rect->y + rect->height;
+
+						UpdateRect* update = updateClip;
+						while (update != finClip)
+						{
+							if (update->isActive)
+							{
+								RECT clip = {
+									rect->x > update->rect.left ? rect->x : update->rect.left,
+									rect->y > update->rect.top ? rect->y : update->rect.top,
+									rect_right < update->rect.right ? rect_right : update->rect.right,
+									rect_bottom < update->rect.bottom ? rect_bottom : update->rect.bottom
+								};
+
+								INT clipWidth = clip.right - clip.left;
+								INT clipHeight = clip.bottom - clip.top;
+								if (clipWidth > 0 && clipHeight > 0)
+								{
+									DWORD* source = surface->pixelBuffer + clip.top * this->width + clip.left;
+									DWORD* dest = (DWORD*)frameBuffer;
+									INT copyHeight = clipHeight;
+									do
+									{
+										MemoryCopy(dest, source, clipWidth << 2);
+										source += this->width;
+										dest += clipWidth;
+									} while (--copyHeight);
+
+									GLTexSubImage2D(GL_TEXTURE_2D, 0, clip.left - rect->x, clip.top - rect->y, clipWidth, clipHeight, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
+								}
+							}
+
+							if (++update == surface->endClip)
+								update = surface->clipsList;
+						}
+
+						// Clear prev pointer
+						Pointer* prevPointer = &pointersList[pointer == pointersList];
+						if (prevPointer->isActive)
+						{
+							INT ptr_right = prevPointer->pos.x + prevPointer->size.cx;
+							INT ptr_bottom = prevPointer->pos.y + prevPointer->size.cy;
+
+							RECT clip = {
+								rect->x > prevPointer->pos.x ? rect->x : prevPointer->pos.x,
+								rect->y > prevPointer->pos.y ? rect->y : prevPointer->pos.y,
+								rect_right < ptr_right ? rect_right : ptr_right,
+								rect_bottom < ptr_bottom ? rect_bottom : ptr_bottom
+							};
+
+							INT clipWidth = clip.right - clip.left;
+							INT clipHeight = clip.bottom - clip.top;
+							if (clipWidth > 0 && clipHeight > 0)
+							{
+								DWORD* source = surface->pixelBuffer + clip.top * this->width + clip.left;
+								DWORD* dest = (DWORD*)frameBuffer;
+								INT copyHeight = clipHeight;
+								do
+								{
+									MemoryCopy(dest, source, clipWidth << 2);
+									source += this->width;
+									dest += clipWidth;
+								} while (--copyHeight);
+
+								GLTexSubImage2D(GL_TEXTURE_2D, 0, clip.left - rect->x, clip.top - rect->y, clipWidth, clipHeight, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
+							}
+						}
+
+						// Update pointer
+						if (pointer->isActive)
+						{
+							INT ptr_right = pointer->pos.x + pointer->size.cx;
+							INT ptr_bottom = pointer->pos.y + pointer->size.cy;
+
+							RECT clip = {
+								rect->x > pointer->pos.x ? rect->x : pointer->pos.x,
+								rect->y > pointer->pos.y ? rect->y : pointer->pos.y,
+								rect_right < ptr_right ? rect_right : ptr_right,
+								rect_bottom < ptr_bottom ? rect_bottom : ptr_bottom
+							};
+
+							INT clipWidth = clip.right - clip.left;
+							INT clipHeight = clip.bottom - clip.top;
+							if (clipWidth > 0 && clipHeight > 0)
+							{
+								DWORD* source = surface->pixelBuffer + clip.top * this->width + clip.left;
+								DWORD* dst = (DWORD*)frameBuffer;
+
+								POINT offset = {
+									clip.left - pointer->pos.x,
+									clip.top - pointer->pos.y
+								};
+
+								DWORD initMask = 8 - (offset.x % 8);
+								DWORD initOffset = offset.x & (8 - 1);
+
+								INT shadowIdx = offset.y - SHADOW_OFFSET;
+								INT copyHeight = clipHeight;
+								if (colorInfo)
+								{
+									BYTE* sourceColor = (BYTE*)colorInfo->bmBits + offset.y * colorInfo->bmWidthBytes + offset.x;
+									BYTE* sourceMask = (BYTE*)maskInfo->bmBits + offset.y * maskInfo->bmWidthBytes + (offset.x / 8);
+									BYTE* shadowMask = (BYTE*)sourceMask - SHADOW_OFFSET * maskInfo->bmWidthBytes;
+
+									do
+									{
+										DWORD* src = source;
+										BYTE* srcColor = sourceColor;
+										BYTE* srcMask = sourceMask;
+										BYTE* shadMask = shadowMask;
+
+										BYTE xorMask = *srcMask++;
+										BYTE shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
+
+										xorMask <<= initOffset;
+										shdMask <<= initOffset;
+
+										DWORD countMask = initMask;
+										LONG copyWidth = clipWidth;
+										do
+										{
+											if (xorMask & 0x80)
+											{
+												DWORD color = *src;
+
+												if (!(shdMask & 0x80))
+												{
+													BYTE* cp = (BYTE*)&color;
+													DWORD cc = 3;
+													do
+														*cp++ >>= 1;
+													while (--cc);
+												}
+
+												*dst = color;
+											}
+											else
+												*dst = _byteswap_ulong(_rotl(Hooks::palEntries[*srcColor], 8));
+
+											if (--countMask)
+											{
+												xorMask <<= 1;
+												shdMask <<= 1;
+											}
+											else
+											{
+												countMask = 8;
+												xorMask = *srcMask++;
+												shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
+											}
+
+											++src;
+											++srcColor;
+											++dst;
+										} while (--copyWidth);
+
+										source += this->width;
+										sourceColor += colorInfo->bmWidthBytes;
+										sourceMask += maskInfo->bmWidthBytes;
+										shadowMask += maskInfo->bmWidthBytes;
+
+										++shadowIdx;
+									} while (--copyHeight);
+								}
+								else
+								{
+									BYTE* sourceMask = (BYTE*)maskInfo->bmBits + offset.y * maskInfo->bmWidthBytes + (offset.x / 8);
+									BYTE* shadowMask = (BYTE*)sourceMask - SHADOW_OFFSET * maskInfo->bmWidthBytes;
+									BYTE* colorMask = (BYTE*)sourceMask + 32 * maskInfo->bmWidthBytes;
+
+									do
+									{
+										DWORD* src = source;
+										BYTE* clrMask = colorMask;
+										BYTE* srcMask = sourceMask;
+										BYTE* shadMask = shadowMask;
+
+										BYTE andMask = *clrMask++;
+										BYTE xorMask = *srcMask++;
+										BYTE shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
+
+										andMask <<= initOffset;
+										xorMask <<= initOffset;
+										shdMask <<= initOffset;
+
+										DWORD countMask = initMask;
+										LONG copyWidth = clipWidth;
+										do
+										{
+											if (xorMask & 0x80)
+											{
+												DWORD color = *src;
+
+												if (!(shdMask & 0x80))
+												{
+													BYTE* cp = (BYTE*)&color;
+													DWORD cc = 3;
+													do
+														*cp++ >>= 1;
+													while (--cc);
+												}
+
+												*dst = color;
+											}
+											else
+												*dst = (andMask & 0x80) ? 0xFFFFFFFF : 0xFF000000;
+
+											if (--countMask)
+											{
+												andMask <<= 1;
+												xorMask <<= 1;
+												shdMask <<= 1;
+											}
+											else
+											{
+												countMask = 8;
+												andMask = *clrMask++;
+												xorMask = *srcMask++;
+												shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
+											}
+
+											++src;
+											++dst;
+										} while (--copyWidth);
+
+										source += this->width;
+
+										colorMask += maskInfo->bmWidthBytes;
+										sourceMask += maskInfo->bmWidthBytes;
+										shadowMask += maskInfo->bmWidthBytes;
+
+										++shadowIdx;
+									} while (--copyHeight);
+								}
+
+								GLTexSubImage2D(GL_TEXTURE_2D, 0, clip.left - rect->x, clip.top - rect->y, clipWidth, clipHeight, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
+							}
+						}
+					}
+
+					GLBegin(GL_TRIANGLE_FAN);
+					{
+						GLTexCoord2f(0.0f, 0.0f);
+						GLVertex2s(frame->rect.x, frame->rect.y);
+
+						GLTexCoord2f(frame->tSize.width, 0.0f);
+						GLVertex2s(frame->vSize.width, frame->rect.y);
+
+						GLTexCoord2f(frame->tSize.width, frame->tSize.height);
+						GLVertex2s(frame->vSize.width, frame->vSize.height);
+
+						GLTexCoord2f(0.0f, frame->tSize.height);
+						GLVertex2s(frame->rect.x, frame->vSize.height);
+					}
+					GLEnd();
+					++frame;
+				}
+
+				pointersList[pointer == pointersList].isActive = FALSE;
+
+				if (this->isTakeSnapshot)
+				{
+					this->isTakeSnapshot = FALSE;
+					surface->TakeSnapshot(this->width, this->height);
+				}
+
+				SwapBuffers(this->hDc);
+				GLFinish();
+
+				if (clear >= 2)
+					WaitForSingleObject(this->hDrawEvent, INFINITE);
 			} while (!this->isFinish);
 		}
 		MemoryFree(frameBuffer);
@@ -890,17 +842,17 @@ VOID OpenDraw::RenderMid()
 
 	DWORD texSize = (maxTexSize & 0xFFFF) | (maxTexSize << 16);
 
-	struct
-	{
-		ShaderProgram linear;
-		ShaderProgram hermite;
-		ShaderProgram cubic;
+	struct {
+		ShaderGroup* linear;
+		ShaderGroup* hermite;
+		ShaderGroup* cubic;
 	} shaders = {
-		{ 0, GLSL_VER_1_10, IDR_LINEAR_VERTEX, IDR_LINEAR_FRAGMENT, NULL },
-		{ 0, GLSL_VER_1_10, IDR_HERMITE_VERTEX, IDR_HERMITE_FRAGMENT, NULL },
-		{ 0, GLSL_VER_1_10, IDR_CUBIC_VERTEX, IDR_CUBIC_FRAGMENT, NULL }
+		new ShaderGroup(GLSL_VER_1_10, IDR_LINEAR_VERTEX, IDR_LINEAR_FRAGMENT, SHADER_LEVELS, NULL),
+		new ShaderGroup(GLSL_VER_1_10, IDR_HERMITE_VERTEX, IDR_HERMITE_FRAGMENT, SHADER_LEVELS, NULL),
+		new ShaderGroup(GLSL_VER_1_10, IDR_CUBIC_VERTEX, IDR_CUBIC_FRAGMENT, SHADER_LEVELS, NULL)
 	};
 
+	ShaderGroup* program = NULL;
 	{
 		GLuint bufferName;
 		GLGenBuffers(1, &bufferName);
@@ -980,180 +932,947 @@ VOID OpenDraw::RenderMid()
 						do
 						{
 							OpenDrawSurface* surface = this->attachedSurface;
-							if (surface)
+							if (!surface)
+								continue;
+
+							OpenDrawPalette* palette = surface->attachedPalette;
+							if (!palette)
+								continue;
+
+							if (isVSync != config.image.vSync)
 							{
-								OpenDrawPalette* palette = surface->attachedPalette;
-								if (palette)
+								isVSync = config.image.vSync;
+								if (WGLSwapInterval)
+									WGLSwapInterval(isVSync);
+							}
+
+							FilterState state = this->filterState;
+							this->filterState.flags = FALSE;
+
+							if (program && program->Check())
+								state.flags = TRUE;
+
+							if (state.flags)
+								this->viewport.refresh = TRUE;
+
+							BOOL isTakeSnapshot = this->isTakeSnapshot;
+							if (isTakeSnapshot)
+								this->isTakeSnapshot = FALSE;
+
+							UpdateRect* updateClip = surface->poinetrClip;
+							UpdateRect* finClip = surface->currentClip;
+							surface->poinetrClip = finClip;
+
+							if (this->CheckView())
+							{
+								GLViewport(this->viewport.rectangle.x, this->viewport.rectangle.y, this->viewport.rectangle.width, this->viewport.rectangle.height);
+								clear = 0;
+							}
+
+							if (clear++ <= 1)
+								GLClear(GL_COLOR_BUFFER_BIT);
+
+							if (state.flags)
+							{
+								switch (state.interpolation)
 								{
-									if (isVSync != config.image.vSync)
+								case InterpolateHermite:
+									program = shaders.hermite;
+									break;
+								case InterpolateCubic:
+									program = shaders.cubic;
+									break;
+								default:
+									program = shaders.linear;
+									break;
+								}
+
+								program->Use(texSize);
+
+								DWORD filter = state.interpolation == InterpolateLinear || state.interpolation == InterpolateHermite ? GL_LINEAR : GL_NEAREST;
+								GLBindTexture(GL_TEXTURE_2D, textureId);
+								GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+								GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+							}
+
+							if (palette->isChanged || first)
+							{
+								palette->isChanged = FALSE;
+								first = FALSE;
+
+								updateClip = (finClip == surface->clipsList ? surface->endClip : finClip) - 1;
+								updateClip->rect.left = 0;
+								updateClip->rect.top = 0;
+								updateClip->rect.right = this->width;
+								updateClip->rect.bottom = this->height;
+								updateClip->isActive = TRUE;
+							}
+
+							// NEXT UNCHANGED
+							{
+								// Update texture
+								while (updateClip != finClip)
+								{
+									if (updateClip->isActive)
 									{
-										isVSync = config.image.vSync;
-										if (WGLSwapInterval)
-											WGLSwapInterval(isVSync);
-									}
+										RECT update = updateClip->rect;
+										DWORD texWidth = update.right - update.left;
+										DWORD texHeight = update.bottom - update.top;
 
-									FilterState state = this->filterState;
-									this->filterState.flags = FALSE;
-
-									if (state.flags)
-										this->viewport.refresh = TRUE;
-
-									BOOL isTakeSnapshot = this->isTakeSnapshot;
-									if (isTakeSnapshot)
-										this->isTakeSnapshot = FALSE;
-
-									UpdateRect* updateClip = surface->poinetrClip;
-									UpdateRect* finClip = surface->currentClip;
-									surface->poinetrClip = finClip;
-
-									if (this->CheckView())
-									{
-										GLViewport(this->viewport.rectangle.x, this->viewport.rectangle.y, this->viewport.rectangle.width, this->viewport.rectangle.height);
-										clear = 0;
-									}
-
-									if (clear++ <= 1)
-										GLClear(GL_COLOR_BUFFER_BIT);
-
-									if (state.flags)
-									{
-										ShaderProgram* program;
-										switch (state.interpolation)
+										if (texWidth == this->width)
+											GLTexSubImage2D(GL_TEXTURE_2D, 0, 0, update.top, texWidth, texHeight, GL_RGBA, GL_UNSIGNED_BYTE, surface->pixelBuffer + update.top * texWidth);
+										else
 										{
-										case InterpolateHermite:
-											program = &shaders.hermite;
-											break;
-										case InterpolateCubic:
-											program = &shaders.cubic;
-											break;
-										default:
-											program = &shaders.linear;
-											break;
-										}
-										UseShaderProgram(program, texSize);
-
-										DWORD filter = state.interpolation == InterpolateLinear || state.interpolation == InterpolateHermite ? GL_LINEAR : GL_NEAREST;
-										GLBindTexture(GL_TEXTURE_2D, textureId);
-										GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
-										GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
-									}
-
-									if (palette->isChanged || first)
-									{
-										palette->isChanged = FALSE;
-										first = FALSE;
-										
-										updateClip = (finClip == surface->clipsList ? surface->endClip : finClip) - 1;
-										updateClip->rect.left = 0;
-										updateClip->rect.top = 0;
-										updateClip->rect.right = this->width;
-										updateClip->rect.bottom = this->height;
-										updateClip->isActive = TRUE;
-									}
-
-									// NEXT UNCHANGED
-									{
-										// Update texture
-										while (updateClip != finClip)
-										{
-											if (updateClip->isActive)
-											{
-												RECT update = updateClip->rect;
-												DWORD texWidth = update.right - update.left;
-												DWORD texHeight = update.bottom - update.top;
-
-												if (texWidth == this->width)
-													GLTexSubImage2D(GL_TEXTURE_2D, 0, 0, update.top, texWidth, texHeight, GL_RGBA, GL_UNSIGNED_BYTE, surface->pixelBuffer + update.top * texWidth);
-												else
-												{
-													DWORD* source = surface->pixelBuffer + update.top * this->width + update.left;
-													DWORD* dest = (DWORD*)frameBuffer;
-													DWORD copyHeight = texHeight;
-													do
-													{
-														MemoryCopy(dest, source, texWidth << 2);
-														source += this->width;
-														dest += texWidth;
-													} while (--copyHeight);
-
-													GLTexSubImage2D(GL_TEXTURE_2D, 0, update.left, update.top, texWidth, texHeight, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
-												}
-											}
-
-											if (++updateClip == surface->endClip)
-												updateClip = surface->clipsList;
-										}
-
-										// Clear prev pointer
-										if (pointer->isActive)
-										{
-											pointer->isActive = FALSE;
-
-											DWORD* source = surface->pixelBuffer + pointer->pos.y * this->width + pointer->pos.x;
+											DWORD* source = surface->pixelBuffer + update.top * this->width + update.left;
 											DWORD* dest = (DWORD*)frameBuffer;
-
-											LONG copyHeight = pointer->size.cy;
+											DWORD copyHeight = texHeight;
 											do
 											{
-												MemoryCopy(dest, source, pointer->size.cx << 2);
+												MemoryCopy(dest, source, texWidth << 2);
 												source += this->width;
-												dest += pointer->size.cx;
+												dest += texWidth;
 											} while (--copyHeight);
+
+											GLTexSubImage2D(GL_TEXTURE_2D, 0, update.left, update.top, texWidth, texHeight, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
+										}
+									}
+
+									if (++updateClip == surface->endClip)
+										updateClip = surface->clipsList;
+								}
+
+								// Clear prev pointer
+								if (pointer->isActive)
+								{
+									pointer->isActive = FALSE;
+
+									DWORD* source = surface->pixelBuffer + pointer->pos.y * this->width + pointer->pos.x;
+									DWORD* dest = (DWORD*)frameBuffer;
+
+									LONG copyHeight = pointer->size.cy;
+									do
+									{
+										MemoryCopy(dest, source, pointer->size.cx << 2);
+										source += this->width;
+										dest += pointer->size.cx;
+									} while (--copyHeight);
+
+									GLTexSubImage2D(GL_TEXTURE_2D, 0, pointer->pos.x, pointer->pos.y, pointer->size.cx, pointer->size.cy, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
+								}
+
+								// Update pointer
+								pointer = &pointersList[pointer == pointersList];
+								if (config.cursor.index && !config.cursor.hidden)
+								{
+									DWORD ptrIndex = config.cursor.index - 1;
+
+									iconInfo = &((ICONINFO*)Hooks::hookSpace->icons_info)[ptrIndex];
+									maskInfo = &((BITMAP*)Hooks::hookSpace->masks_info)[ptrIndex];
+									colorInfo = Hooks::hookSpace->colors_info && maskInfo->bmHeight == maskInfo->bmWidth
+										? &((BITMAP*)Hooks::hookSpace->colors_info)[ptrIndex]
+										: NULL;
+
+									GetCursorPos(&pointer->pos);
+									ScreenToClient(this->hWnd, &pointer->pos);
+
+									pointer->pos.x = (LONG)((FLOAT)((pointer->pos.x - this->viewport.rectangle.x) * this->width) / this->viewport.rectangle.width) - iconInfo->xHotspot;
+									pointer->pos.y = (LONG)((FLOAT)((pointer->pos.y - this->viewport.rectangle.y) * this->height) / this->viewport.rectangle.height) - iconInfo->yHotspot;
+
+									pointer->size.cx = 32;
+									pointer->size.cy = 32;
+
+									if (pointer->pos.x < 0)
+									{
+										pointer->offset.x = -pointer->pos.x;
+										pointer->size.cx += pointer->pos.x;
+										pointer->pos.x = 0;
+									}
+									else
+										pointer->offset.x = 0;
+
+									if (pointer->pos.y < 0)
+									{
+										pointer->offset.y = -pointer->pos.y;
+										pointer->size.cy += pointer->pos.y;
+										pointer->pos.y = 0;
+									}
+									else
+										pointer->offset.y = 0;
+
+									if (pointer->size.cx > 0 && pointer->size.cy > 0)
+									{
+										if (pointer->pos.x + pointer->size.cx >= *(INT*)&this->width)
+											pointer->size.cx = this->width - pointer->pos.x;
+
+										if (pointer->pos.y + pointer->size.cy >= *(INT*)&this->height)
+											pointer->size.cy = this->height - pointer->pos.y;
+
+										if (pointer->size.cx > 0 && pointer->size.cy > 0)
+										{
+											pointer->isActive = TRUE;
+
+											DWORD* source = surface->pixelBuffer + pointer->pos.y * this->width + pointer->pos.x;
+											DWORD* dst = (DWORD*)frameBuffer;
+
+											DWORD initMask = 8 - (pointer->offset.x % 8);
+											DWORD initOffset = pointer->offset.x & (8 - 1);
+
+											INT shadowIdx = pointer->offset.y - SHADOW_OFFSET;
+											LONG copyHeight = pointer->size.cy;
+
+											if (colorInfo)
+											{
+												BYTE* sourceColor = (BYTE*)colorInfo->bmBits + pointer->offset.y * colorInfo->bmWidthBytes + pointer->offset.x;
+												BYTE* sourceMask = (BYTE*)maskInfo->bmBits + pointer->offset.y * maskInfo->bmWidthBytes + (pointer->offset.x / 8);
+												BYTE* shadowMask = (BYTE*)sourceMask - SHADOW_OFFSET * maskInfo->bmWidthBytes;
+
+												do
+												{
+													DWORD* src = source;
+													BYTE* srcColor = sourceColor;
+													BYTE* srcMask = sourceMask;
+													BYTE* shadMask = shadowMask;
+
+													BYTE xorMask = *srcMask++;
+													BYTE shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
+
+													xorMask <<= initOffset;
+													shdMask <<= initOffset;
+
+													DWORD countMask = initMask;
+													LONG copyWidth = pointer->size.cx;
+													do
+													{
+														if (xorMask & 0x80)
+														{
+															DWORD color = *src;
+
+															if (!(shdMask & 0x80))
+															{
+																BYTE* cp = (BYTE*)&color;
+																DWORD cc = 3;
+																do
+																	*cp++ >>= 1;
+																while (--cc);
+															}
+
+															*dst = color;
+														}
+														else
+															*dst = _byteswap_ulong(_rotl(Hooks::palEntries[*srcColor], 8));
+
+														if (--countMask)
+														{
+															xorMask <<= 1;
+															shdMask <<= 1;
+														}
+														else
+														{
+															countMask = 8;
+															xorMask = *srcMask++;
+															shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
+														}
+
+														++src;
+														++srcColor;
+														++dst;
+													} while (--copyWidth);
+
+													source += this->width;
+													sourceColor += colorInfo->bmWidthBytes;
+													sourceMask += maskInfo->bmWidthBytes;
+													shadowMask += maskInfo->bmWidthBytes;
+
+													++shadowIdx;
+												} while (--copyHeight);
+											}
+											else
+											{
+												BYTE* sourceMask = (BYTE*)maskInfo->bmBits + pointer->offset.y * maskInfo->bmWidthBytes + (pointer->offset.x / 8);
+												BYTE* shadowMask = (BYTE*)sourceMask - SHADOW_OFFSET * maskInfo->bmWidthBytes;
+												BYTE* colorMask = (BYTE*)sourceMask + 32 * maskInfo->bmWidthBytes;
+
+												do
+												{
+													DWORD* src = source;
+													BYTE* clrMask = colorMask;
+													BYTE* srcMask = sourceMask;
+													BYTE* shadMask = shadowMask;
+
+													BYTE andMask = *clrMask++;
+													BYTE xorMask = *srcMask++;
+													BYTE shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
+
+													andMask <<= initOffset;
+													xorMask <<= initOffset;
+													shdMask <<= initOffset;
+
+													DWORD countMask = initMask;
+													LONG copyWidth = pointer->size.cx;
+													do
+													{
+														if (xorMask & 0x80)
+														{
+															DWORD color = *src;
+
+															if (!(shdMask & 0x80))
+															{
+																BYTE* cp = (BYTE*)&color;
+																DWORD cc = 3;
+																do
+																	*cp++ >>= 1;
+																while (--cc);
+															}
+
+															*dst = color;
+														}
+														else
+															*dst = (andMask & 0x80) ? 0xFFFFFFFF : 0xFF000000;
+
+														if (--countMask)
+														{
+															andMask <<= 1;
+															xorMask <<= 1;
+															shdMask <<= 1;
+														}
+														else
+														{
+															countMask = 8;
+															andMask = *clrMask++;
+															xorMask = *srcMask++;
+															shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
+														}
+
+														++src;
+														++dst;
+													} while (--copyWidth);
+
+													source += this->width;
+
+													colorMask += maskInfo->bmWidthBytes;
+													sourceMask += maskInfo->bmWidthBytes;
+													shadowMask += maskInfo->bmWidthBytes;
+
+													++shadowIdx;
+												} while (--copyHeight);
+											}
 
 											GLTexSubImage2D(GL_TEXTURE_2D, 0, pointer->pos.x, pointer->pos.y, pointer->size.cx, pointer->size.cy, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
 										}
+									}
+								}
 
-										// Update pointer
-										pointer = &pointersList[pointer == pointersList];
-										if (config.cursor.index && !config.cursor.hidden)
+								GLDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+							}
+
+							if (isTakeSnapshot)
+								surface->TakeSnapshot(this->width, this->height);
+
+							// Swap
+							SwapBuffers(this->hDc);
+							GLFinish();
+
+							if (clear >= 2)
+								WaitForSingleObject(this->hDrawEvent, INFINITE);
+						} while (!this->isFinish);
+					}
+					MemoryFree(frameBuffer);
+				}
+				GLDeleteTextures(1, &textureId);
+			}
+			GLBindBuffer(GL_ARRAY_BUFFER, NULL);
+		}
+		GLDeleteBuffers(1, &bufferName);
+	}
+	GLUseProgram(NULL);
+
+	ShaderGroup** shader = (ShaderGroup**)&shaders;
+	DWORD count = sizeof(shaders) / sizeof(ShaderGroup*);
+	do
+		delete *shader++;
+	while (--count);
+}
+
+VOID OpenDraw::RenderNew()
+{
+	PostMessage(this->hWnd, config.msgMenu, NULL, NULL);
+
+	DWORD maxTexSize = GetPow2(this->width > this->height ? this->width : this->height);
+	FLOAT texWidth = this->width == maxTexSize ? 1.0f : (FLOAT)this->width / maxTexSize;
+	FLOAT texHeight = this->height == maxTexSize ? 1.0f : (FLOAT)this->height / maxTexSize;
+
+	DWORD texSize = (maxTexSize & 0xFFFF) | (maxTexSize << 16);
+
+	FLOAT mvp[4][4] = {
+		{ FLOAT(2.0f / this->width), 0.0f, 0.0f, 0.0f },
+		{ 0.0f, FLOAT(-2.0f / this->height), 0.0f, 0.0f },
+		{ 0.0f, 0.0f, 2.0f, 0.0f },
+		{ -1.0f, 1.0f, -1.0f, 1.0f }
+	};
+
+	struct {
+		ShaderGroup* stencil;
+		ShaderGroup* linear;
+		ShaderGroup* hermite;
+		ShaderGroup* cubic;
+		ShaderGroup* xBRz_2x;
+		ShaderGroup* xBRz_3x;
+		ShaderGroup* xBRz_4x;
+		ShaderGroup* xBRz_5x;
+		ShaderGroup* xBRz_6x;
+		ShaderGroup* scaleHQ_2x;
+		ShaderGroup* scaleHQ_4x;
+		ShaderGroup* xSal_2x;
+		ShaderGroup* eagle_2x;
+		ShaderGroup* scaleNx_2x;
+		ShaderGroup* scaleNx_3x;
+	} shaders = {
+		new ShaderGroup(GLSL_VER_1_30, IDR_STENCIL_VERTEX, IDR_STENCIL_FRAGMENT, NULL, (GLfloat*)mvp),
+		new ShaderGroup(GLSL_VER_1_30, IDR_LINEAR_VERTEX, IDR_LINEAR_FRAGMENT, SHADER_LEVELS, NULL),
+		new ShaderGroup(GLSL_VER_1_30, IDR_HERMITE_VERTEX, IDR_HERMITE_FRAGMENT, SHADER_LEVELS, NULL),
+		new ShaderGroup(GLSL_VER_1_30, IDR_CUBIC_VERTEX, IDR_CUBIC_FRAGMENT, SHADER_LEVELS, NULL),
+		new ShaderGroup(GLSL_VER_1_30, IDR_XBRZ_VERTEX, IDR_XBRZ_FRAGMENT_2X, NULL, NULL),
+		new ShaderGroup(GLSL_VER_1_30, IDR_XBRZ_VERTEX, IDR_XBRZ_FRAGMENT_3X, NULL, NULL),
+		new ShaderGroup(GLSL_VER_1_30, IDR_XBRZ_VERTEX, IDR_XBRZ_FRAGMENT_4X, NULL, NULL),
+		new ShaderGroup(GLSL_VER_1_30, IDR_XBRZ_VERTEX, IDR_XBRZ_FRAGMENT_5X, NULL, NULL),
+		new ShaderGroup(GLSL_VER_1_30, IDR_XBRZ_VERTEX, IDR_XBRZ_FRAGMENT_6X, NULL, NULL),
+		new ShaderGroup(GLSL_VER_1_30, IDR_SCALEHQ_VERTEX_2X, IDR_SCALEHQ_FRAGMENT_2X, NULL, NULL),
+		new ShaderGroup(GLSL_VER_1_30, IDR_SCALEHQ_VERTEX_4X, IDR_SCALEHQ_FRAGMENT_4X, NULL, NULL),
+		new ShaderGroup(GLSL_VER_1_30, IDR_XSAL_VERTEX, IDR_XSAL_FRAGMENT, NULL, NULL),
+		new ShaderGroup(GLSL_VER_1_30, IDR_EAGLE_VERTEX, IDR_EAGLE_FRAGMENT, NULL, NULL),
+		new ShaderGroup(GLSL_VER_1_30, IDR_SCALENX_VERTEX_2X, IDR_SCALENX_FRAGMENT_2X, NULL, NULL),
+		new ShaderGroup(GLSL_VER_1_30, IDR_SCALENX_VERTEX_3X, IDR_SCALENX_FRAGMENT_3X, NULL, NULL)
+	};
+
+	ShaderGroup* program = NULL;
+	ShaderGroup* upscaleProgram = NULL;
+	{
+		POINTFLOAT* stencil = NULL;
+		GLuint stArrayName, stBufferName, arrayName, bufferName;
+
+		GLGenVertexArrays(1, &arrayName);
+		{
+			GLBindVertexArray(arrayName);
+			{
+				GLGenBuffers(1, &bufferName);
+				{
+					GLBindBuffer(GL_ARRAY_BUFFER, bufferName);
+					{
+						{
+							FLOAT buffer[8][8] = {
+								{ 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+								{ (FLOAT)this->width, 0.0f, 0.0f, 1.0f, texWidth, 0.0f, 0.0f, 0.0f },
+								{ (FLOAT)this->width, (FLOAT)this->height, 0.0f, 1.0f, texWidth, texHeight, 0.0f, 0.0f },
+								{ 0.0f, (FLOAT)this->height, 0.0f, 1.0f, 0.0f, texHeight, 0.0f, 0.0f },
+
+								{ 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f },
+								{ (FLOAT)this->width, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f },
+								{ (FLOAT)this->width, (FLOAT)this->height, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+								{ 0.0f, (FLOAT)this->height, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f }
+							};
+
+							for (DWORD i = 0; i < 8; ++i)
+							{
+								FLOAT* vector = &buffer[i][0];
+								for (DWORD j = 0; j < 4; ++j)
+								{
+									FLOAT sum = 0.0f;
+									for (DWORD v = 0; v < 4; ++v)
+										sum += mvp[v][j] * vector[v];
+
+									vector[j] = sum;
+								}
+							}
+
+							GLBufferData(GL_ARRAY_BUFFER, sizeof(buffer), buffer, GL_STATIC_DRAW);
+						}
+
+						{
+							GLEnableVertexAttribArray(0);
+							GLVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 32, (GLvoid*)0);
+
+							GLEnableVertexAttribArray(1);
+							GLVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 32, (GLvoid*)16);
+						}
+
+						GLuint textureId;
+						GLGenTextures(1, &textureId);
+						{
+							GLActiveTexture(GL_TEXTURE0);
+							GLBindTexture(GL_TEXTURE_2D, textureId);
+							GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, config.gl.caps.clampToEdge);
+							GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, config.gl.caps.clampToEdge);
+							GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+							GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+							GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+							GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+							GLTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, maxTexSize, maxTexSize, GL_NONE, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+							GLuint fboId;
+							GLGenFramebuffers(1, &fboId);
+							{
+								DWORD viewSize = 0;
+								GLuint rboId = 0, tboId = 0;
+								{
+									GLClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
+									VOID* frameBuffer = MemoryAlloc(this->width * this->height * sizeof(DWORD));
+									{
+										BOOL isVSync = config.image.vSync;
+										if (WGLSwapInterval)
+											WGLSwapInterval(isVSync);
+
+										Pointer pointersList[2];
+										Pointer* pointer = pointersList;
+										MemoryZero(pointersList, sizeof(pointersList));
+
+										ICONINFO* iconInfo = NULL;
+										BITMAP* maskInfo = NULL;
+										BITMAP* colorInfo = NULL;
+
+										BOOL first = TRUE;
+										DWORD clear = 0;
+										do
 										{
-											DWORD ptrIndex = config.cursor.index - 1;
+											OpenDrawSurface* surface = this->attachedSurface;
+											if (!surface)
+												continue;
 
-											iconInfo = &((ICONINFO*)Hooks::hookSpace->icons_info)[ptrIndex];
-											maskInfo = &((BITMAP*)Hooks::hookSpace->masks_info)[ptrIndex];
-											colorInfo = Hooks::hookSpace->colors_info && maskInfo->bmHeight == maskInfo->bmWidth
-												? &((BITMAP*)Hooks::hookSpace->colors_info)[ptrIndex]
-												: NULL;
+											OpenDrawPalette* palette = surface->attachedPalette;
+											if (!palette)
+												continue;
 
-											GetCursorPos(&pointer->pos);
-											ScreenToClient(this->hWnd, &pointer->pos);
-
-											pointer->pos.x = (LONG)((FLOAT)((pointer->pos.x - this->viewport.rectangle.x) * this->width) / this->viewport.rectangle.width) - iconInfo->xHotspot;
-											pointer->pos.y = (LONG)((FLOAT)((pointer->pos.y - this->viewport.rectangle.y) * this->height) / this->viewport.rectangle.height) - iconInfo->yHotspot;
-
-											pointer->size.cx = 32;
-											pointer->size.cy = 32;
-
-											if (pointer->pos.x < 0)
+											if (isVSync != config.image.vSync)
 											{
-												pointer->offset.x = -pointer->pos.x;
-												pointer->size.cx += pointer->pos.x;
-												pointer->pos.x = 0;
+												isVSync = config.image.vSync;
+												if (WGLSwapInterval)
+													WGLSwapInterval(isVSync);
 											}
-											else
-												pointer->offset.x = 0;
 
-											if (pointer->pos.y < 0)
+											FilterState state = this->filterState;
+											this->filterState.flags = FALSE;
+
+											if (program && program->Check())
+												state.flags = TRUE;
+
+											if (state.flags)
+												this->viewport.refresh = TRUE;
+
+											BOOL isTakeSnapshot = this->isTakeSnapshot;
+											if (isTakeSnapshot)
+												this->isTakeSnapshot = FALSE;
+
+											pointer = &pointersList[pointer == pointersList];
+											if (config.cursor.index && !config.cursor.hidden && this->viewport.rectangle.width && this->viewport.rectangle.height)
 											{
-												pointer->offset.y = -pointer->pos.y;
-												pointer->size.cy += pointer->pos.y;
-												pointer->pos.y = 0;
-											}
-											else
-												pointer->offset.y = 0;
+												DWORD ptrIndex = config.cursor.index - 1;
 
-											if (pointer->size.cx > 0 && pointer->size.cy > 0)
-											{
-												if (pointer->pos.x + pointer->size.cx >= *(INT*)&this->width)
-													pointer->size.cx = this->width - pointer->pos.x;
+												iconInfo = &((ICONINFO*)Hooks::hookSpace->icons_info)[ptrIndex];
+												maskInfo = &((BITMAP*)Hooks::hookSpace->masks_info)[ptrIndex];
+												colorInfo = Hooks::hookSpace->colors_info && maskInfo->bmHeight == maskInfo->bmWidth
+													? &((BITMAP*)Hooks::hookSpace->colors_info)[ptrIndex]
+													: NULL;
 
-												if (pointer->pos.y + pointer->size.cy >= *(INT*)&this->height)
-													pointer->size.cy = this->height - pointer->pos.y;
+												GetCursorPos(&pointer->pos);
+												ScreenToClient(this->hWnd, &pointer->pos);
+
+												pointer->pos.x = (LONG)((FLOAT)((pointer->pos.x - this->viewport.rectangle.x) * this->width) / this->viewport.rectangle.width) - iconInfo->xHotspot;
+												pointer->pos.y = (LONG)((FLOAT)((pointer->pos.y - this->viewport.rectangle.y) * this->height) / this->viewport.rectangle.height) - iconInfo->yHotspot;
+
+												pointer->size.cx = 32;
+												pointer->size.cy = 32;
+
+												if (pointer->pos.x < 0)
+												{
+													pointer->offset.x = -pointer->pos.x;
+													pointer->size.cx += pointer->pos.x;
+													pointer->pos.x = 0;
+												}
+												else
+													pointer->offset.x = 0;
+
+												if (pointer->pos.y < 0)
+												{
+													pointer->offset.y = -pointer->pos.y;
+													pointer->size.cy += pointer->pos.y;
+													pointer->pos.y = 0;
+												}
+												else
+													pointer->offset.y = 0;
 
 												if (pointer->size.cx > 0 && pointer->size.cy > 0)
 												{
-													pointer->isActive = TRUE;
+													if (pointer->pos.x + pointer->size.cx >= *(INT*)&this->width)
+														pointer->size.cx = this->width - pointer->pos.x;
 
+													if (pointer->pos.y + pointer->size.cy >= *(INT*)&this->height)
+														pointer->size.cy = this->height - pointer->pos.y;
+
+													if (pointer->size.cx > 0 && pointer->size.cy > 0)
+														pointer->isActive = TRUE;
+												}
+											}
+
+											UpdateRect* updateClip = surface->poinetrClip;
+											UpdateRect* finClip = surface->currentClip;
+											surface->poinetrClip = finClip;
+
+											if (state.upscaling)
+											{
+												GLBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboId);
+
+												if (state.flags)
+												{
+													switch (state.upscaling)
+													{
+													case UpscaleScaleNx:
+														switch (state.value)
+														{
+														case 3:
+															upscaleProgram = shaders.scaleNx_3x;
+															break;
+														default:
+															upscaleProgram = shaders.scaleNx_2x;
+															break;
+														}
+
+														break;
+
+													case UpscaleScaleHQ:
+														switch (state.value)
+														{
+														case 4:
+															upscaleProgram = shaders.scaleHQ_4x;
+															break;
+														default:
+															upscaleProgram = shaders.scaleHQ_2x;
+															break;
+														}
+
+														break;
+
+													case UpscaleXRBZ:
+														switch (state.value)
+														{
+														case 6:
+															upscaleProgram = shaders.xBRz_6x;
+															break;
+														case 5:
+															upscaleProgram = shaders.xBRz_5x;
+															break;
+														case 4:
+															upscaleProgram = shaders.xBRz_4x;
+															break;
+														case 3:
+															upscaleProgram = shaders.xBRz_3x;
+															break;
+														default:
+															upscaleProgram = shaders.xBRz_2x;
+															break;
+														}
+
+														break;
+
+													case UpscaleXSal:
+														upscaleProgram = shaders.xSal_2x;
+
+														break;
+
+													default:
+														upscaleProgram = shaders.eagle_2x;
+
+														break;
+													}
+
+													DWORD newSize = MAKELONG(this->width * state.value, this->height * state.value);
+													if (newSize != viewSize)
+													{
+														first = TRUE;
+
+														if (!viewSize)
+														{
+															GLGenTextures(1, &tboId);
+															GLGenRenderbuffers(1, &rboId);
+														}
+
+														viewSize = newSize;
+
+														// Gen texture
+														GLBindTexture(GL_TEXTURE_2D, tboId);
+														GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, config.gl.caps.clampToEdge);
+														GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, config.gl.caps.clampToEdge);
+														GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+														GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+														GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+														GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+														GLTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, LOWORD(viewSize), HIWORD(viewSize), GL_NONE, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+														// Get storage
+														GLBindRenderbuffer(GL_RENDERBUFFER, rboId);
+														GLRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, LOWORD(viewSize), HIWORD(viewSize));
+														GLBindRenderbuffer(GL_RENDERBUFFER, NULL);
+
+														GLFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tboId, 0);
+														GLFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rboId);
+
+														if (!stencil)
+														{
+															DWORD size = (STENCIL_COUNT + 2) * sizeof(POINTFLOAT) * STENCIL_POINTS;
+															stencil = (POINTFLOAT*)MemoryAlloc(size); // +2 for cursor
+
+															{
+																GLGenVertexArrays(1, &stArrayName);
+																GLBindVertexArray(stArrayName);
+																GLGenBuffers(1, &stBufferName);
+																GLBindBuffer(GL_ARRAY_BUFFER, stBufferName);
+																{
+																	GLBufferData(GL_ARRAY_BUFFER, size, NULL, GL_STREAM_DRAW);
+
+																	GLEnableVertexAttribArray(0);
+																	GLVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);
+																}
+
+																GLBindVertexArray(arrayName);
+																GLBindBuffer(GL_ARRAY_BUFFER, bufferName);
+															}
+														}
+													}
+												}
+
+												GLViewport(0, 0, LOWORD(viewSize), HIWORD(viewSize));
+
+												// Clear and stencil
+												if (palette->isChanged || first)
+												{
+													palette->isChanged = FALSE;
+													first = FALSE;
+
+													updateClip = (finClip == surface->clipsList ? surface->endClip : finClip) - 1;
+													updateClip->rect.left = 0;
+													updateClip->rect.top = 0;
+													updateClip->rect.right = this->width;
+													updateClip->rect.bottom = this->height;
+													updateClip->isActive = TRUE;
+												}
+												else
+												{
+													GLEnable(GL_STENCIL_TEST);
+													GLClear(GL_STENCIL_BUFFER_BIT);
+
+													shaders.stencil->Use(0);
+													{
+														GLColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+														GLStencilFunc(GL_ALWAYS, 0x01, 0x01);
+														GLStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+														{
+															GLBindVertexArray(stArrayName);
+															GLBindBuffer(GL_ARRAY_BUFFER, stBufferName);
+															{
+																POINTFLOAT* point = stencil;
+																UpdateRect* clip = updateClip;
+																while (clip != finClip)
+																{
+																	if (clip->isActive)
+																	{
+																		FLOAT left = (FLOAT)clip->rect.left;
+																		FLOAT top = (FLOAT)clip->rect.top;
+																		FLOAT right = (FLOAT)clip->rect.right;
+																		FLOAT bottom = (FLOAT)clip->rect.bottom;
+
+																		point->x = left;
+																		point->y = top;
+																		++point;
+																		point->x = right;
+																		point->y = top;
+																		++point;
+																		point->x = right;
+																		point->y = bottom;
+																		++point;
+
+																		point->x = left;
+																		point->y = top;
+																		++point;
+																		point->x = right;
+																		point->y = bottom;
+																		++point;
+																		point->x = left;
+																		point->y = bottom;
+																		++point;
+																	}
+
+																	if (++clip == surface->endClip)
+																		clip = surface->clipsList;
+																}
+
+																Pointer* ptr = pointersList;
+																DWORD count = sizeof(pointersList) / sizeof(Pointer);
+																do
+																{
+																	if (ptr->isActive)
+																	{
+																		FLOAT left = (FLOAT)ptr->pos.x;
+																		FLOAT top = (FLOAT)ptr->pos.y;
+																		FLOAT right = (FLOAT)(ptr->pos.x + ptr->size.cx);
+																		FLOAT bottom = (FLOAT)(ptr->pos.y + ptr->size.cy);
+
+																		point->x = left;
+																		point->y = top;
+																		++point;
+																		point->x = right;
+																		point->y = top;
+																		++point;
+																		point->x = right;
+																		point->y = bottom;
+																		++point;
+
+																		point->x = left;
+																		point->y = top;
+																		++point;
+																		point->x = right;
+																		point->y = bottom;
+																		++point;
+																		point->x = left;
+																		point->y = bottom;
+																		++point;
+																	}
+
+																	++ptr;
+																} while (--count);
+
+																count = point - stencil;
+																if (count)
+																{
+																	GLBufferSubData(GL_ARRAY_BUFFER, 0, count * sizeof(POINTFLOAT), stencil);
+																	GLDrawArrays(GL_TRIANGLES, 0, count);
+																}
+															}
+															GLBindVertexArray(arrayName);
+															GLBindBuffer(GL_ARRAY_BUFFER, bufferName);
+														}
+														GLColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+														GLStencilFunc(GL_EQUAL, 0x01, 0x01);
+														GLStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+													}
+												}
+
+												upscaleProgram->Use(texSize);
+
+												GLBindTexture(GL_TEXTURE_2D, textureId);
+												GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+												GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+											}
+											else
+											{
+												if (this->CheckView())
+												{
+													GLViewport(this->viewport.rectangle.x, this->viewport.rectangle.y, this->viewport.rectangle.width, this->viewport.rectangle.height);
+													clear = 0;
+												}
+
+												if (clear++ <= 1)
+													GLClear(GL_COLOR_BUFFER_BIT);
+
+												if (state.flags)
+												{
+													if (viewSize)
+													{
+														GLDeleteTextures(1, &tboId);
+														GLDeleteRenderbuffers(1, &rboId);
+														viewSize = 0;
+													}
+
+													switch (state.interpolation)
+													{
+													case InterpolateHermite:
+														program = shaders.hermite;
+														break;
+													case InterpolateCubic:
+														program = shaders.cubic;
+														break;
+													default:
+														program = shaders.linear;
+														break;
+													}
+
+													program->Use(texSize);
+
+													GLBindTexture(GL_TEXTURE_2D, textureId);
+
+													DWORD filter = state.interpolation == InterpolateLinear || state.interpolation == InterpolateHermite ? GL_LINEAR : GL_NEAREST;
+													GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+													GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+												}
+
+												if (palette->isChanged || first)
+												{
+													palette->isChanged = FALSE;
+													first = FALSE;
+
+													updateClip = (finClip == surface->clipsList ? surface->endClip : finClip) - 1;
+													updateClip->rect.left = 0;
+													updateClip->rect.top = 0;
+													updateClip->rect.right = this->width;
+													updateClip->rect.bottom = this->height;
+													updateClip->isActive = TRUE;
+												}
+											}
+
+											// NEXT UNCHANGED
+											{
+												// Update texture
+												while (updateClip != finClip)
+												{
+													if (updateClip->isActive)
+													{
+														RECT update = updateClip->rect;
+														DWORD texWidth = update.right - update.left;
+														DWORD texHeight = update.bottom - update.top;
+
+														if (texWidth == this->width)
+															GLTexSubImage2D(GL_TEXTURE_2D, 0, 0, update.top, texWidth, texHeight, GL_RGBA, GL_UNSIGNED_BYTE, surface->pixelBuffer + update.top * texWidth);
+														else
+														{
+															DWORD* source = surface->pixelBuffer + update.top * this->width + update.left;
+															DWORD* dest = (DWORD*)frameBuffer;
+															DWORD copyHeight = texHeight;
+															do
+															{
+																MemoryCopy(dest, source, texWidth << 2);
+																source += this->width;
+																dest += texWidth;
+															} while (--copyHeight);
+
+															GLTexSubImage2D(GL_TEXTURE_2D, 0, update.left, update.top, texWidth, texHeight, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
+														}
+													}
+
+													if (++updateClip == surface->endClip)
+														updateClip = surface->clipsList;
+												}
+
+												// Clear prev pointer
+												Pointer* prevPointer = &pointersList[pointer == pointersList];
+												if (prevPointer->isActive)
+												{
+													prevPointer->isActive = FALSE;
+
+													DWORD* source = surface->pixelBuffer + prevPointer->pos.y * this->width + prevPointer->pos.x;
+													DWORD* dest = (DWORD*)frameBuffer;
+
+													LONG copyHeight = prevPointer->size.cy;
+													do
+													{
+														MemoryCopy(dest, source, prevPointer->size.cx << 2);
+														source += this->width;
+														dest += prevPointer->size.cx;
+													} while (--copyHeight);
+
+													GLTexSubImage2D(GL_TEXTURE_2D, 0, prevPointer->pos.x, prevPointer->pos.y, prevPointer->size.cx, prevPointer->size.cy, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
+												}
+
+												// Update pointer
+												if (pointer->isActive)
+												{
 													DWORD* source = surface->pixelBuffer + pointer->pos.y * this->width + pointer->pos.x;
 													DWORD* dst = (DWORD*)frameBuffer;
 
@@ -1166,7 +1885,7 @@ VOID OpenDraw::RenderMid()
 													if (colorInfo)
 													{
 														BYTE* sourceColor = (BYTE*)colorInfo->bmBits + pointer->offset.y * colorInfo->bmWidthBytes + pointer->offset.x;
-														BYTE* sourceMask = (BYTE*)maskInfo->bmBits + pointer->offset.y * maskInfo->bmWidthBytes + (pointer->offset.x / 8);
+														BYTE* sourceMask = (BYTE*)maskInfo->bmBits + pointer->offset.y * maskInfo->bmWidthBytes;
 														BYTE* shadowMask = (BYTE*)sourceMask - SHADOW_OFFSET * maskInfo->bmWidthBytes;
 
 														do
@@ -1302,868 +2021,94 @@ VOID OpenDraw::RenderMid()
 
 													GLTexSubImage2D(GL_TEXTURE_2D, 0, pointer->pos.x, pointer->pos.y, pointer->size.cx, pointer->size.cy, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
 												}
+
+												GLDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 											}
-										}
 
-										GLDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-									}
-
-									if (isTakeSnapshot)
-										surface->TakeSnapshot(this->width, this->height);
-
-									// Swap
-									SwapBuffers(this->hDc);
-									GLFinish();
-
-									if (clear >= 2)
-										WaitForSingleObject(this->hDrawEvent, INFINITE);
-								}
-							}
-						} while (!this->isFinish);
-					}
-					MemoryFree(frameBuffer);
-				}
-				GLDeleteTextures(1, &textureId);
-			}
-			GLBindBuffer(GL_ARRAY_BUFFER, NULL);
-		}
-		GLDeleteBuffers(1, &bufferName);
-	}
-	GLUseProgram(NULL);
-
-	ShaderProgram* shaderProgram = (ShaderProgram*)&shaders;
-	DWORD count = sizeof(shaders) / sizeof(ShaderProgram);
-	do
-	{
-		if (shaderProgram->id)
-			GLDeleteProgram(shaderProgram->id);
-
-		++shaderProgram;
-	} while (--count);
-}
-
-VOID OpenDraw::RenderNew()
-{
-	PostMessage(this->hWnd, config.msgMenu, NULL, NULL);
-
-	DWORD maxTexSize = GetPow2(this->width > this->height ? this->width : this->height);
-	FLOAT texWidth = this->width == maxTexSize ? 1.0f : (FLOAT)this->width / maxTexSize;
-	FLOAT texHeight = this->height == maxTexSize ? 1.0f : (FLOAT)this->height / maxTexSize;
-
-	DWORD texSize = (maxTexSize & 0xFFFF) | (maxTexSize << 16);
-
-	FLOAT mvp[4][4] = {
-		{ FLOAT(2.0f / this->width), 0.0f, 0.0f, 0.0f },
-		{ 0.0f, FLOAT(-2.0f / this->height), 0.0f, 0.0f },
-		{ 0.0f, 0.0f, 2.0f, 0.0f },
-		{ -1.0f, 1.0f, -1.0f, 1.0f }
-	};
-
-	struct
-	{
-		ShaderProgram stencil;
-		ShaderProgram linear;
-		ShaderProgram hermite;
-		ShaderProgram cubic;
-		ShaderProgram xBRz_2x;
-		ShaderProgram xBRz_3x;
-		ShaderProgram xBRz_4x;
-		ShaderProgram xBRz_5x;
-		ShaderProgram xBRz_6x;
-		ShaderProgram scaleHQ_2x;
-		ShaderProgram scaleHQ_4x;
-		ShaderProgram xSal_2x;
-		ShaderProgram eagle_2x;
-		ShaderProgram scaleNx_2x;
-		ShaderProgram scaleNx_3x;
-	} shaders = {
-		{ 0, GLSL_VER_1_30, IDR_STENCIL_VERTEX, IDR_STENCIL_FRAGMENT, (GLfloat*)mvp },
-		{ 0, GLSL_VER_1_30, IDR_LINEAR_VERTEX, IDR_LINEAR_FRAGMENT, NULL },
-		{ 0, GLSL_VER_1_30, IDR_HERMITE_VERTEX, IDR_HERMITE_FRAGMENT, NULL },
-		{ 0, GLSL_VER_1_30, IDR_CUBIC_VERTEX, IDR_CUBIC_FRAGMENT, NULL },
-		{ 0, GLSL_VER_1_30, IDR_XBRZ_VERTEX, IDR_XBRZ_FRAGMENT_2X, NULL },
-		{ 0, GLSL_VER_1_30, IDR_XBRZ_VERTEX, IDR_XBRZ_FRAGMENT_3X, NULL },
-		{ 0, GLSL_VER_1_30, IDR_XBRZ_VERTEX, IDR_XBRZ_FRAGMENT_4X, NULL },
-		{ 0, GLSL_VER_1_30, IDR_XBRZ_VERTEX, IDR_XBRZ_FRAGMENT_5X, NULL },
-		{ 0, GLSL_VER_1_30, IDR_XBRZ_VERTEX, IDR_XBRZ_FRAGMENT_6X, NULL },
-		{ 0, GLSL_VER_1_30, IDR_SCALEHQ_VERTEX_2X, IDR_SCALEHQ_FRAGMENT_2X, NULL },
-		{ 0, GLSL_VER_1_30, IDR_SCALEHQ_VERTEX_4X, IDR_SCALEHQ_FRAGMENT_4X, NULL },
-		{ 0, GLSL_VER_1_30, IDR_XSAL_VERTEX, IDR_XSAL_FRAGMENT, NULL },
-		{ 0, GLSL_VER_1_30, IDR_EAGLE_VERTEX, IDR_EAGLE_FRAGMENT, NULL },
-		{ 0, GLSL_VER_1_30, IDR_SCALENX_VERTEX_2X, IDR_SCALENX_FRAGMENT_2X, NULL },
-		{ 0, GLSL_VER_1_30, IDR_SCALENX_VERTEX_3X, IDR_SCALENX_FRAGMENT_3X, NULL }
-	};
-
-	{
-		POINTFLOAT* stencil = NULL;
-		GLuint stArrayName, stBufferName, arrayName, bufferName;
-
-		GLGenVertexArrays(1, &arrayName);
-		{
-			GLBindVertexArray(arrayName);
-			{
-				GLGenBuffers(1, &bufferName);
-				{
-					GLBindBuffer(GL_ARRAY_BUFFER, bufferName);
-					{
-						{
-							FLOAT buffer[8][8] = {
-								{ 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f },
-								{ (FLOAT)this->width, 0.0f, 0.0f, 1.0f, texWidth, 0.0f, 0.0f, 0.0f },
-								{ (FLOAT)this->width, (FLOAT)this->height, 0.0f, 1.0f, texWidth, texHeight, 0.0f, 0.0f },
-								{ 0.0f, (FLOAT)this->height, 0.0f, 1.0f, 0.0f, texHeight, 0.0f, 0.0f },
-
-								{ 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f },
-								{ (FLOAT)this->width, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f },
-								{ (FLOAT)this->width, (FLOAT)this->height, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-								{ 0.0f, (FLOAT)this->height, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f }
-							};
-
-							for (DWORD i = 0; i < 8; ++i)
-							{
-								FLOAT* vector = &buffer[i][0];
-								for (DWORD j = 0; j < 4; ++j)
-								{
-									FLOAT sum = 0.0f;
-									for (DWORD v = 0; v < 4; ++v)
-										sum += mvp[v][j] * vector[v];
-
-									vector[j] = sum;
-								}
-							}
-
-							GLBufferData(GL_ARRAY_BUFFER, sizeof(buffer), buffer, GL_STATIC_DRAW);
-						}
-
-						{
-							GLEnableVertexAttribArray(0);
-							GLVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 32, (GLvoid*)0);
-
-							GLEnableVertexAttribArray(1);
-							GLVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 32, (GLvoid*)16);
-						}
-
-						GLuint textureId;
-						GLGenTextures(1, &textureId);
-						{
-							GLActiveTexture(GL_TEXTURE0);
-							GLBindTexture(GL_TEXTURE_2D, textureId);
-							GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, config.gl.caps.clampToEdge);
-							GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, config.gl.caps.clampToEdge);
-							GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
-							GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-							GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-							GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-							GLTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, maxTexSize, maxTexSize, GL_NONE, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-
-							GLuint fboId;
-							GLGenFramebuffers(1, &fboId);
-							{
-								DWORD viewSize = 0;
-								GLuint rboId = 0, tboId = 0;
-								{
-									GLClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-
-									VOID* frameBuffer = MemoryAlloc(this->width * this->height * sizeof(DWORD));
-									{
-										ShaderProgram* upscaleProgram;
-										BOOL isVSync = config.image.vSync;
-										if (WGLSwapInterval)
-											WGLSwapInterval(isVSync);
-
-										Pointer pointersList[2];
-										Pointer* pointer = pointersList;
-										MemoryZero(pointersList, sizeof(pointersList));
-
-										ICONINFO* iconInfo = NULL;
-										BITMAP* maskInfo = NULL;
-										BITMAP* colorInfo = NULL;
-
-										BOOL first = TRUE;
-										DWORD clear = 0;
-										do
-										{
-											OpenDrawSurface* surface = this->attachedSurface;
-											if (surface)
+											// Draw from FBO
+											if (state.upscaling)
 											{
-												OpenDrawPalette* palette = surface->attachedPalette;
-												if (palette)
+												GLDisable(GL_STENCIL_TEST);
+												//GLFinish();
+												GLBindFramebuffer(GL_DRAW_FRAMEBUFFER, NULL);
+
+												switch (state.interpolation)
 												{
-													if (isVSync != config.image.vSync)
+												case InterpolateHermite:
+													program = shaders.hermite;
+													break;
+												case InterpolateCubic:
+													program = shaders.cubic;
+													break;
+												default:
+													program = shaders.linear;
+													break;
+												}
+
+												program->Use(texSize);
+												{
+													if (this->CheckView())
+														clear = 0;
+
+													GLViewport(this->viewport.rectangle.x, this->viewport.rectangle.y, this->viewport.rectangle.width, this->viewport.rectangle.height);
+
+													if (clear++ <= 1)
+														GLClear(GL_COLOR_BUFFER_BIT);
+
+													GLBindTexture(GL_TEXTURE_2D, tboId);
+
+													DWORD filter = state.interpolation == InterpolateLinear || state.interpolation == InterpolateHermite ? GL_LINEAR : GL_NEAREST;
+													GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+													GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+
+													GLDrawArrays(GL_TRIANGLE_FAN, 4, 4);
+
+													if (isTakeSnapshot && OpenClipboard(NULL))
 													{
-														isVSync = config.image.vSync;
-														if (WGLSwapInterval)
-															WGLSwapInterval(isVSync);
+														EmptyClipboard();
+
+														DWORD size = LOWORD(viewSize) * HIWORD(viewSize) * 3;
+														DWORD slice = sizeof(BITMAPINFOHEADER);
+														HGLOBAL hMemory = GlobalAlloc(GMEM_MOVEABLE, slice + size);
+														if (hMemory)
+														{
+															VOID* data = GlobalLock(hMemory);
+															if (data)
+															{
+																BITMAPINFOHEADER* bmi = (BITMAPINFOHEADER*)data;
+																bmi->biSize = sizeof(BITMAPINFOHEADER);
+																bmi->biWidth = LOWORD(viewSize);
+																bmi->biHeight = HIWORD(viewSize);
+																bmi->biPlanes = 1;
+																bmi->biBitCount = 24;
+																bmi->biCompression = BI_RGB;
+																bmi->biSizeImage = size;
+																bmi->biXPelsPerMeter = 1;
+																bmi->biYPelsPerMeter = 1;
+																bmi->biClrUsed = 0;
+																bmi->biClrImportant = 0;
+
+																GLGetTexImage(GL_TEXTURE_2D, 0, GL_BGR_EXT, GL_UNSIGNED_BYTE, (BYTE*)data + slice);
+
+																GlobalUnlock(hMemory);
+																SetClipboardData(CF_DIB, hMemory);
+															}
+
+															GlobalFree(hMemory);
+														}
+
+														CloseClipboard();
 													}
-
-													FilterState state = this->filterState;
-													this->filterState.flags = FALSE;
-
-													if (state.flags)
-														this->viewport.refresh = TRUE;
-
-													BOOL isTakeSnapshot = this->isTakeSnapshot;
-													if (isTakeSnapshot)
-														this->isTakeSnapshot = FALSE;
-
-													pointer = &pointersList[pointer == pointersList];
-													if (config.cursor.index && !config.cursor.hidden && this->viewport.rectangle.width && this->viewport.rectangle.height)
-													{
-														DWORD ptrIndex = config.cursor.index - 1;
-
-														iconInfo = &((ICONINFO*)Hooks::hookSpace->icons_info)[ptrIndex];
-														maskInfo = &((BITMAP*)Hooks::hookSpace->masks_info)[ptrIndex];
-														colorInfo = Hooks::hookSpace->colors_info && maskInfo->bmHeight == maskInfo->bmWidth
-															? &((BITMAP*)Hooks::hookSpace->colors_info)[ptrIndex]
-															: NULL;
-
-														GetCursorPos(&pointer->pos);
-														ScreenToClient(this->hWnd, &pointer->pos);
-
-														pointer->pos.x = (LONG)((FLOAT)((pointer->pos.x - this->viewport.rectangle.x) * this->width) / this->viewport.rectangle.width) - iconInfo->xHotspot;
-														pointer->pos.y = (LONG)((FLOAT)((pointer->pos.y - this->viewport.rectangle.y) * this->height) / this->viewport.rectangle.height) - iconInfo->yHotspot;
-
-														pointer->size.cx = 32;
-														pointer->size.cy = 32;
-
-														if (pointer->pos.x < 0)
-														{
-															pointer->offset.x = -pointer->pos.x;
-															pointer->size.cx += pointer->pos.x;
-															pointer->pos.x = 0;
-														}
-														else
-															pointer->offset.x = 0;
-
-														if (pointer->pos.y < 0)
-														{
-															pointer->offset.y = -pointer->pos.y;
-															pointer->size.cy += pointer->pos.y;
-															pointer->pos.y = 0;
-														}
-														else
-															pointer->offset.y = 0;
-
-														if (pointer->size.cx > 0 && pointer->size.cy > 0)
-														{
-															if (pointer->pos.x + pointer->size.cx >= *(INT*)&this->width)
-																pointer->size.cx = this->width - pointer->pos.x;
-
-															if (pointer->pos.y + pointer->size.cy >= *(INT*)&this->height)
-																pointer->size.cy = this->height - pointer->pos.y;
-
-															if (pointer->size.cx > 0 && pointer->size.cy > 0)
-																pointer->isActive = TRUE;
-														}
-													}
-
-													UpdateRect* updateClip = surface->poinetrClip;
-													UpdateRect* finClip = surface->currentClip;
-													surface->poinetrClip = finClip;
-
-													if (state.upscaling)
-													{
-														GLBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboId);
-
-														if (state.flags)
-														{
-															switch (state.upscaling)
-															{
-															case UpscaleScaleNx:
-																switch (state.value)
-																{
-																case 3:
-																	upscaleProgram = &shaders.scaleNx_3x;
-																	break;
-																default:
-																	upscaleProgram = &shaders.scaleNx_2x;
-																	break;
-																}
-
-																break;
-
-															case UpscaleScaleHQ:
-																switch (state.value)
-																{
-																case 4:
-																	upscaleProgram = &shaders.scaleHQ_4x;
-																	break;
-																default:
-																	upscaleProgram = &shaders.scaleHQ_2x;
-																	break;
-																}
-
-																break;
-
-															case UpscaleXRBZ:
-																switch (state.value)
-																{
-																case 6:
-																	upscaleProgram = &shaders.xBRz_6x;
-																	break;
-																case 5:
-																	upscaleProgram = &shaders.xBRz_5x;
-																	break;
-																case 4:
-																	upscaleProgram = &shaders.xBRz_4x;
-																	break;
-																case 3:
-																	upscaleProgram = &shaders.xBRz_3x;
-																	break;
-																default:
-																	upscaleProgram = &shaders.xBRz_2x;
-																	break;
-																}
-
-																break;
-
-															case UpscaleXSal:
-																upscaleProgram = &shaders.xSal_2x;
-
-																break;
-
-															default:
-																upscaleProgram = &shaders.eagle_2x;
-
-																break;
-															}
-
-															UseShaderProgram(upscaleProgram, texSize);
-
-															DWORD newSize = MAKELONG(this->width * state.value, this->height * state.value);
-															if (newSize != viewSize)
-															{
-																first = TRUE;
-
-																if (!viewSize)
-																{
-																	GLGenTextures(1, &tboId);
-																	GLGenRenderbuffers(1, &rboId);
-																}
-
-																viewSize = newSize;
-
-																// Gen texture
-																GLBindTexture(GL_TEXTURE_2D, tboId);
-																GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, config.gl.caps.clampToEdge);
-																GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, config.gl.caps.clampToEdge);
-																GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
-																GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-																GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-																GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-																GLTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, LOWORD(viewSize), HIWORD(viewSize), GL_NONE, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-
-																// Get storage
-																GLBindRenderbuffer(GL_RENDERBUFFER, rboId);
-																GLRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, LOWORD(viewSize), HIWORD(viewSize));
-																GLBindRenderbuffer(GL_RENDERBUFFER, NULL);
-
-																GLFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tboId, 0);
-																GLFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rboId);
-
-																if (!stencil)
-																{
-																	DWORD size = (STENCIL_COUNT + 2) * sizeof(POINTFLOAT) * STENCIL_POINTS;
-																	stencil = (POINTFLOAT*)MemoryAlloc(size); // +2 for cursor
-
-																	UseShaderProgram(&shaders.stencil, 0);
-																	{
-																		GLGenVertexArrays(1, &stArrayName);
-																		GLBindVertexArray(stArrayName);
-																		GLGenBuffers(1, &stBufferName);
-																		GLBindBuffer(GL_ARRAY_BUFFER, stBufferName);
-																		{
-																			GLBufferData(GL_ARRAY_BUFFER, size, NULL, GL_STREAM_DRAW);
-
-																			GLEnableVertexAttribArray(0);
-																			GLVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);
-																		}
-
-																		GLBindVertexArray(arrayName);
-																		GLBindBuffer(GL_ARRAY_BUFFER, bufferName);
-																	}
-																	UseShaderProgram(upscaleProgram, texSize);
-																}
-															}
-														}
-
-														GLViewport(0, 0, LOWORD(viewSize), HIWORD(viewSize));
-
-														// Clear and stencil
-														if (palette->isChanged || first)
-														{
-															palette->isChanged = FALSE;
-															first = FALSE;
-															
-															updateClip = (finClip == surface->clipsList ? surface->endClip : finClip) - 1;
-															updateClip->rect.left = 0;
-															updateClip->rect.top = 0;
-															updateClip->rect.right = this->width;
-															updateClip->rect.bottom = this->height;
-															updateClip->isActive = TRUE;
-														}
-														else
-														{
-															GLEnable(GL_STENCIL_TEST);
-															GLClear(GL_STENCIL_BUFFER_BIT);
-
-															UseShaderProgram(&shaders.stencil, 0);
-															{
-																GLColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-																GLStencilFunc(GL_ALWAYS, 0x01, 0x01);
-																GLStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
-																{
-																	GLBindVertexArray(stArrayName);
-																	GLBindBuffer(GL_ARRAY_BUFFER, stBufferName);
-																	{
-																		POINTFLOAT* point = stencil;
-																		UpdateRect* clip = updateClip;
-																		while (clip != finClip)
-																		{
-																			if (clip->isActive)
-																			{
-																				FLOAT left = (FLOAT)clip->rect.left;
-																				FLOAT top = (FLOAT)clip->rect.top;
-																				FLOAT right = (FLOAT)clip->rect.right;
-																				FLOAT bottom = (FLOAT)clip->rect.bottom;
-
-																				point->x = left;
-																				point->y = top;
-																				++point;
-																				point->x = right;
-																				point->y = top;
-																				++point;
-																				point->x = right;
-																				point->y = bottom;
-																				++point;
-
-																				point->x = left;
-																				point->y = top;
-																				++point;
-																				point->x = right;
-																				point->y = bottom;
-																				++point;
-																				point->x = left;
-																				point->y = bottom;
-																				++point;
-																			}
-
-																			if (++clip == surface->endClip)
-																				clip = surface->clipsList;
-																		}
-
-																		Pointer* ptr = pointersList;
-																		DWORD count = sizeof(pointersList) / sizeof(Pointer);
-																		do
-																		{
-																			if (ptr->isActive)
-																			{
-																				FLOAT left = (FLOAT)ptr->pos.x;
-																				FLOAT top = (FLOAT)ptr->pos.y;
-																				FLOAT right = (FLOAT)(ptr->pos.x + ptr->size.cx);
-																				FLOAT bottom = (FLOAT)(ptr->pos.y + ptr->size.cy);
-
-																				point->x = left;
-																				point->y = top;
-																				++point;
-																				point->x = right;
-																				point->y = top;
-																				++point;
-																				point->x = right;
-																				point->y = bottom;
-																				++point;
-
-																				point->x = left;
-																				point->y = top;
-																				++point;
-																				point->x = right;
-																				point->y = bottom;
-																				++point;
-																				point->x = left;
-																				point->y = bottom;
-																				++point;
-																			}
-
-																			++ptr;
-																		} while (--count);
-
-																		count = point - stencil;
-																		if (count)
-																		{
-																			GLBufferSubData(GL_ARRAY_BUFFER, 0, count * sizeof(POINTFLOAT), stencil);
-																			GLDrawArrays(GL_TRIANGLES, 0, count);
-																		}
-																	}
-																	GLBindVertexArray(arrayName);
-																	GLBindBuffer(GL_ARRAY_BUFFER, bufferName);
-																}
-																GLColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-																GLStencilFunc(GL_EQUAL, 0x01, 0x01);
-																GLStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-															}
-															UseShaderProgram(upscaleProgram, texSize);
-														}
-
-														GLBindTexture(GL_TEXTURE_2D, textureId);
-														GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-														GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-													}
-													else
-													{
-														if (this->CheckView())
-														{
-															GLViewport(this->viewport.rectangle.x, this->viewport.rectangle.y, this->viewport.rectangle.width, this->viewport.rectangle.height);
-															clear = 0;
-														}
-
-														if (clear++ <= 1)
-															GLClear(GL_COLOR_BUFFER_BIT);
-
-														if (state.flags)
-														{
-															if (viewSize)
-															{
-																GLDeleteTextures(1, &tboId);
-																GLDeleteRenderbuffers(1, &rboId);
-																viewSize = 0;
-															}
-
-															ShaderProgram* program;
-															switch (state.interpolation)
-															{
-															case InterpolateHermite:
-																program = &shaders.hermite;
-																break;
-															case InterpolateCubic:
-																program = &shaders.cubic;
-																break;
-															default:
-																program = &shaders.linear;
-																break;
-															}
-
-															UseShaderProgram(program, texSize);
-
-															GLBindTexture(GL_TEXTURE_2D, textureId);
-
-															DWORD filter = state.interpolation == InterpolateLinear || state.interpolation == InterpolateHermite ? GL_LINEAR : GL_NEAREST;
-															GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
-															GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
-														}
-
-														if (palette->isChanged || first)
-														{
-															palette->isChanged = FALSE;
-															first = FALSE;
-
-															updateClip = (finClip == surface->clipsList ? surface->endClip : finClip) - 1;
-															updateClip->rect.left = 0;
-															updateClip->rect.top = 0;
-															updateClip->rect.right = this->width;
-															updateClip->rect.bottom = this->height;
-															updateClip->isActive = TRUE;
-														}
-													}
-
-													// NEXT UNCHANGED
-													{
-														// Update texture
-														while (updateClip != finClip)
-														{
-															if (updateClip->isActive)
-															{
-																RECT update = updateClip->rect;
-																DWORD texWidth = update.right - update.left;
-																DWORD texHeight = update.bottom - update.top;
-
-																if (texWidth == this->width)
-																	GLTexSubImage2D(GL_TEXTURE_2D, 0, 0, update.top, texWidth, texHeight, GL_RGBA, GL_UNSIGNED_BYTE, surface->pixelBuffer + update.top * texWidth);
-																else
-																{
-																	DWORD* source = surface->pixelBuffer + update.top * this->width + update.left;
-																	DWORD* dest = (DWORD*)frameBuffer;
-																	DWORD copyHeight = texHeight;
-																	do
-																	{
-																		MemoryCopy(dest, source, texWidth << 2);
-																		source += this->width;
-																		dest += texWidth;
-																	} while (--copyHeight);
-
-																	GLTexSubImage2D(GL_TEXTURE_2D, 0, update.left, update.top, texWidth, texHeight, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
-																}
-															}
-
-															if (++updateClip == surface->endClip)
-																updateClip = surface->clipsList;
-														}
-
-														// Clear prev pointer
-														Pointer* prevPointer = &pointersList[pointer == pointersList];
-														if (prevPointer->isActive)
-														{
-															prevPointer->isActive = FALSE;
-
-															DWORD* source = surface->pixelBuffer + prevPointer->pos.y * this->width + prevPointer->pos.x;
-															DWORD* dest = (DWORD*)frameBuffer;
-
-															LONG copyHeight = prevPointer->size.cy;
-															do
-															{
-																MemoryCopy(dest, source, prevPointer->size.cx << 2);
-																source += this->width;
-																dest += prevPointer->size.cx;
-															} while (--copyHeight);
-
-															GLTexSubImage2D(GL_TEXTURE_2D, 0, prevPointer->pos.x, prevPointer->pos.y, prevPointer->size.cx, prevPointer->size.cy, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
-														}
-
-														// Update pointer
-														if (pointer->isActive)
-														{
-															DWORD* source = surface->pixelBuffer + pointer->pos.y * this->width + pointer->pos.x;
-															DWORD* dst = (DWORD*)frameBuffer;
-
-															DWORD initMask = 8 - (pointer->offset.x % 8);
-															DWORD initOffset = pointer->offset.x & (8 - 1);
-
-															INT shadowIdx = pointer->offset.y - SHADOW_OFFSET;
-															LONG copyHeight = pointer->size.cy;
-
-															if (colorInfo)
-															{
-																BYTE* sourceColor = (BYTE*)colorInfo->bmBits + pointer->offset.y * colorInfo->bmWidthBytes + pointer->offset.x;
-																BYTE* sourceMask = (BYTE*)maskInfo->bmBits + pointer->offset.y * maskInfo->bmWidthBytes;
-																BYTE* shadowMask = (BYTE*)sourceMask - SHADOW_OFFSET * maskInfo->bmWidthBytes;
-
-																do
-																{
-																	DWORD* src = source;
-																	BYTE* srcColor = sourceColor;
-																	BYTE* srcMask = sourceMask;
-																	BYTE* shadMask = shadowMask;
-
-																	BYTE xorMask = *srcMask++;
-																	BYTE shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
-
-																	xorMask <<= initOffset;
-																	shdMask <<= initOffset;
-
-																	DWORD countMask = initMask;
-																	LONG copyWidth = pointer->size.cx;
-																	do
-																	{
-																		if (xorMask & 0x80)
-																		{
-																			DWORD color = *src;
-
-																			if (!(shdMask & 0x80))
-																			{
-																				BYTE* cp = (BYTE*)&color;
-																				DWORD cc = 3;
-																				do
-																					*cp++ >>= 1;
-																				while (--cc);
-																			}
-
-																			*dst = color;
-																		}
-																		else
-																			*dst = _byteswap_ulong(_rotl(Hooks::palEntries[*srcColor], 8));
-
-																		if (--countMask)
-																		{
-																			xorMask <<= 1;
-																			shdMask <<= 1;
-																		}
-																		else
-																		{
-																			countMask = 8;
-																			xorMask = *srcMask++;
-																			shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
-																		}
-
-																		++src;
-																		++srcColor;
-																		++dst;
-																	} while (--copyWidth);
-
-																	source += this->width;
-																	sourceColor += colorInfo->bmWidthBytes;
-																	sourceMask += maskInfo->bmWidthBytes;
-																	shadowMask += maskInfo->bmWidthBytes;
-
-																	++shadowIdx;
-																} while (--copyHeight);
-															}
-															else
-															{
-																BYTE* sourceMask = (BYTE*)maskInfo->bmBits + pointer->offset.y * maskInfo->bmWidthBytes + (pointer->offset.x / 8);
-																BYTE* shadowMask = (BYTE*)sourceMask - SHADOW_OFFSET * maskInfo->bmWidthBytes;
-																BYTE* colorMask = (BYTE*)sourceMask + 32 * maskInfo->bmWidthBytes;
-
-																do
-																{
-																	DWORD* src = source;
-																	BYTE* clrMask = colorMask;
-																	BYTE* srcMask = sourceMask;
-																	BYTE* shadMask = shadowMask;
-
-																	BYTE andMask = *clrMask++;
-																	BYTE xorMask = *srcMask++;
-																	BYTE shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
-
-																	andMask <<= initOffset;
-																	xorMask <<= initOffset;
-																	shdMask <<= initOffset;
-
-																	DWORD countMask = initMask;
-																	LONG copyWidth = pointer->size.cx;
-																	do
-																	{
-																		if (xorMask & 0x80)
-																		{
-																			DWORD color = *src;
-
-																			if (!(shdMask & 0x80))
-																			{
-																				BYTE* cp = (BYTE*)&color;
-																				DWORD cc = 3;
-																				do
-																					*cp++ >>= 1;
-																				while (--cc);
-																			}
-
-																			*dst = color;
-																		}
-																		else
-																			*dst = (andMask & 0x80) ? 0xFFFFFFFF : 0xFF000000;
-
-																		if (--countMask)
-																		{
-																			andMask <<= 1;
-																			xorMask <<= 1;
-																			shdMask <<= 1;
-																		}
-																		else
-																		{
-																			countMask = 8;
-																			andMask = *clrMask++;
-																			xorMask = *srcMask++;
-																			shdMask = shadowIdx > 0 ? *shadMask++ : 0xFF;
-																		}
-
-																		++src;
-																		++dst;
-																	} while (--copyWidth);
-
-																	source += this->width;
-
-																	colorMask += maskInfo->bmWidthBytes;
-																	sourceMask += maskInfo->bmWidthBytes;
-																	shadowMask += maskInfo->bmWidthBytes;
-
-																	++shadowIdx;
-																} while (--copyHeight);
-															}
-
-															GLTexSubImage2D(GL_TEXTURE_2D, 0, pointer->pos.x, pointer->pos.y, pointer->size.cx, pointer->size.cy, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer);
-														}
-
-														GLDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-													}
-
-													// Draw from FBO
-													if (state.upscaling)
-													{
-														GLDisable(GL_STENCIL_TEST);
-														//GLFinish();
-														GLBindFramebuffer(GL_DRAW_FRAMEBUFFER, NULL);
-
-														ShaderProgram* program;
-														switch (state.interpolation)
-														{
-														case InterpolateHermite:
-															program = &shaders.hermite;
-															break;
-														case InterpolateCubic:
-															program = &shaders.cubic;
-															break;
-														default:
-															program = &shaders.linear;
-															break;
-														}
-
-														UseShaderProgram(program, viewSize);
-														{
-															if (this->CheckView())
-																clear = 0;
-
-															GLViewport(this->viewport.rectangle.x, this->viewport.rectangle.y, this->viewport.rectangle.width, this->viewport.rectangle.height);
-
-															if (clear++ <= 1)
-																GLClear(GL_COLOR_BUFFER_BIT);
-
-															GLBindTexture(GL_TEXTURE_2D, tboId);
-
-															DWORD filter = state.interpolation == InterpolateLinear || state.interpolation == InterpolateHermite ? GL_LINEAR : GL_NEAREST;
-															GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
-															GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
-
-															GLDrawArrays(GL_TRIANGLE_FAN, 4, 4);
-
-															if (isTakeSnapshot)
-															{
-																if (OpenClipboard(NULL))
-																{
-																	EmptyClipboard();
-
-																	DWORD size = LOWORD(viewSize) * HIWORD(viewSize) * 3;
-																	DWORD slice = sizeof(BITMAPINFOHEADER);
-																	HGLOBAL hMemory = GlobalAlloc(GMEM_MOVEABLE, slice + size);
-																	if (hMemory)
-																	{
-																		VOID* data = GlobalLock(hMemory);
-																		if (data)
-																		{
-																			BITMAPINFOHEADER* bmi = (BITMAPINFOHEADER*)data;
-																			bmi->biSize = sizeof(BITMAPINFOHEADER);
-																			bmi->biWidth = LOWORD(viewSize);
-																			bmi->biHeight = HIWORD(viewSize);
-																			bmi->biPlanes = 1;
-																			bmi->biBitCount = 24;
-																			bmi->biCompression = BI_RGB;
-																			bmi->biSizeImage = size;
-																			bmi->biXPelsPerMeter = 1;
-																			bmi->biYPelsPerMeter = 1;
-																			bmi->biClrUsed = 0;
-																			bmi->biClrImportant = 0;
-
-																			GLGetTexImage(GL_TEXTURE_2D, 0, GL_BGR_EXT, GL_UNSIGNED_BYTE, (BYTE*)data + slice);
-																		
-																			GlobalUnlock(hMemory);
-																			SetClipboardData(CF_DIB, hMemory);
-																		}
-																		
-																		GlobalFree(hMemory);
-																	}
-																	
-																	CloseClipboard();
-																}
-															}
-														}
-														UseShaderProgram(upscaleProgram, texSize);
-													}
-													else if (isTakeSnapshot)
-														surface->TakeSnapshot(this->width, this->height);
-
-													SwapBuffers(this->hDc);
-													GLFinish();
-
-													if (clear >= 2)
-														WaitForSingleObject(this->hDrawEvent, INFINITE);	
 												}
 											}
+											else if (isTakeSnapshot)
+												surface->TakeSnapshot(this->width, this->height);
+
+											SwapBuffers(this->hDc);
+											GLFinish();
+
+											if (clear >= 2)
+												WaitForSingleObject(this->hDrawEvent, INFINITE);
 										} while (!this->isFinish);
 									}
 									MemoryFree(frameBuffer);
@@ -2196,15 +2141,11 @@ VOID OpenDraw::RenderNew()
 	}
 	GLUseProgram(NULL);
 
-	ShaderProgram* shaderProgram = (ShaderProgram*)&shaders;
-	DWORD count = sizeof(shaders) / sizeof(ShaderProgram);
+	ShaderGroup** shader = (ShaderGroup**)&shaders;
+	DWORD count = sizeof(shaders) / sizeof(ShaderGroup*);
 	do
-	{
-		if (shaderProgram->id)
-			GLDeleteProgram(shaderProgram->id);
-
-		++shaderProgram;
-	} while (--count);
+		delete *shader++;
+	while (--count);
 }
 
 VOID OpenDraw::LoadFilterState()
@@ -2300,7 +2241,7 @@ VOID OpenDraw::RenderStart()
 
 	DWORD threadId;
 	SECURITY_ATTRIBUTES sAttribs = { sizeof(SECURITY_ATTRIBUTES), NULL, FALSE };
-	this->hDrawThread = CreateThread(&sAttribs, 256 * 1024, RenderThread, this, NORMAL_PRIORITY_CLASS, &threadId);
+	this->hDrawThread = CreateThread(&sAttribs, STACK_SIZE, RenderThread, this, NORMAL_PRIORITY_CLASS, &threadId);
 }
 
 VOID OpenDraw::RenderStop()

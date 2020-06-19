@@ -25,39 +25,38 @@
 #pragma once
 
 #include "Allocation.h"
+#include "ExtraTypes.h"
 
-#pragma once
-class Hooker : public Allocation {
+#define SHADER_LEVELS 0x1
+
+class ShaderProgram : public Allocation {
 private:
-	HANDLE hFile;
-	HANDLE hMap;
+	GLuint id;
+	GLfloat* mvp;
+	DWORD texSize;
+	struct {
+		GLint texSize;
+		GLint hue;
+		GLint sat;
+		struct {
+			GLint left;
+			GLint right;
+		} input;
+		GLint gamma;
+		struct {
+			GLint left;
+			GLint right;
+		} output;
+	} loc;
+
+	Adjustment* colors;
 
 public:
-	HMODULE hModule;
-	PIMAGE_NT_HEADERS headNT;
-	DWORD baseOffset;
-	VOID* mapAddress;
+	ShaderProgram* last;
+	DWORD flags;
+	ShaderProgram(const CHAR*, DWORD, DWORD, DWORD, GLfloat*, ShaderProgram*);
+	~ShaderProgram();
 
-	Hooker(HMODULE);
-	~Hooker();
-
-	BOOL MapFile();
-	VOID UnmapFile();
-
-	BOOL ReadBlock(DWORD, VOID*, DWORD);
-	BOOL ReadWord(DWORD, WORD*);
-	BOOL ReadDWord(DWORD, DWORD*);
-	BOOL ReadByte(DWORD, BYTE*);
-	BOOL PatchRedirect(DWORD, DWORD, BYTE, DWORD);
-	BOOL PatchJump(DWORD, DWORD);
-	BOOL PatchHook(DWORD, VOID*, DWORD = 0);
-	BOOL PatchCall(DWORD, VOID*, DWORD = 0);
-	DWORD RedirectCall(DWORD, VOID*);
-	BOOL PatchNop(DWORD, DWORD);
-	BOOL PatchBlock(DWORD, VOID*, DWORD);
-	BOOL PatchWord(DWORD, WORD);
-	BOOL PatchDWord(DWORD, DWORD);
-	BOOL PatchByte(DWORD, BYTE);
-	DWORD PatchImport(const CHAR*, VOID*);
-	DWORD PatchExport(const CHAR*, VOID*);
+	VOID Use();
+	VOID Update(DWORD, Adjustment*);
 };

@@ -25,39 +25,24 @@
 #pragma once
 
 #include "Allocation.h"
+#include "ShaderProgram.h"
 
-#pragma once
-class Hooker : public Allocation {
+class ShaderGroup : public Allocation {
 private:
-	HANDLE hFile;
-	HANDLE hMap;
+	const CHAR* version;
+	DWORD vertexName;
+	DWORD fragmentName;
+	DWORD flags;
+	GLfloat* mvp;
+	Adjustment* colors;
+	BOOL update;
+	ShaderProgram* current;
+	ShaderProgram* list;
 
 public:
-	HMODULE hModule;
-	PIMAGE_NT_HEADERS headNT;
-	DWORD baseOffset;
-	VOID* mapAddress;
+	ShaderGroup(const CHAR*, DWORD, DWORD, DWORD, GLfloat*);
+	~ShaderGroup();
 
-	Hooker(HMODULE);
-	~Hooker();
-
-	BOOL MapFile();
-	VOID UnmapFile();
-
-	BOOL ReadBlock(DWORD, VOID*, DWORD);
-	BOOL ReadWord(DWORD, WORD*);
-	BOOL ReadDWord(DWORD, DWORD*);
-	BOOL ReadByte(DWORD, BYTE*);
-	BOOL PatchRedirect(DWORD, DWORD, BYTE, DWORD);
-	BOOL PatchJump(DWORD, DWORD);
-	BOOL PatchHook(DWORD, VOID*, DWORD = 0);
-	BOOL PatchCall(DWORD, VOID*, DWORD = 0);
-	DWORD RedirectCall(DWORD, VOID*);
-	BOOL PatchNop(DWORD, DWORD);
-	BOOL PatchBlock(DWORD, VOID*, DWORD);
-	BOOL PatchWord(DWORD, WORD);
-	BOOL PatchDWord(DWORD, DWORD);
-	BOOL PatchByte(DWORD, BYTE);
-	DWORD PatchImport(const CHAR*, VOID*);
-	DWORD PatchExport(const CHAR*, VOID*);
+	BOOL Check();
+	VOID Use(DWORD);
 };

@@ -186,6 +186,8 @@
     <ClCompile Include="DllMain.cpp" />
     <ClCompile Include="GLib.cpp" />
     <ClCompile Include="Hooks.cpp" />
+    <ClCompile Include="ShaderGroup.cpp" />
+    <ClCompile Include="ShaderProgram.cpp" />
     <ClCompile Include="StdAfx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
     </ClCompile>
@@ -215,6 +217,8 @@
     <ClInclude Include="Hooks.h" />
     <ClInclude Include="Main.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="ShaderGroup.h" />
+    <ClInclude Include="ShaderProgram.h" />
     <ClInclude Include="StdAfx.h" />
     <ClInclude Include="Window.h" />
   </ItemGroup>

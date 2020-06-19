@@ -97,7 +97,9 @@ GLBINDATTRIBLOCATION GLBindAttribLocation;
 GLGETUNIFORMLOCATION GLGetUniformLocation;
 
 GLUNIFORM1I GLUniform1i;
+GLUNIFORM1F GLUniform1f;
 GLUNIFORM2F GLUniform2f;
+GLUNIFORM4F GLUniform4f;
 GLUNIFORMMATRIX4FV GLUniformMatrix4fv;
 
 GLGENVERTEXARRAYS GLGenVertexArrays;
@@ -252,7 +254,9 @@ namespace GL
 		LoadFunction(buffer, PREFIX_GL, "GetUniformLocation", (PROC*)&GLGetUniformLocation);
 
 		LoadFunction(buffer, PREFIX_GL, "Uniform1i", (PROC*)&GLUniform1i);
+		LoadFunction(buffer, PREFIX_GL, "Uniform1f", (PROC*)&GLUniform1f);
 		LoadFunction(buffer, PREFIX_GL, "Uniform2f", (PROC*)&GLUniform2f);
+		LoadFunction(buffer, PREFIX_GL, "Uniform4f", (PROC*)&GLUniform4f);
 		LoadFunction(buffer, PREFIX_GL, "UniformMatrix4fv", (PROC*)&GLUniformMatrix4fv);
 
 		LoadFunction(buffer, PREFIX_GL, "GenVertexArrays", (PROC*)&GLGenVertexArrays);
@@ -463,7 +467,7 @@ namespace GL
 		}
 	}
 
-	GLuint __fastcall CompileShaderSource(DWORD name, const CHAR* version, GLenum type)
+	GLuint __fastcall CompileShaderSource(DWORD name, CHAR* prefix, GLenum type)
 	{
 		HGLOBAL hResourceData;
 		LPVOID pData = NULL;
@@ -480,13 +484,13 @@ namespace GL
 
 		GLuint shader = GLCreateShader(type);
 
-		DWORD pre = StrLength(version);
+		DWORD pre = StrLength(prefix);
 		DWORD length = SizeofResource(hDllModule, hResource);
 		DWORD size = length + pre;
 		CHAR* source = (CHAR*)MemoryAlloc(size + 1);
 		const GLchar* srcData[] = { source };
 		{
-			MemoryCopy(source, version, pre);
+			MemoryCopy(source, prefix, pre);
 			MemoryCopy(source + pre, pData, length);
 			*(source + size) = NULL;
 

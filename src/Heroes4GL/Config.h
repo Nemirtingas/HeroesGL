@@ -28,10 +28,15 @@
 
 #define CONFIG_APP "Application"
 #define CONFIG_WRAPPER "Wrapper"
+#define CONFIG_COLORS "Colors"
 #define CONFIG_KEYS "FunktionKeys"
 #define RESOURCE_ICON 107
 
 extern ConfigItems config;
+
+extern Adjustment activeColors;
+extern const Adjustment inactiveColors;
+extern const Adjustment defaultColors;
 
 namespace Config
 {
