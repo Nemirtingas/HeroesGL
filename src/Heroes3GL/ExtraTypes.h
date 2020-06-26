@@ -193,6 +193,7 @@ struct AddressSpace
 	/*DWORD video_address;
 	DWORD video_count;*/
 	LCID resLanguage;
+	DWORD atof;
 	DWORD move_oldCenter;
 	DWORD move_drawRect;
 	DWORD move_lifeCycle;

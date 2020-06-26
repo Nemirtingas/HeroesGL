@@ -641,9 +641,9 @@ namespace Window
 					do
 					{
 						BYTE* b = (BYTE*)data++;
-						++levels[*b++].red;
+						++levels[*b++].blue;
 						++levels[*b++].green;
-						++levels[*b].blue;
+						++levels[*b].red;
 					} while (--count);
 				}
 				else

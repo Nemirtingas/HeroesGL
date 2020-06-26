@@ -110,6 +110,7 @@ extern "C"
 #define StrDuplicate(str) _strdup(str)
 #define StrToAnsi(dst, src, size) wcstombs(dst, src, size)
 #define StrLength(str) strlen(str)
+#define StrToDouble(str) atof(str);
 #define FileOpen(filename, mode) fopen(filename, mode)
 #define FileClose(stream) fclose(stream)
 #define Random() rand()
