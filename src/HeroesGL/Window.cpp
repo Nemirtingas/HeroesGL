@@ -626,11 +626,11 @@ namespace Window
 				LevelColors levels[256];
 				MemoryZero(levels, sizeof(levels));
 
-				BYTE* data = surface->indexBuffer;
+				DWORD* data = surface->pixelBuffer;
 				DWORD count = size.width * size.height;
 				do
 				{
-					BYTE* b = (BYTE*)&palette->entries[*data++];
+					BYTE* b = (BYTE*)data++;
 					++levels[*b++].red;
 					++levels[*b++].green;
 					++levels[*b].blue;
