@@ -28,5 +28,5 @@
 
 void main() {
 	gl_Position = vCoord;
-	fTex = vTex;
+	fTex = vTex * 1.00001;
 }

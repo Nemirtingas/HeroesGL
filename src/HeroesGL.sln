@@ -20,7 +20,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cubic", "cubic", "{E4F599C2-AF64-4BAC-98C8-5B29F95F6B34}"
 	ProjectSection(SolutionItems) = preProject
 		glsl\cubic\fragment.glsl = glsl\cubic\fragment.glsl
-		glsl\cubic\vertex.glsl = glsl\cubic\vertex.glsl
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scalehq", "scalehq", "{82C8BA11-F68D-4990-B4BC-D066DBFB2047}"
@@ -70,7 +69,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "hermite", "hermite", "{91ECB352-8DF9-4AD6-A6D4-7409107FA052}"
 	ProjectSection(SolutionItems) = preProject
 		glsl\hermite\fragment.glsl = glsl\hermite\fragment.glsl
-		glsl\hermite\vertex.glsl = glsl\hermite\vertex.glsl
 	EndProjectSection
 EndProject
 Global
