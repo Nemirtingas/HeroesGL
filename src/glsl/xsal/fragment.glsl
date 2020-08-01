@@ -33,12 +33,12 @@ in vec2 fTex;
 
 out vec4 fragColor;
 
-void main()
-{
-    float dx = pow(texSize.x, -1.0) * 0.25;
-    float dy = pow(texSize.y, -1.0) * 0.25;
-    vec3  dt = vec3(1.0, 1.0, 1.0);
- 
+const vec3 dt = vec3(1.0, 1.0, 1.0);
+
+void main() {
+    float dx = 0.25 / texSize.x;
+	float dy = 0.25 / texSize.y;
+    
     vec3 c00 = texture(tex01, fTex + vec2(-dx, -dy)).xyz;
     vec3 c20 = texture(tex01, fTex + vec2( dx, -dy)).xyz;
     vec3 c02 = texture(tex01, fTex + vec2(-dx,  dy)).xyz;

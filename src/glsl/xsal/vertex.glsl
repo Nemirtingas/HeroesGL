@@ -26,6 +26,11 @@
 	SOFTWARE.
 */
 
+in vec4 vCoord;
+in vec2 vTex;
+
+out vec2 fTex;
+
 void main() {
 	gl_Position = vCoord;
 	fTex = vTex * 1.00001;

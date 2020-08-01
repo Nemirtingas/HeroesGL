@@ -46,8 +46,7 @@ uniform vec4 out_right;
 
 COMPAT_IN vec2 fTex;
 
-vec4 hermite(sampler2D tex, vec2 coord)
-{
+vec4 hermite(sampler2D tex, vec2 coord) {
 	vec2 uv = coord * texSize - 0.5;
 	vec2 texel = floor(uv) + 0.5;
 	vec2 t = fract(uv);
@@ -58,8 +57,7 @@ vec4 hermite(sampler2D tex, vec2 coord)
 }
 
 #ifdef LEVELS
-vec3 satHue(vec3 color)
-{
+vec3 satHue(vec3 color) {
 	const mat3 mrgb = mat3(	  1.0,    1.0,    1.0,
 							0.956, -0.272, -1.107,
 							0.621, -0.647,  1.705 );
@@ -78,8 +76,7 @@ vec3 satHue(vec3 color)
 	return mrgb * mhsv * myiq * color;
 }
 
-vec3 levels(vec3 color)
-{
+vec3 levels(vec3 color) {
 	color = clamp((color - in_left.rgb) / (in_right.rgb - in_left.rgb), 0.0, 1.0);
 	color = pow(color, gamma.rgb);
 	color = clamp(color * (out_right.rgb - out_left.rgb) + out_left.rgb, 0.0, 1.0);

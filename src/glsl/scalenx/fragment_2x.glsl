@@ -43,8 +43,7 @@ bool neq(vec3 A, vec3 B){
 	return (A!=B);
 }
 
-void main()
-{
+void main() {
 	vec3 B = texture(tex01, t1.xy).xyz;
 	vec3 D = texture(tex01, t1.zw).xyz;
 	vec3 E = texture(tex01, fTex).xyz;

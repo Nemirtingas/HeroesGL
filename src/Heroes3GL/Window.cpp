@@ -134,6 +134,9 @@ namespace Window
 			EnableMenuItem(hMenu, IDM_FILT_CUBIC, MF_BYCOMMAND | isFilters);
 			CheckMenuItem(hMenu, IDM_FILT_CUBIC, MF_BYCOMMAND | MF_UNCHECKED);
 
+			EnableMenuItem(hMenu, IDM_FILT_LANCZOS, MF_BYCOMMAND | isFilters);
+			CheckMenuItem(hMenu, IDM_FILT_LANCZOS, MF_BYCOMMAND | MF_UNCHECKED);
+
 			switch (config.image.interpolation)
 			{
 			case InterpolateLinear:
@@ -146,6 +149,10 @@ namespace Window
 
 			case InterpolateCubic:
 				CheckMenuItem(hMenu, isFilters == MF_ENABLED ? IDM_FILT_CUBIC : IDM_FILT_LINEAR, MF_BYCOMMAND | MF_CHECKED);
+				break;
+
+			case InterpolateLanczos:
+				CheckMenuItem(hMenu, isFilters == MF_ENABLED ? IDM_FILT_LANCZOS : IDM_FILT_LINEAR, MF_BYCOMMAND | MF_CHECKED);
 				break;
 
 			default:
@@ -1551,6 +1558,10 @@ namespace Window
 						InterpolationChanged(hWnd, config.gl.version.value >= GL_VER_2_0 ? InterpolateCubic : InterpolateNearest);
 						break;
 
+					case InterpolateCubic:
+						InterpolationChanged(hWnd, config.gl.version.value >= GL_VER_2_0 ? InterpolateLanczos : InterpolateNearest);
+						break;
+
 					default:
 						InterpolationChanged(hWnd, InterpolateNearest);
 						break;
@@ -1723,6 +1734,11 @@ namespace Window
 
 			case IDM_FILT_CUBIC: {
 				InterpolationChanged(hWnd, InterpolateCubic);
+				return NULL;
+			}
+
+			case IDM_FILT_LANCZOS: {
+				InterpolationChanged(hWnd, InterpolateLanczos);
 				return NULL;
 			}
 

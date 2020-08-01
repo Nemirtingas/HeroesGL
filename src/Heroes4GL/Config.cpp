@@ -261,7 +261,7 @@ namespace Config
 
 				value = Config::Get(CONFIG_WRAPPER, "Interpolation", InterpolateHermite);
 				config.image.interpolation = *(InterpolationFilter*)&value;
-				if (config.image.interpolation < InterpolateNearest || config.image.interpolation > InterpolateCubic)
+				if (config.image.interpolation < InterpolateNearest || config.image.interpolation > InterpolateLanczos)
 					config.image.interpolation = InterpolateHermite;
 
 				value = Config::Get(CONFIG_WRAPPER, "Upscaling", UpscaleNone);

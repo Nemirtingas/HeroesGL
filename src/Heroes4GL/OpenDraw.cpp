@@ -485,10 +485,12 @@ VOID OpenDraw::RenderMid()
 		ShaderGroup* linear;
 		ShaderGroup* hermite;
 		ShaderGroup* cubic;
+		ShaderGroup* lanczos;
 	} shaders = {
 		new ShaderGroup(GLSL_VER_1_10, IDR_LINEAR_VERTEX, IDR_LINEAR_FRAGMENT, SHADER_LEVELS, NULL),
 		new ShaderGroup(GLSL_VER_1_10, IDR_HERMITE_VERTEX, IDR_HERMITE_FRAGMENT, SHADER_LEVELS, NULL),
-		new ShaderGroup(GLSL_VER_1_10, IDR_CUBIC_VERTEX, IDR_CUBIC_FRAGMENT, SHADER_LEVELS, NULL)
+		new ShaderGroup(GLSL_VER_1_10, IDR_CUBIC_VERTEX, IDR_CUBIC_FRAGMENT, SHADER_LEVELS, NULL),
+		new ShaderGroup(GLSL_VER_1_10, IDR_LANCZOS_VERTEX, IDR_LANCZOS_FRAGMENT, SHADER_LEVELS, NULL)
 	};
 
 	ShaderGroup* program = NULL;
@@ -607,6 +609,9 @@ VOID OpenDraw::RenderMid()
 							case InterpolateCubic:
 								program = shaders.cubic;
 								break;
+							case InterpolateLanczos:
+								program = shaders.lanczos;
+								break;
 							default:
 								program = shaders.linear;
 								break;
@@ -716,6 +721,7 @@ VOID OpenDraw::RenderNew()
 		ShaderGroup* linear;
 		ShaderGroup* hermite;
 		ShaderGroup* cubic;
+		ShaderGroup* lanczos;
 		ShaderGroup* xBRz_2x;
 		ShaderGroup* xBRz_3x;
 		ShaderGroup* xBRz_4x;
@@ -732,6 +738,7 @@ VOID OpenDraw::RenderNew()
 		new ShaderGroup(GLSL_VER_1_30, IDR_LINEAR_VERTEX, IDR_LINEAR_FRAGMENT, SHADER_LEVELS, NULL),
 		new ShaderGroup(GLSL_VER_1_30, IDR_HERMITE_VERTEX, IDR_HERMITE_FRAGMENT, SHADER_LEVELS, NULL),
 		new ShaderGroup(GLSL_VER_1_30, IDR_CUBIC_VERTEX, IDR_CUBIC_FRAGMENT, SHADER_LEVELS, NULL),
+		new ShaderGroup(GLSL_VER_1_30, IDR_LANCZOS_VERTEX, IDR_LANCZOS_FRAGMENT, SHADER_LEVELS, NULL),
 		new ShaderGroup(GLSL_VER_1_30, IDR_XBRZ_VERTEX, IDR_XBRZ_FRAGMENT_2X, NULL, NULL),
 		new ShaderGroup(GLSL_VER_1_30, IDR_XBRZ_VERTEX, IDR_XBRZ_FRAGMENT_3X, NULL, NULL),
 		new ShaderGroup(GLSL_VER_1_30, IDR_XBRZ_VERTEX, IDR_XBRZ_FRAGMENT_4X, NULL, NULL),
@@ -1085,6 +1092,9 @@ VOID OpenDraw::RenderNew()
 												case InterpolateCubic:
 													program = shaders.cubic;
 													break;
+												case InterpolateLanczos:
+													program = shaders.lanczos;
+													break;
 												default:
 													program = shaders.linear;
 													break;
@@ -1164,6 +1174,9 @@ VOID OpenDraw::RenderNew()
 												break;
 											case InterpolateCubic:
 												program = shaders.cubic;
+												break;
+											case InterpolateLanczos:
+												program = shaders.lanczos;
 												break;
 											default:
 												program = shaders.linear;

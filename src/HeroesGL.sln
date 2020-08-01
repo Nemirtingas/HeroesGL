@@ -71,6 +71,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "hermite", "hermite", "{91EC
 		glsl\hermite\fragment.glsl = glsl\hermite\fragment.glsl
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "lanczos", "lanczos", "{00393A6C-DE83-4500-838E-348F3FF44FE4}"
+	ProjectSection(SolutionItems) = preProject
+		glsl\lanczos\fragment.glsl = glsl\lanczos\fragment.glsl
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -111,6 +116,7 @@ Global
 		{AE45BC76-A7E0-49BF-B05B-F58D72A4E3C6} = {520D4B5D-885D-43CC-B75C-4F342C729245}
 		{C7909C56-36E5-4C1E-A7DA-E7F7EB05C41D} = {520D4B5D-885D-43CC-B75C-4F342C729245}
 		{91ECB352-8DF9-4AD6-A6D4-7409107FA052} = {520D4B5D-885D-43CC-B75C-4F342C729245}
+		{00393A6C-DE83-4500-838E-348F3FF44FE4} = {520D4B5D-885D-43CC-B75C-4F342C729245}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {76298140-6EFF-4E41-BE27-FD61CE97B9DE}

@@ -42,7 +42,7 @@ out vec4 fragColor;
 #define MIN_W -0.05
 #define LUM_ADD 0.25
 
-vec3 dt = vec3(1.0);
+const vec3 dt = vec3(1.0);
 
 void main()
 {

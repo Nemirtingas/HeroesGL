@@ -73,6 +73,7 @@ BEGIN
 			MENUITEM "&Линейная",					IDM_FILT_LINEAR
 			MENUITEM "&Эрмитова",					IDM_FILT_HERMITE
 			MENUITEM "&Кубическая",					IDM_FILT_CUBIC
+			MENUITEM "&Ланцоша",					IDM_FILT_LANCZOS
 		END
 		POPUP "&Масштабирование"
 		BEGIN
@@ -280,6 +281,7 @@ BEGIN
 			MENUITEM "&Лінійна",					IDM_FILT_LINEAR
 			MENUITEM "&Ермітова",					IDM_FILT_HERMITE
 			MENUITEM "&Кубічна",					IDM_FILT_CUBIC
+			MENUITEM "&Ланцоша",					IDM_FILT_LANCZOS
 		END
 		POPUP "&Масштабування"
 		BEGIN
@@ -494,6 +496,7 @@ BEGIN
 			MENUITEM "&Linear",						IDM_FILT_LINEAR
 			MENUITEM "&Hermite",					IDM_FILT_HERMITE
 			MENUITEM "&Cubic",						IDM_FILT_CUBIC
+			MENUITEM "&Lanczos",					IDM_FILT_LANCZOS
 		END
 		POPUP "&Upscaling"
 		BEGIN
@@ -642,6 +645,8 @@ IDR_HERMITE_FRAGMENT		RCDATA		DISCARDABLE		"..\\glsl\\hermite\\fragment.glsl"
 
 IDR_CUBIC_FRAGMENT			RCDATA		DISCARDABLE		"..\\glsl\\cubic\\fragment.glsl"
 
+IDR_LANCZOS_FRAGMENT		RCDATA		DISCARDABLE		"..\\glsl\\lanczos\\fragment.glsl"
+
 IDR_XSAL_VERTEX				RCDATA		DISCARDABLE		"..\\glsl\\xsal\\vertex.glsl"
 IDR_XSAL_FRAGMENT			RCDATA		DISCARDABLE		"..\\glsl\\xsal\\fragment.glsl"
 
@@ -671,8 +676,8 @@ IDR_SCALENX_FRAGMENT_3X		RCDATA		DISCARDABLE		"..\\glsl\\scalenx\\fragment_3x.gl
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2020,7,8,475
- PRODUCTVERSION 1,4,5,0
+ FILEVERSION 2020,8,1,478
+ PRODUCTVERSION 1,4,6,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS VS_FF_DEBUG
@@ -688,10 +693,10 @@ BEGIN
 		BLOCK "040904b0"
 		BEGIN
 			VALUE "FileDescription", "HoMM I & II - OpenGL wrapper"
-			VALUE "FileVersion", "2020.07.08.475"
+			VALUE "FileVersion", "2020.08.01.478"
 			VALUE "LegalCopyright", "© 2020 Verok (verokster@gmail.com)"
 			VALUE "OriginalFilename", "wing32.dll"
-			VALUE "ProductVersion", "1.4.5"
+			VALUE "ProductVersion", "1.4.6"
 			VALUE "ProductName", "HeroesGL"
 		END
 	END
