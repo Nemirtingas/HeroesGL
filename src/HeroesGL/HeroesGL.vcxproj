@@ -96,7 +96,7 @@
       <SectionAlignment>
       </SectionAlignment>
       <AssemblyDebug>true</AssemblyDebug>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;opengl32.lib;advapi32.lib;shell32.lib;winmm.lib;version.lib;crt.lib;vcruntimed.lib;ucrtd.lib;msvcrtd.lib</AdditionalDependencies>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;opengl32.lib;advapi32.lib;shell32.lib;winmm.lib;version.lib;crt.lib;vcruntimed.lib;ucrtd.lib;msvcrtd.lib;hooker.lib</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <FixedBaseAddress>true</FixedBaseAddress>
@@ -142,7 +142,7 @@
     </ClCompile>
     <ResourceCompile />
     <Link>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;opengl32.lib;advapi32.lib;shell32.lib;winmm.lib;version.lib;crt.lib;msvcrt.lib</AdditionalDependencies>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;opengl32.lib;advapi32.lib;shell32.lib;winmm.lib;version.lib;crt.lib;msvcrt.lib;hooker.lib</AdditionalDependencies>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <AssemblyDebug>false</AssemblyDebug>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
@@ -174,7 +174,6 @@
     <ClCompile Include="DirectDraw.cpp" />
     <ClCompile Include="DirectDrawPalette.cpp" />
     <ClCompile Include="DirectDrawSurface.cpp" />
-    <ClCompile Include="Hooker.cpp" />
     <ClCompile Include="IDrawClipper.cpp" />
     <ClCompile Include="IDraw.cpp" />
     <ClCompile Include="IDrawPalette.cpp" />
@@ -203,7 +202,6 @@
     <ClInclude Include="DirectDraw.h" />
     <ClInclude Include="DirectDrawPalette.h" />
     <ClInclude Include="DirectDrawSurface.h" />
-    <ClInclude Include="Hooker.h" />
     <ClInclude Include="IDrawClipper.h" />
     <ClInclude Include="IDraw.h" />
     <ClInclude Include="IDrawPalette.h" />

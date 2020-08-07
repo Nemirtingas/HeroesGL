@@ -46,14 +46,14 @@ uniform vec4 out_right;
 
 COMPAT_IN vec2 fTex;
 
-vec4 hermite(sampler2D tex, vec2 coord) {
+vec3 hermite(sampler2D tex, vec2 coord) {
 	vec2 uv = coord * texSize - 0.5;
 	vec2 texel = floor(uv) + 0.5;
 	vec2 t = fract(uv);
 
 	uv = texel + t * t * t * (t * (t * 6.0 - 15.0) + 10.0);
 
-	return COMPAT_TEXTURE(tex, uv / texSize);
+	return COMPAT_TEXTURE(tex, uv / texSize).rgb;
 }
 
 #ifdef LEVELS
@@ -88,7 +88,7 @@ vec3 levels(vec3 color) {
 #endif
 
 void main() {
-	vec3 color = hermite(tex01, fTex).rgb;
+	vec3 color = hermite(tex01, fTex);
 
 #ifdef LEVELS
 	color = satHue(color);

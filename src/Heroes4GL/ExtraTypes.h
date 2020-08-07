@@ -181,6 +181,7 @@ struct AddressSpace
 	DWORD fullscr_nop[2];
 	DWORD clientrect_nop[2];
 	DWORD updateWindow_nop[4];
+	DWORD updateWindowReg_nop;
 	LCID resLanguage;
 	WORD resDialog;
 	DWORD windowName;
@@ -205,6 +206,12 @@ struct ConfigItems
 	BOOL singleWindow;
 	BOOL coldCPU;
 	RendererType renderer;
+
+	struct {
+		BOOL allowed;
+		BOOL enabled;
+		DWORD systemMask;
+	} singleCore;
 
 	struct {
 		LCID current;
@@ -264,6 +271,7 @@ enum MenuType
 	MenuUpscale,
 	MenuColors,
 	MenuCpu,
+	MenuCore,
 	MenuRenderer,
 	MenuLanguage
 };

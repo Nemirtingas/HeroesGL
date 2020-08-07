@@ -46,7 +46,7 @@ uniform vec4 out_right;
 
 COMPAT_IN vec2 fTex;
 
-vec4 cubic(sampler2D tex, vec2 coord) {
+vec3 cubic(sampler2D tex, vec2 coord) {
 	vec2 uv = coord * texSize - 0.5;
 	vec2 texel = floor(uv) - 0.5;
 	vec2 t = fract(uv);
@@ -65,25 +65,13 @@ vec4 cubic(sampler2D tex, vec2 coord) {
 	vec4 x = vec4(dot(xs, p0), dot(xs, p1), dot(xs, p2), dot(xs, p3));
 	vec4 y = vec4(dot(ys, p0), dot(ys, p1), dot(ys, p2), dot(ys, p3));
 
-	vec4 color = x.r * y.r * COMPAT_TEXTURE(tex, (texel + vec2(0.0, 0.0)) / texSize) +
-		x.g * y.r * COMPAT_TEXTURE(tex, (texel + vec2(1.0, 0.0)) / texSize) +
-		x.b * y.r * COMPAT_TEXTURE(tex, (texel + vec2(2.0, 0.0)) / texSize) +
-		x.a * y.r * COMPAT_TEXTURE(tex, (texel + vec2(3.0, 0.0)) / texSize);
+	#define TEX(a, b) COMPAT_TEXTURE(tex, (texel + vec2(a, b)) / texSize).rgb
 
-	color += x.r * y.g * COMPAT_TEXTURE(tex, (texel + vec2(0.0, 1.0)) / texSize) +
-		x.g * y.g * COMPAT_TEXTURE(tex, (texel + vec2(1.0, 1.0)) / texSize) +
-		x.b * y.g * COMPAT_TEXTURE(tex, (texel + vec2(2.0, 1.0)) / texSize) +
-		x.a * y.g * COMPAT_TEXTURE(tex, (texel + vec2(3.0, 1.0)) / texSize);
-
-	color += x.r * y.b * COMPAT_TEXTURE(tex, (texel + vec2(0.0, 2.0)) / texSize) +
-		x.g * y.b * COMPAT_TEXTURE(tex, (texel + vec2(1.0, 2.0)) / texSize) +
-		x.b * y.b * COMPAT_TEXTURE(tex, (texel + vec2(2.0, 2.0)) / texSize) +
-		x.a * y.b * COMPAT_TEXTURE(tex, (texel + vec2(3.0, 2.0)) / texSize);
-
-	return color + x.r * y.a * COMPAT_TEXTURE(tex, (texel + vec2(0.0, 3.0)) / texSize) +
-		x.g * y.a * COMPAT_TEXTURE(tex, (texel + vec2(1.0, 3.0)) / texSize) +
-		x.b * y.a * COMPAT_TEXTURE(tex, (texel + vec2(2.0, 3.0)) / texSize) +
-		x.a * y.a * COMPAT_TEXTURE(tex, (texel + vec2(3.0, 3.0)) / texSize);
+	return
+		(TEX(0.0, 0.0) * x.r + TEX(1.0, 0.0) * x.g + TEX(2.0, 0.0) * x.b + TEX(3.0, 0.0) * x.a) * y.r +
+		(TEX(0.0, 1.0) * x.r + TEX(1.0, 1.0) * x.g + TEX(2.0, 1.0) * x.b + TEX(3.0, 1.0) * x.a) * y.g +
+		(TEX(0.0, 2.0) * x.r + TEX(1.0, 2.0) * x.g + TEX(2.0, 2.0) * x.b + TEX(3.0, 2.0) * x.a) * y.b +
+		(TEX(0.0, 3.0) * x.r + TEX(1.0, 3.0) * x.g + TEX(2.0, 3.0) * x.b + TEX(3.0, 3.0) * x.a) * y.a;
 }
 
 #ifdef LEVELS
@@ -118,7 +106,7 @@ vec3 levels(vec3 color) {
 #endif
 
 void main() {
-	vec3 color = cubic(tex01, fTex).rgb;
+	vec3 color = cubic(tex01, fTex);
 
 #ifdef LEVELS
 	color = satHue(color);

@@ -46,4 +46,6 @@ namespace Config
 	DWORD __fastcall Get(const CHAR* app, const CHAR* key, const CHAR* default, CHAR* returnString, DWORD nSize);
 	BOOL __fastcall Set(const CHAR* app, const CHAR* key, INT value);
 	BOOL __fastcall Set(const CHAR* app, const CHAR* key, CHAR* value);
+
+	VOID __fastcall SetProcessMask();
 }

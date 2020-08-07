@@ -291,6 +291,20 @@ namespace Window
 		}
 		break;
 
+		case MenuCore: {
+			if (config.singleCore.allowed)
+			{
+				EnableMenuItem(hMenu, IDM_SINGLE_CORE, MF_BYCOMMAND | MF_ENABLED);
+				CheckMenuItem(hMenu, IDM_SINGLE_CORE, MF_BYCOMMAND | (config.singleCore.enabled ? MF_CHECKED : MF_UNCHECKED));
+			}
+			else
+			{
+				EnableMenuItem(hMenu, IDM_SINGLE_CORE, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
+				CheckMenuItem(hMenu, IDM_SINGLE_CORE, MF_BYCOMMAND | MF_UNCHECKED);
+			}
+		}
+		break;
+
 		case MenuLanguage: {
 			MenuItemData mData;
 			mData.childId = IDM_LANG_ENGLISH;
@@ -351,6 +365,7 @@ namespace Window
 		CheckMenu(hMenu, MenuUpscale);
 		CheckMenu(hMenu, MenuColors);
 		CheckMenu(hMenu, MenuCpu);
+		CheckMenu(hMenu, MenuCore);
 		CheckMenu(hMenu, MenuLanguage);
 		CheckMenu(hMenu, MenuRenderer);
 	}
@@ -1666,10 +1681,16 @@ namespace Window
 			{
 			case IDM_PATCH_CPU: {
 				config.coldCPU = !config.coldCPU;
-
 				Config::Set(CONFIG_WRAPPER, "ColdCPU", config.coldCPU);
-
 				Window::CheckMenu(hWnd, MenuCpu);
+				return NULL;
+			}
+
+			case IDM_SINGLE_CORE: {
+				config.singleCore.enabled = !config.singleCore.enabled;
+				Config::Set(CONFIG_WRAPPER, "SingleCPU", config.singleCore.enabled);
+				Config::SetProcessMask();
+				Window::CheckMenu(hWnd, MenuCore);
 				return NULL;
 			}
 

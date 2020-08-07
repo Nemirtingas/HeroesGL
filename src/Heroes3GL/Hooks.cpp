@@ -203,7 +203,7 @@ const AddressSpace addressArray[] = {
 namespace Hooks
 {
 	const AddressSpace* hookSpace;
-	Hooker* mainHooker;
+	HOOKER hooker;
 
 	// ===============================================================
 	BOOL __stdcall AdjustWindowRectHook(LPRECT lpRect, DWORD dwStyle, BOOL bMenu)
@@ -298,9 +298,9 @@ namespace Hooks
 		if (!isModeReaded)
 		{
 			isModeReaded = TRUE;
-			mainHooker->ReadByte(hookSpace->bpp_address + 1, (BYTE*)&displayMode.bpp);
-			mainHooker->ReadDWord(hookSpace->bpp_address + 2 + 1, &displayMode.height);
-			mainHooker->ReadDWord(hookSpace->bpp_address + 2 + 5 + 1, &displayMode.width);
+			ReadByte(hooker, hookSpace->bpp_address + 1, (BYTE*)&displayMode.bpp);
+			ReadDWord(hooker, hookSpace->bpp_address + 2 + 1, &displayMode.height);
+			ReadDWord(hooker, hookSpace->bpp_address + 2 + 5 + 1, &displayMode.width);
 		}
 
 		return index != BITSPIXEL ? GetDeviceCaps(hdc, index) : displayMode.bpp;
@@ -348,7 +348,7 @@ namespace Hooks
 	BOOL __stdcall WinHelpHook(HWND hWndMain, LPCSTR lpszHelp, UINT uCommand, ULONG_PTR dwData)
 	{
 		CHAR filePath[MAX_PATH];
-		GetModuleFileName(mainHooker->hModule, filePath, MAX_PATH - 1);
+		GetModuleFileName(GetHookerModule(hooker), filePath, MAX_PATH - 1);
 		CHAR* p = StrLastChar(filePath, '\\');
 		*p = NULL;
 		StrCopy(p, "\\winhlp32.exe");
@@ -610,7 +610,7 @@ namespace Hooks
 
 			if (total)
 			{
-				SeedRandom(GetTickCount());
+				SeedRandom(timeGetTime());
 				DWORD random = total != 1 ? Random() % total : 0;
 
 				DWORD index = 0;
@@ -812,9 +812,9 @@ namespace Hooks
 			cursorTime = 16;
 
 		// ==========================================================
-		mainHooker->PatchByte(hookSpace->cursor_time_1 + 2, (BYTE)cursorTime);
-		mainHooker->PatchByte(hookSpace->cursor_time_2 + 2, (BYTE)cursorTime);
-		mainHooker->PatchDWord(hookSpace->cursor_time_2 + 5 + 1, cursorTime);
+		PatchByte(hooker, hookSpace->cursor_time_1 + 2, (BYTE)cursorTime);
+		PatchByte(hooker, hookSpace->cursor_time_2 + 2, (BYTE)cursorTime);
+		PatchDWord(hooker, hookSpace->cursor_time_2 + 5 + 1, cursorTime);
 
 		// ==========================================================
 		if (config.smooth.move)
@@ -828,7 +828,7 @@ namespace Hooks
 				-32, 0, 32
 			};
 
-			mainHooker->PatchBlock(hookSpace->move_object, &moveObject, sizeof(MoveObject));
+			PatchBlock(hooker, hookSpace->move_object, &moveObject, sizeof(MoveObject));
 		}
 		else
 		{
@@ -838,7 +838,7 @@ namespace Hooks
 				-32, 0, 32
 			};
 
-			mainHooker->PatchBlock(hookSpace->move_object, (VOID*)&moveObject, sizeof(MoveObject));
+			PatchBlock(hooker, hookSpace->move_object, (VOID*)&moveObject, sizeof(MoveObject));
 		}
 		// ==========================================================
 	}
@@ -1119,18 +1119,18 @@ namespace Hooks
 		const AddressSpace* defaultSpace = NULL;
 		const AddressSpace* equalSpace = NULL;
 
-		mainHooker = new Hooker(GetModuleHandle(NULL));
+		hooker = CreateHooker(GetModuleHandle(NULL));
 
 		hookSpace = addressArray;
 		DWORD hookCount = sizeof(addressArray) / sizeof(AddressSpace);
 		do
 		{
 			DWORD check1, check2, equal;
-			if (mainHooker->ReadDWord(hookSpace->check_1 + 1, &check1) && check1 == STYLE_FULL_OLD && mainHooker->ReadDWord(hookSpace->check_2 + 1, &check2) && check2 == STYLE_FULL_OLD)
+			if (ReadDWord(hooker, hookSpace->check_1 + 1, &check1) && check1 == STYLE_FULL_OLD && ReadDWord(hooker, hookSpace->check_2 + 1, &check2) && check2 == STYLE_FULL_OLD)
 			{
 				if (!hookSpace->equal_address)
 					defaultSpace = hookSpace;
-				else if (mainHooker->ReadDWord(hookSpace->equal_address, &equal) && equal == hookSpace->equal_value)
+				else if (ReadDWord(hooker, hookSpace->equal_address, &equal) && equal == hookSpace->equal_value)
 				{
 					equalSpace = hookSpace;
 					break;
@@ -1143,76 +1143,76 @@ namespace Hooks
 		hookSpace = equalSpace ? equalSpace : defaultSpace;
 		if (hookSpace)
 		{
-			Config::Load(mainHooker->hModule, hookSpace);
+			Config::Load(GetHookerModule(hooker), hookSpace);
 
-			Hooker* userHooker = new Hooker(GetModuleHandle("USER32.dll"));
+			HOOKER userHooker = CreateHooker(GetModuleHandle("USER32.dll"));
 			{
-				userHooker->PatchExport("PeekMessageA", PeekMessageHook);
+				PatchExport(userHooker, "PeekMessageA", PeekMessageHook);
 			}
-			delete userHooker;
+			ReleaseHooker(userHooker);
 			
 			{
-				mainHooker->PatchImport("PeekMessageA", PeekMessageHook);
+				PatchImport(hooker, "PeekMessageA", PeekMessageHook);
 
-				mainHooker->PatchImport("MessageBoxA", MessageBoxHook);
-				mainHooker->PatchImport("WinHelpA", WinHelpHook);
+				PatchImport(hooker, "MessageBoxA", MessageBoxHook);
+				PatchImport(hooker, "WinHelpA", WinHelpHook);
 
-				mainHooker->PatchImport("LoadMenuA", LoadMenuHook);
-				mainHooker->PatchImport("SetMenu", SetMenuHook);
-				mainHooker->PatchImport("EnableMenuItem", EnableMenuItemHook);
+				PatchImport(hooker, "LoadMenuA", LoadMenuHook);
+				PatchImport(hooker, "SetMenu", SetMenuHook);
+				PatchImport(hooker, "EnableMenuItem", EnableMenuItemHook);
 
-				mainHooker->PatchImport("Sleep", SleepHook);
-				mainHooker->PatchImport("DialogBoxParamA", DialogBoxParamHook);
+				PatchImport(hooker, "Sleep", SleepHook);
+				PatchImport(hooker, "DialogBoxParamA", DialogBoxParamHook);
 
-				//mainHooker->PatchImport("CreateFileA", CreateFileHook);
+				//PatchImport(hooker, "CreateFileA", CreateFileHook);
 
-				mainHooker->PatchImport("RegCreateKeyA", RegCreateKeyHook);
-				mainHooker->PatchImport("RegOpenKeyExA", RegOpenKeyExHook);
-				mainHooker->PatchImport("RegCloseKey", RegCloseKeyHook);
-				mainHooker->PatchImport("RegQueryValueExA", RegQueryValueExHook);
-				mainHooker->PatchImport("RegSetValueExA", RegSetValueExHook);
+				PatchImport(hooker, "RegCreateKeyA", RegCreateKeyHook);
+				PatchImport(hooker, "RegOpenKeyExA", RegOpenKeyExHook);
+				PatchImport(hooker, "RegCloseKey", RegCloseKeyHook);
+				PatchImport(hooker, "RegQueryValueExA", RegQueryValueExHook);
+				PatchImport(hooker, "RegSetValueExA", RegSetValueExHook);
 
-				mainHooker->PatchImport("GetDiskFreeSpaceA", GetDiskFreeSpaceHook);
+				PatchImport(hooker, "GetDiskFreeSpaceA", GetDiskFreeSpaceHook);
 
-				mainHooker->PatchImport("DirectDrawCreate", Main::DirectDrawCreate);
+				PatchImport(hooker, "DirectDrawCreate", Main::DirectDrawCreate);
 
-				AIL_waveOutOpen = (AIL_WAVEOUTOPEN)mainHooker->PatchImport("_AIL_waveOutOpen@16", AIL_waveOutOpenHook);
-				AIL_stream_position = (AIL_STREAM_POSITION)mainHooker->PatchImport("_AIL_stream_position@4", AIL_stream_positionHook);
-				AIL_open_stream = (AIL_OPEN_STREAM)mainHooker->PatchImport("_AIL_open_stream@12", AIL_open_streamHook);
-				AIL_set_stream_position = (AIL_SET_STREAM_POSITION)mainHooker->PatchImport("_AIL_set_stream_position@8", AIL_set_stream_positionHook);
+				PatchImport(hooker, "_AIL_waveOutOpen@16", AIL_waveOutOpenHook, (DWORD*)&AIL_waveOutOpen);
+				PatchImport(hooker, "_AIL_stream_position@4", AIL_stream_positionHook, (DWORD*)&AIL_stream_position);
+				PatchImport(hooker, "_AIL_open_stream@12", AIL_open_streamHook, (DWORD*)&AIL_open_stream);
+				PatchImport(hooker, "_AIL_set_stream_position@8", AIL_set_stream_positionHook, (DWORD*)&AIL_set_stream_position);
 
 				if (!config.isDDraw)
 				{
-					mainHooker->PatchImport("AdjustWindowRect", AdjustWindowRectHook);
-					mainHooker->PatchImport("AdjustWindowRectEx", AdjustWindowRectExHook);
-					mainHooker->PatchImport("CreateWindowExA", CreateWindowExHook);
-					mainHooker->PatchImport("SetWindowLongA", SetWindowLongHook);
+					PatchImport(hooker, "AdjustWindowRect", AdjustWindowRectHook);
+					PatchImport(hooker, "AdjustWindowRectEx", AdjustWindowRectExHook);
+					PatchImport(hooker, "CreateWindowExA", CreateWindowExHook);
+					PatchImport(hooker, "SetWindowLongA", SetWindowLongHook);
 
-					mainHooker->PatchImport("GetDeviceCaps", GetDeviceCapsHook);
-					mainHooker->PatchImport("GetCursorPos", GetCursorPosHook);
-					mainHooker->PatchImport("ScreenToClient", ScreenToClientHook);
-					mainHooker->PatchImport("ShowCursor", ShowCursorHook);
-					mainHooker->PatchImport("SetCursor", SetCursorHook);
+					PatchImport(hooker, "GetDeviceCaps", GetDeviceCapsHook);
+					PatchImport(hooker, "GetCursorPos", GetCursorPosHook);
+					PatchImport(hooker, "ScreenToClient", ScreenToClientHook);
+					PatchImport(hooker, "ShowCursor", ShowCursorHook);
+					PatchImport(hooker, "SetCursor", SetCursorHook);
 				}
 
-				mainHooker->UnmapFile();
+				UnmapFile(hooker);
 			}
 
 			if (!config.isDDraw)
-				mainHooker->PatchNop(hookSpace->renderNop, 5); // prevent on WM_PAINT
+				PatchNop(hooker, hookSpace->renderNop, 5); // prevent on WM_PAINT
 
 			// Smooth hero move
-			sub_DrawSizedRect_1 = mainHooker->RedirectCall(hookSpace->move_address, hook_0048017C);
+			sub_DrawSizedRect_1 = RedirectCall(hooker, hookSpace->move_address, hook_0048017C);
 
 			// Smooth map move
 			{
-				mainHooker->PatchCall(hookSpace->move_oldCenter, hook_00419707, 2);
-				sub_SetMapCenter = mainHooker->RedirectCall(hookSpace->move_drawRect - 25, FakeSetCenter);
-				sub_DrawSizedRect_2 = mainHooker->RedirectCall(hookSpace->move_drawRect, hook_004197A3);
+				PatchCall(hooker, hookSpace->move_oldCenter, hook_00419707, 2);
+				sub_SetMapCenter = RedirectCall(hooker, hookSpace->move_drawRect - 25, FakeSetCenter);
+				sub_DrawSizedRect_2 = RedirectCall(hooker, hookSpace->move_drawRect, hook_004197A3);
 			}
 
 			// replace ',' by '.' for atof
-			mainHooker->PatchHook(hookSpace->atof, StrToDoubleHook);
+			PatchHook(hooker, hookSpace->atof, StrToDoubleHook);
 
 			// Reset video table
 			/*{

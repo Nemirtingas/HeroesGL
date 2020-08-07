@@ -37,78 +37,78 @@
 #define STYLE_WIN_NEW (WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SIZEBOX | WS_MAXIMIZEBOX)
 
 const AddressSpace addressArray[] = {
-	// === RUS ======================================================================================================================================
+// === RUS ======================================================================================================================================
 #pragma region RUS
 	0x00844A4D, 0x00844B35, 0x00401D18, 0x90909090, 0x0084497C, 0x006D59BB, 0x00843736, 0x00843F0E,
-	0x00000000, 0x00842B01, 0x00842B36, 0x00842BB2,
+	0x00000000, 0x00842B01, 0x00842B36, 0x00842BB2, 0x00842B18,
 	LNG_RUSSIAN, IDD_HELP_ABOUT_RUSSIAN_1_0, IDS_HOMM_4, // Heroes IV - 1.0
 
 	0x008C6411, 0x008C64F9, 0x00000000, 0x00000000, 0x008C6340, 0x00736E79, 0x008C4EEE, 0x008C58B2,
-	0x008C4259, 0x008C4290, 0x008C429A, 0x008C4323,
+	0x008C4259, 0x008C4290, 0x008C429A, 0x008C4323, 0x008C4272,
 	LNG_RUSSIAN, IDD_HELP_ABOUT_RUSSIAN_2_2_GS, IDS_HOMM_4_GS, // Heroes IV - 2.2GS
 
 	0x008D38B1, 0x008D3999, 0x00000000, 0x00000000, 0x008D37E0, 0x0073D780, 0x008D238E, 0x008D2D52,
-	0x008D16F9, 0x008D1730, 0x008D173A, 0x008D17C3,
+	0x008D16F9, 0x008D1730, 0x008D173A, 0x008D17C3, 0x008D1712,
 	LNG_RUSSIAN, IDD_HELP_ABOUT_RUSSIAN_3_0_WOW, IDS_HOMM_4_WOW, // Heroes IV - 3.0WoW
-#pragma endregion 
+#pragma endregion
 
-	// === ENG ======================================================================================================================================
+// === ENG ======================================================================================================================================
 #pragma region ENG
 	0x00844A4D, 0x00844B35, 0x00000000, 0x00000000, 0x0084497C, 0x006D59BB, 0x00843736, 0x00843F0E,
-	0x00000000, 0x00842B01, 0x00842B36, 0x00842BB2,
+	0x00000000, 0x00842B01, 0x00842B36, 0x00842BB2, 0x00842B18,
 	LNG_ENGLISH, IDD_HELP_ABOUT_ENGLISH_1_0, IDS_HOMM_4, // Heroes IV - 1.0
 
 	0x0084C0FD, 0x0084C1E5, 0x00000000, 0x00000000, 0x0084C02C, 0x006DAC3B, 0x0084AD96, 0x0084B5BE,
-	0x00000000, 0x0084A161, 0x0084A196, 0x0084A212,
+	0x00000000, 0x0084A161, 0x0084A196, 0x0084A212, 0x0084A178,
 	LNG_ENGLISH, IDD_HELP_ABOUT_ENGLISH_1_2, IDS_HOMM_4, // Heroes IV - 1.2
 
 	0x008533C1, 0x008534A9, 0x00000000, 0x00000000, 0x008532F0, 0x006DF4F5, 0x0085201E, 0x00852862,
-	0x00851389, 0x008513C0, 0x008513CA, 0x00851453,
+	0x00851389, 0x008513C0, 0x008513CA, 0x00851453, 0x008513A2,
 	LNG_ENGLISH, IDD_HELP_ABOUT_ENGLISH_1_3, IDS_HOMM_4, // Heroes IV - 1.3
 
 	0x008C5F51, 0x008C6039, 0x00000000, 0x00000000, 0x008C5E80, 0x007362D9, 0x008C4A2E, 0x008C53F2,
-	0x008C3D99, 0x008C3DD0, 0x008C3DDA, 0x008C3E63,
+	0x008C3D99, 0x008C3DD0, 0x008C3DDA, 0x008C3E63, 0x008C3DB2,
 	LNG_ENGLISH, IDD_HELP_ABOUT_ENGLISH_2_0, IDS_HOMM_4, // Heroes IV - 2.0
 
 	0x008C63F1, 0x008C64D9, 0x00000000, 0x00000000, 0x008C6320, 0x007369F9, 0x008C4ECE, 0x008C5892,
-	0x008C4239, 0x008C4270, 0x008C427A, 0x008C4303,
+	0x008C4239, 0x008C4270, 0x008C427A, 0x008C4303, 0x008C4252,
 	LNG_ENGLISH, IDD_HELP_ABOUT_ENGLISH_2_2, IDS_HOMM_4, // Heroes IV - 2.2
 
 	0x008D3881, 0x008D3969, 0x00000000, 0x00000000, 0x008D37B0, 0x0073D9B0, 0x008D235E, 0x008D2D22,
-	0x008D16C9, 0x008D1700, 0x008D170A, 0x008D1793,
+	0x008D16C9, 0x008D1700, 0x008D170A, 0x008D1793, 0x008D16E2,
 	LNG_ENGLISH, IDD_HELP_ABOUT_ENGLISH_3_0, IDS_HOMM_4, // Heroes IV - 3.0
 
 	// ---------------------------------------------------------------------------------------------------------------------
 
 	0x008C5F51, 0x008C6039, 0x00401448, 0x00961278, 0x008C5E80, 0x007362D9, 0x008C4A2E, 0x008C53F2,
-	0x008C3D99, 0x008C3DD0, 0x008C3DDA, 0x008C3E63,
+	0x008C3D99, 0x008C3DD0, 0x008C3DDA, 0x008C3E63, 0x008C3DB2,
 	LNG_ENGLISH, IDD_HELP_ABOUT_ENGLISH_2_0_GS, IDS_HOMM_4_GS, // Heroes IV - 2.0GS
 
 	0x008C63F1, 0x008C64D9, 0x00401448, 0x00961278, 0x008C6320, 0x007369F9, 0x008C4ECE, 0x008C5892,
-	0x008C4239, 0x008C4270, 0x008C427A, 0x008C4303,
+	0x008C4239, 0x008C4270, 0x008C427A, 0x008C4303, 0x008C4252,
 	LNG_ENGLISH, IDD_HELP_ABOUT_ENGLISH_2_2_GS, IDS_HOMM_4_GS, // Heroes IV - 2.2GS
 
 	0x008D3881, 0x008D3969, 0x00401448, 0x00970278, 0x008D37B0, 0x0073D9B0, 0x008D235E, 0x008D2D22,
-	0x008D16C9, 0x008D1700, 0x008D170A, 0x008D1793,
+	0x008D16C9, 0x008D1700, 0x008D170A, 0x008D1793, 0x008D16E2,
 	LNG_ENGLISH, IDD_HELP_ABOUT_ENGLISH_3_0_GS, IDS_HOMM_4_GS, // Heroes IV - 3.0GS
 
 	// ---------------------------------------------------------------------------------------------------------------------
 
 	0x008D3881, 0x008D3969, 0x00401448, 0x00970200, 0x008D37B0, 0x0073D9B0, 0x008D235E, 0x008D2D22,
-	0x008D16C9, 0x008D1700, 0x008D170A, 0x008D1793,
+	0x008D16C9, 0x008D1700, 0x008D170A, 0x008D1793, 0x008D16E2,
 	LNG_ENGLISH, IDD_HELP_ABOUT_ENGLISH_3_0_WOW, IDS_HOMM_4_WOW, // Heroes IV - 3.0WoW
-#pragma endregion 
+#pragma endregion
 
-	// === POL ======================================================================================================================================
+// === POL ======================================================================================================================================
 #pragma region POL
 	0x008D8F91, 0x008D9079, 0x00000000, 0x00000000, 0x008D8EC0, 0x0074085C, 0x008D7A5E, 0x008D8422,
-	0x008D6DAE, 0x008D6DE6, 0x008D6DF0, 0x008D6E7A,
+	0x008D6DAE, 0x008D6DE6, 0x008D6DF0, 0x008D6E7A, 0x008D6DC6,
 	LNG_ENGLISH, IDD_HELP_ABOUT_ENGLISH_3_0_WOW, IDS_HOMM_4_WOW, // Heroes IV - 3.0WoW
 
 	0x008D1651, 0x008D1739, 0x00000000, 0x00000000, 0x008D1580, 0x0073B0A0, 0x008D012E, 0x008D0AF2,
-	0x008CF499, 0x008CF4D0, 0x008CF4DA, 0x008CF563,
+	0x008CF499, 0x008CF4D0, 0x008CF4DA, 0x008CF563, 0x008CF4B2,
 	LNG_ENGLISH, IDD_HELP_ABOUT_ENGLISH_3_0_WOW, IDS_HOMM_4_WOW // Heroes IV - 3.0WoW
-#pragma endregion 
+#pragma endregion
 };
 
 namespace Hooks
@@ -379,7 +379,7 @@ namespace Hooks
 		CHAR sub[256];
 		CHAR cls[16];
 	} regKey;
-	
+
 	LSTATUS __stdcall RegCreateKeyExHook(HKEY hKey, LPCSTR lpSubKey, DWORD Reserved, LPSTR lpClass, DWORD dwOptions, REGSAM samDesired, const LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult, LPDWORD lpdwDisposition)
 	{
 		regKey.type = TRUE;
@@ -412,9 +412,7 @@ namespace Hooks
 		{
 			DWORD dwDisposition;
 
-			LSTATUS res = regKey.type ?
-				RegCreateKeyEx(regKey.path, regKey.sub, NULL, regKey.cls, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKey, &dwDisposition) :
-				RegOpenKeyEx(regKey.path, regKey.sub, NULL, KEY_EXECUTE, &hKey);
+			LSTATUS res = regKey.type ? RegCreateKeyEx(regKey.path, regKey.sub, NULL, regKey.cls, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKey, &dwDisposition) : RegOpenKeyEx(regKey.path, regKey.sub, NULL, KEY_EXECUTE, &hKey);
 
 			if (!res)
 			{
@@ -450,13 +448,13 @@ namespace Hooks
 				{
 					*(INT*)lpData = Config::Get(CONFIG_APP, lpValueName, *(INT*)lpData);
 					if (lpType)
-						* lpType = REG_DWORD;
+						*lpType = REG_DWORD;
 				}
 				else
 				{
 					Config::Get(CONFIG_APP, lpValueName, "", (CHAR*)lpData, *lpcbData);
 					if (lpType)
-						* lpType = *lpcbData ? REG_BINARY : REG_SZ;
+						*lpType = *lpcbData ? REG_BINARY : REG_SZ;
 				}
 
 				regKey.calc = FALSE;
@@ -482,100 +480,116 @@ namespace Hooks
 		const AddressSpace* defaultSpace = NULL;
 		const AddressSpace* equalSpace = NULL;
 
-		Hooker* mainHooker = new Hooker(GetModuleHandle(NULL));
-
-		hookSpace = addressArray;
-		DWORD hookCount = sizeof(addressArray) / sizeof(AddressSpace);
-		do
+		HOOKER hooker = CreateHooker(GetModuleHandle(NULL));
 		{
-			DWORD check1, check2, equal;
-			if (mainHooker->ReadDWord(hookSpace->check_1 + 1, &check1) && check1 == STYLE_FULL_OLD &&
-				mainHooker->ReadDWord(hookSpace->check_2 + 1, &check2) && check2 == STYLE_FULL_OLD)
+			hookSpace = addressArray;
+			DWORD hookCount = sizeof(addressArray) / sizeof(AddressSpace);
+			do
 			{
-				if (!hookSpace->equal_address)
-					defaultSpace = hookSpace;
-				else if (mainHooker->ReadDWord(hookSpace->equal_address, &equal) && equal == hookSpace->equal_value)
+				DWORD check1, check2, equal;
+				if (ReadDWord(hooker, hookSpace->check_1 + 1, &check1) && check1 == STYLE_FULL_OLD && ReadDWord(hooker, hookSpace->check_2 + 1, &check2) && check2 == STYLE_FULL_OLD)
 				{
-					equalSpace = hookSpace;
-					break;
+					if (!hookSpace->equal_address)
+						defaultSpace = hookSpace;
+					else if (ReadDWord(hooker, hookSpace->equal_address, &equal) && equal == hookSpace->equal_value)
+					{
+						equalSpace = hookSpace;
+						break;
+					}
 				}
-			}
 
-			++hookSpace;
-		} while (--hookCount);
+				++hookSpace;
+			} while (--hookCount);
 
-		hookSpace = equalSpace ? equalSpace : defaultSpace;
-		if (hookSpace)
-		{
-			Config::Load(mainHooker->hModule, hookSpace);
-
+			hookSpace = equalSpace ? equalSpace : defaultSpace;
+			if (hookSpace)
 			{
-				mainHooker->PatchImport("CreateWindowExA", CreateWindowExHook);
-				mainHooker->PatchImport("MessageBoxA", MessageBoxHook);
+				Config::Load(GetHookerModule(hooker), hookSpace);
 
-				mainHooker->PatchImport("LoadMenuA", LoadMenuHook);
-				mainHooker->PatchImport("SetMenu", SetMenuHook);
-				mainHooker->PatchImport("EnableMenuItem", EnableMenuItemHook);
-				mainHooker->PatchImport("PeekMessageA", PeekMessageHook);
+				{
+					PatchImport(hooker, "CreateWindowExA", CreateWindowExHook);
+					PatchImport(hooker, "MessageBoxA", MessageBoxHook);
 
-				mainHooker->PatchImport("RegCreateKeyExA", RegCreateKeyExHook);
-				mainHooker->PatchImport("RegOpenKeyExA", RegOpenKeyExHook);
-				mainHooker->PatchImport("RegCloseKey", RegCloseKeyHook);
-				mainHooker->PatchImport("RegQueryValueExA", RegQueryValueExHook);
-				mainHooker->PatchImport("RegSetValueExA", RegSetValueExHook);
+					PatchImport(hooker, "LoadMenuA", LoadMenuHook);
+					PatchImport(hooker, "SetMenu", SetMenuHook);
+					PatchImport(hooker, "EnableMenuItem", EnableMenuItemHook);
+					PatchImport(hooker, "PeekMessageA", PeekMessageHook);
 
-				mainHooker->PatchImport("DirectDrawCreateEx", Main::DirectDrawCreateEx);
+					PatchImport(hooker, "RegCreateKeyExA", RegCreateKeyExHook);
+					PatchImport(hooker, "RegOpenKeyExA", RegOpenKeyExHook);
+					PatchImport(hooker, "RegCloseKey", RegCloseKeyHook);
+					PatchImport(hooker, "RegQueryValueExA", RegQueryValueExHook);
+					PatchImport(hooker, "RegSetValueExA", RegSetValueExHook);
 
+					PatchImport(hooker, "DirectDrawCreateEx", Main::DirectDrawCreateEx);
+
+					if (!config.isDDraw)
+					{
+						PatchImport(hooker, "SetWindowLongA", SetWindowLongHook);
+						PatchImport(hooker, "AdjustWindowRectEx", AdjustWindowRectExHook);
+						PatchImport(hooker, "MoveWindow", MoveWindowHook);
+
+						PatchImport(hooker, "GetWindowRect", GetWindowRectHook);
+						PatchImport(hooker, "GetClientRect", GetClientRectHook);
+						PatchImport(hooker, "GetCursorPos", GetCursorPosHook);
+
+						PatchImport(hooker, "SetActiveWindow", SetActiveWindowHook);
+					}
+				}
+
+				// windowed limitations
 				if (!config.isDDraw)
 				{
-					mainHooker->PatchImport("SetWindowLongA", SetWindowLongHook);
-					mainHooker->PatchImport("AdjustWindowRectEx", AdjustWindowRectExHook);
-					mainHooker->PatchImport("MoveWindow", MoveWindowHook);
+					PatchNop(hooker, hookSpace->fullscr_nop[0], 20);
+					PatchNop(hooker, hookSpace->fullscr_nop[1], 4);
 
-					mainHooker->PatchImport("GetWindowRect", GetWindowRectHook);
-					mainHooker->PatchImport("GetClientRect", GetClientRectHook);
-					mainHooker->PatchImport("GetCursorPos", GetCursorPosHook);
-
-					mainHooker->PatchImport("SetActiveWindow", SetActiveWindowHook);
-				}
-
-				mainHooker->UnmapFile();
-			}
-
-			// windowed limitations
-			if (!config.isDDraw)
-			{
-				mainHooker->PatchNop(hookSpace->fullscr_nop[0], 20);
-				mainHooker->PatchNop(hookSpace->fullscr_nop[1], 4);
-
-				const DWORD* lpNop = hookSpace->clientrect_nop;
-				DWORD count = sizeof(hookSpace->clientrect_nop) / sizeof(DWORD);
-				do
-					mainHooker->PatchNop(*lpNop++, 2);
-				while (--count);
-
-				count = sizeof(hookSpace->updateWindow_nop) / sizeof(DWORD);
-				lpNop = hookSpace->updateWindow_nop;
-				if (*lpNop)
-				{
+					const DWORD* lpNop = hookSpace->clientrect_nop;
+					DWORD count = sizeof(hookSpace->clientrect_nop) / sizeof(DWORD);
 					do
-						mainHooker->PatchNop(*lpNop++, 5);
+						PatchNop(hooker, *lpNop++, 2);
 					while (--count);
-				}
-				else
-				{
-					BYTE addEsp[5] = { 0x83, 0xC4, 0x08, 0x90, 0x90, };
 
-					--count;
-					do
-						mainHooker->PatchBlock(*lpNop++, addEsp, sizeof(addEsp));
-					while (--count);
+					count = sizeof(hookSpace->updateWindow_nop) / sizeof(DWORD);
+					lpNop = hookSpace->updateWindow_nop;
+					if (*lpNop)
+					{
+						do
+							PatchNop(hooker, *lpNop++, 5);
+						while (--count);
+
+						PatchNop(hooker, hookSpace->updateWindowReg_nop, 5);
+					}
+					else
+					{
+						const BYTE addEsp8[5] = {
+							0x83,
+							0xC4,
+							0x08,
+							0x90,
+							0x90,
+						};
+
+						--count;
+						++lpNop;
+						do
+							PatchBlock(hooker, *lpNop++, (VOID*)addEsp8, sizeof(addEsp8));
+						while (--count);
+
+						const BYTE addEsp4[5] = {
+							0x83,
+							0xC4,
+							0x04,
+							0x90,
+							0x90,
+						};
+						PatchBlock(hooker, hookSpace->updateWindowReg_nop, (VOID*)addEsp4, sizeof(addEsp4));
+					}
 				}
+
+				return TRUE;
 			}
-
-			return TRUE;
 		}
-
+		ReleaseHooker(hooker);
 		return FALSE;
 	}
 }

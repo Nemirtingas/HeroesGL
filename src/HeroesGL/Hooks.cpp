@@ -171,7 +171,7 @@ const AddressSpace addressArray[] = {
 namespace Hooks
 {
 	const AddressSpace* hookSpace;
-	Hooker* mainHooker;
+	//Hooker* mainHooker;
 	HWND hWnd;
 
 #pragma region Fix paint rectangle on VM
@@ -1186,7 +1186,7 @@ namespace Hooks
 	DWORD savedTick = 0;
 	VOID __cdecl SetTickCount()
 	{
-		savedTick = GetTickCount() + 20;
+		savedTick = timeGetTime() + 20;
 	}
 
 	VOID __cdecl UpdatePaletteHook(VOID* pallete)
@@ -1243,7 +1243,7 @@ namespace Hooks
 
 			if (total)
 			{
-				SeedRandom(GetTickCount());
+				SeedRandom(timeGetTime());
 				DWORD random = total != 1 ? Random() % total : 0;
 
 				DWORD index = 0;
@@ -1420,65 +1420,15 @@ namespace Hooks
 			HMODULE hWinMM = LoadLibrary(filePath);
 			if (hWinMM)
 			{
-				Hooker* hooker = new Hooker(GetModuleHandle("MSS32.dll"));
-				if (hooker->hModule)
+				HMODULE hMss32 = GetModuleHandle("MSS32.dll");
+				if (hMss32)
 				{
-					PIMAGE_DATA_DIRECTORY dataDir = &hooker->headNT->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
-					if (dataDir->Size)
+					HOOKER hooker = CreateHooker(GetModuleHandle(NULL));
 					{
-						PIMAGE_IMPORT_DESCRIPTOR imports = (PIMAGE_IMPORT_DESCRIPTOR)((DWORD)hooker->hModule + dataDir->VirtualAddress);
-						for (DWORD idx = 0; imports->Name; ++idx, ++imports)
-						{
-							CHAR* libraryName = (CHAR*)((DWORD)hooker->hModule + imports->Name);
-							if (!StrCompareInsensitive(libraryName, "WINMM.dll"))
-							{
-								PIMAGE_THUNK_DATA addressThunk = (PIMAGE_THUNK_DATA)((DWORD)hooker->hModule + imports->FirstThunk);
-								PIMAGE_THUNK_DATA nameThunk;
-								if (imports->OriginalFirstThunk)
-									nameThunk = (PIMAGE_THUNK_DATA)((DWORD)hooker->hModule + imports->OriginalFirstThunk);
-								else if (hooker->MapFile())
-								{
-									PIMAGE_NT_HEADERS headNT = (PIMAGE_NT_HEADERS)((BYTE*)hooker->mapAddress + ((PIMAGE_DOS_HEADER)hooker->mapAddress)->e_lfanew);
-									PIMAGE_SECTION_HEADER sh = (PIMAGE_SECTION_HEADER)((DWORD)&headNT->OptionalHeader + headNT->FileHeader.SizeOfOptionalHeader);
-
-									nameThunk = NULL;
-									DWORD sCount = headNT->FileHeader.NumberOfSections;
-									while (sCount--)
-									{
-										if (imports->FirstThunk >= sh->VirtualAddress && imports->FirstThunk < sh->VirtualAddress + sh->Misc.VirtualSize)
-										{
-											nameThunk = PIMAGE_THUNK_DATA((DWORD)hooker->mapAddress + sh->PointerToRawData + imports->FirstThunk - sh->VirtualAddress);
-											break;
-										}
-
-										++sh;
-									}
-								}
-
-								if (nameThunk)
-								{
-									for (; nameThunk->u1.AddressOfData; ++nameThunk, ++addressThunk)
-									{
-										PIMAGE_IMPORT_BY_NAME name = PIMAGE_IMPORT_BY_NAME((DWORD)hooker->hModule + nameThunk->u1.AddressOfData);
-
-										WORD hint;
-										if (hooker->ReadWord((INT)name - hooker->baseOffset, &hint))
-										{
-											DWORD old;
-											if (hooker->ReadDWord((INT)&addressThunk->u1.AddressOfData - hooker->baseOffset, &old))
-											{
-												DWORD address = (DWORD)GetProcAddress(hWinMM, (CHAR*)name->Name);
-												if (address)
-													hooker->PatchDWord((INT)&addressThunk->u1.AddressOfData - hooker->baseOffset, (DWORD)address);
-											}
-										}
-									}
-								}
-							}
-						}
+						RedirectImports(hooker, "WINMM.dll", hWinMM);
 					}
+					ReleaseHooker(hooker);
 				}
-				delete hooker;
 			}
 		}
 	}
@@ -1577,68 +1527,68 @@ namespace Hooks
 
 	BOOL Load()
 	{
-		Hooker* mainHooker = new Hooker(GetModuleHandle(NULL));
-
+		HOOKER hooker = CreateHooker(GetModuleHandle(NULL));
+		{
 		hookSpace = addressArray;
 		DWORD hookCount = sizeof(addressArray) / sizeof(AddressSpace);
 		do
 		{
 			DWORD check;
-			if (mainHooker->ReadDWord(hookSpace->check + 6, &check) && check == STYLE_FULL_OLD)
+			if (ReadDWord(hooker, hookSpace->check + 6, &check) && check == STYLE_FULL_OLD)
 			{
-				Config::Load(mainHooker->hModule, hookSpace);
+				Config::Load(GetHookerModule(hooker), hookSpace);
 
 				{
-					mainHooker->PatchImport("AdjustWindowRect", AdjustWindowRectHook);
-					mainHooker->PatchImport("CreateWindowExA", CreateWindowExHook);
-					mainHooker->PatchImport("SetWindowLongA", SetWindowLongHook);
+					PatchImport(hooker, "AdjustWindowRect", AdjustWindowRectHook);
+					PatchImport(hooker, "CreateWindowExA", CreateWindowExHook);
+					PatchImport(hooker, "SetWindowLongA", SetWindowLongHook);
 
-					mainHooker->PatchImport("MessageBoxA", MessageBoxHook);
-					mainHooker->PatchImport("WinHelpA", WinHelpHook);
+					PatchImport(hooker, "MessageBoxA", MessageBoxHook);
+					PatchImport(hooker, "WinHelpA", WinHelpHook);
 
-					mainHooker->PatchImport("LoadMenuA", LoadMenuHook);
-					mainHooker->PatchImport("SetMenu", SetMenuHook);
-					mainHooker->PatchImport("EnableMenuItem", EnableMenuItemHook);
+					PatchImport(hooker, "LoadMenuA", LoadMenuHook);
+					PatchImport(hooker, "SetMenu", SetMenuHook);
+					PatchImport(hooker, "EnableMenuItem", EnableMenuItemHook);
 
-					mainHooker->PatchImport("Sleep", SleepHook);
-					mainHooker->PatchImport("DialogBoxParamA", DialogBoxParamHook);
+					PatchImport(hooker, "Sleep", SleepHook);
+					PatchImport(hooker, "DialogBoxParamA", DialogBoxParamHook);
 
-					mainHooker->PatchImport("PeekMessageA", PeekMessageHook);
-					mainHooker->PatchImport("LoadIconA", LoadIconHook);
-					mainHooker->PatchImport("RegisterClassA", RegisterClassHook);
+					PatchImport(hooker, "PeekMessageA", PeekMessageHook);
+					PatchImport(hooker, "LoadIconA", LoadIconHook);
+					PatchImport(hooker, "RegisterClassA", RegisterClassHook);
 
-					mainHooker->PatchImport("RegCreateKeyA", RegCreateKeyHook);
-					mainHooker->PatchImport("RegOpenKeyExA", RegOpenKeyExHook);
-					mainHooker->PatchImport("RegCloseKey", RegCloseKeyHook);
-					mainHooker->PatchImport("RegQueryValueExA", RegQueryValueExHook);
-					mainHooker->PatchImport("RegSetValueExA", RegSetValueExHook);
+					PatchImport(hooker, "RegCreateKeyA", RegCreateKeyHook);
+					PatchImport(hooker, "RegOpenKeyExA", RegOpenKeyExHook);
+					PatchImport(hooker, "RegCloseKey", RegCloseKeyHook);
+					PatchImport(hooker, "RegQueryValueExA", RegQueryValueExHook);
+					PatchImport(hooker, "RegSetValueExA", RegSetValueExHook);
 
-					AudiereOpenDevice = (ADROPENDEVICE)mainHooker->PatchImport("_AdrOpenDevice@8", AdrOpenDeviceHook);
-					AudiereOpenSampleSource = (ADROPENSAMPLESOURCE)mainHooker->PatchImport("_AdrOpenSampleSource@4", AdrOpenSampleSourceHook);
+					PatchImport(hooker, "_AdrOpenDevice@8", AdrOpenDeviceHook, (DWORD*)&AudiereOpenDevice);
+					PatchImport(hooker, "_AdrOpenSampleSource@4", AdrOpenSampleSourceHook, (DWORD*)&AudiereOpenSampleSource);
 
 					if (!config.isDDraw)
 					{
-						mainHooker->PatchImport("LoadLibraryA", LoadLibraryHook);
-						mainHooker->PatchImport("FreeLibrary", FreeLibraryHook);
-						mainHooker->PatchImport("GetProcAddress", GetProcAddressHook);
+						PatchImport(hooker, "LoadLibraryA", LoadLibraryHook);
+						PatchImport(hooker, "FreeLibrary", FreeLibraryHook);
+						PatchImport(hooker, "GetProcAddress", GetProcAddressHook);
 
-						mainHooker->PatchImport("ScreenToClient", ScreenToClientHook);
-						mainHooker->PatchImport("InvalidateRect", hook_InvalidateRect);
-						mainHooker->PatchImport("BeginPaint", BeginPaintHook);
+						PatchImport(hooker, "ScreenToClient", ScreenToClientHook);
+						PatchImport(hooker, "InvalidateRect", hook_InvalidateRect);
+						PatchImport(hooker, "BeginPaint", BeginPaintHook);
 					}
 
 					if (config.cursor.fix)
 					{
 						if (hookSpace->icons_list)
 						{
-							mainHooker->PatchImport("CreateBitmapIndirect", CreateBitmapIndirectHook);
-							mainHooker->PatchImport("CreateIconIndirect", CreateIconIndirectHook);
+							PatchImport(hooker, "CreateBitmapIndirect", CreateBitmapIndirectHook);
+							PatchImport(hooker, "CreateIconIndirect", CreateIconIndirectHook);
 
 							if (!config.isDDraw)
 							{
-								mainHooker->PatchImport("SetCursor", SetCursorHook);
-								mainHooker->PatchImport("ShowCursor", ShowCursorHook);
-								mainHooker->PatchImport("LoadCursorA", LoadCursorHook);
+								PatchImport(hooker, "SetCursor", SetCursorHook);
+								PatchImport(hooker, "ShowCursor", ShowCursorHook);
+								PatchImport(hooker, "LoadCursorA", LoadCursorHook);
 							}
 							else
 								config.cursor.fix = FALSE;
@@ -1646,64 +1596,63 @@ namespace Hooks
 						else
 							config.cursor.fix = FALSE;
 					}
-
-					mainHooker->UnmapFile();
 				}
 
-				realEntry = mainHooker->RedirectCall(hookSpace->entry, WinMain);
+				realEntry = RedirectCall(hooker, hookSpace->entry, WinMain);
 
 				if (hookSpace->fadein_tick && hookSpace->fadein_update_1 && hookSpace->fadein_update_2)
 				{
-					mainHooker->PatchCall(hookSpace->fadein_tick, SetTickCount);
-					mainHooker->PatchCall(hookSpace->fadein_update_1, UpdatePaletteHook);
-					mainHooker->PatchCall(hookSpace->fadein_update_2, UpdatePaletteHook);
+					PatchCall(hooker, hookSpace->fadein_tick, SetTickCount);
+					PatchCall(hooker, hookSpace->fadein_update_1, UpdatePaletteHook);
+					PatchCall(hooker, hookSpace->fadein_update_2, UpdatePaletteHook);
 				}
 
 				if (hookSpace->fadeout_tick && hookSpace->fadeout_update)
 				{
-					mainHooker->PatchCall(hookSpace->fadeout_tick, SetTickCount);
-					mainHooker->PatchCall(hookSpace->fadeout_update, UpdatePaletteHook);
+					PatchCall(hooker, hookSpace->fadeout_tick, SetTickCount);
+					PatchCall(hooker, hookSpace->fadeout_update, UpdatePaletteHook);
 				}
 
 				if (!config.isDDraw)
 				{
 					if (hookSpace->resLanguage == LNG_ENGLISH)
 					{
-						mainHooker->PatchNop(hookSpace->method2_nop, 6);
-						mainHooker->PatchWord(hookSpace->method2_jmp, 0xE990);
-						mainHooker->PatchByte(hookSpace->invalid_jmp, 0xEB);
+						PatchNop(hooker, hookSpace->method2_nop, 6);
+						PatchWord(hooker, hookSpace->method2_jmp, 0xE990);
+						PatchByte(hooker, hookSpace->invalid_jmp, 0xEB);
 					}
 					else
 					{
-						mainHooker->PatchNop(hookSpace->method2_nop, 2);
-						mainHooker->PatchByte(hookSpace->method2_jmp, 0xEB);
-						mainHooker->PatchWord(hookSpace->invalid_jmp, 0xE990);
+						PatchNop(hooker, hookSpace->method2_nop, 2);
+						PatchByte(hooker, hookSpace->method2_jmp, 0xEB);
+						PatchWord(hooker, hookSpace->invalid_jmp, 0xE990);
 					}
 
-					mainHooker->PatchHook(hookSpace->setFullScreenStatus, hookSpace->game_version == 2 ? hook_mode_v2 : hook_mode_v1);
-					ddSetFullScreenStatus = hookSpace->ddSetFullScreenStatus + mainHooker->baseOffset;
-					checkChangeCursor = hookSpace->checkChangeCursor + mainHooker->baseOffset;
+					PatchHook(hooker, hookSpace->setFullScreenStatus, hookSpace->game_version == 2 ? hook_mode_v2 : hook_mode_v1);
+					DWORD baseOffset = GetBaseOffset(hooker);
+					ddSetFullScreenStatus = hookSpace->ddSetFullScreenStatus + baseOffset;
+					checkChangeCursor = hookSpace->checkChangeCursor + baseOffset;
 
-					config.update.offset = (POINT*)(hookSpace->moveOffset + mainHooker->baseOffset);
+					config.update.offset = (POINT*)(hookSpace->moveOffset + baseOffset);
 					invalidEsp = hookSpace->invalid_esp;
 				}
 
 				if (hookSpace->icons_list && hookSpace->color_pointer && config.cursor.fix)
 				{
-					mainHooker->PatchDWord(hookSpace->color_pointer, TRUE);
+					PatchDWord(hooker, hookSpace->color_pointer, TRUE);
 					if (hookSpace->color_pointer_nop)
-						mainHooker->PatchNop(hookSpace->color_pointer_nop, 10);
+						PatchNop(hooker, hookSpace->color_pointer_nop, 10);
 				}
 
 				//PatchWinMM();
 
 				if (hookSpace->pointer_fs_nop)
-					mainHooker->PatchNop(hookSpace->pointer_fs_nop, 2);
+					PatchNop(hooker, hookSpace->pointer_fs_nop, 2);
 
 				if (hookSpace->dispelMagicSwitch)
 				{
 					BYTE caseList[15];
-					if (mainHooker->ReadBlock(hookSpace->dispelMagicSwitch, &caseList, sizeof(caseList)))
+					if (ReadBlock(hooker, hookSpace->dispelMagicSwitch, &caseList, sizeof(caseList)))
 					{
 						BYTE norm = caseList[0];
 						BYTE alt = caseList[1];
@@ -1723,11 +1672,11 @@ namespace Hooks
 						caseList[13] = norm;
 						caseList[14] = norm;
 
-						mainHooker->PatchBlock(hookSpace->dispelMagicSwitch, &caseList, sizeof(caseList));
+						PatchBlock(hooker, hookSpace->dispelMagicSwitch, &caseList, sizeof(caseList));
 
 						WORD inst;
-						if (mainHooker->ReadWord(hookSpace->dispelMagicFix, &inst))
-							mainHooker->PatchWord(hookSpace->dispelMagicFix, inst == 0xC1DE ? 0xE1DE : 0x6DD8); // faddp -> fsubrp
+						if (ReadWord(hooker, hookSpace->dispelMagicFix, &inst))
+							PatchWord(hooker, hookSpace->dispelMagicFix, inst == 0xC1DE ? 0xE1DE : 0x6DD8); // faddp -> fsubrp
 					}
 				}
 
@@ -1736,6 +1685,8 @@ namespace Hooks
 
 			++hookSpace;
 		} while (--hookCount);
+		}
+		ReleaseHooker(hooker);
 
 		return FALSE;
 	}

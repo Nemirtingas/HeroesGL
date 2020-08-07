@@ -46,9 +46,6 @@
     <ClCompile Include="DirectDraw.cpp">
       <Filter>Source Files\Draw\Direct</Filter>
     </ClCompile>
-    <ClCompile Include="Hooker.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ShaderGroup.cpp">
       <Filter>Source Files\Shader</Filter>
     </ClCompile>
@@ -104,9 +101,6 @@
     </ClInclude>
     <ClInclude Include="DirectDraw.h">
       <Filter>Header Files\Draw\Direct</Filter>
-    </ClInclude>
-    <ClInclude Include="Hooker.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ShaderGroup.h">
       <Filter>Header Files\Shader</Filter>

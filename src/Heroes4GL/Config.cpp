@@ -24,6 +24,7 @@
 
 #include "stdafx.h"
 #include "Config.h"
+#include "Mmsystem.h"
 
 ConfigItems config;
 
@@ -151,6 +152,8 @@ namespace Config
 			config.coldCPU = TRUE;
 			Config::Set(CONFIG_WRAPPER, "ColdCPU", config.coldCPU);
 
+			Config::Set(CONFIG_WRAPPER, "SingleCPU", config.singleCore.enabled);
+
 			config.image.aspect = TRUE;
 			Config::Set(CONFIG_WRAPPER, "ImageAspect", config.image.aspect);
 
@@ -245,6 +248,8 @@ namespace Config
 				LoadString(hDllModule, hookSpace->windowName, config.title, sizeof(config.title));
 			
 			config.coldCPU = (BOOL)Config::Get(CONFIG_WRAPPER, "ColdCPU", TRUE);
+
+			config.singleCore.enabled = (BOOL)Config::Get(CONFIG_WRAPPER, "SingleCPU", FALSE);
 		}
 
 		if (!config.isDDraw)
@@ -450,6 +455,15 @@ namespace Config
 		}
 
 		config.colors.current = &config.colors.active;
+
+		DWORD processMask;
+		HANDLE hProcess = GetCurrentProcess();
+		if (GetProcessAffinityMask(hProcess, &processMask, &config.singleCore.systemMask))
+		{
+			config.singleCore.allowed = TRUE;
+			SeedRandom(timeGetTime());
+			SetProcessMask();
+		}
 	}
 
 	BOOL __fastcall Check(const CHAR* app, const CHAR* key)
@@ -493,5 +507,30 @@ namespace Config
 	BOOL __fastcall Set(const CHAR* app, const CHAR* key, CHAR* value)
 	{
 		return WritePrivateProfileString(app, key, value, config.file);
+	}
+
+	VOID __fastcall SetProcessMask()
+	{
+		DWORD mask = config.singleCore.systemMask;
+
+		if (config.singleCore.enabled)
+		{
+			DWORD cores = 0;
+			DWORD count = sizeof(DWORD) << 3;
+			do
+			{
+				if (mask & 1)
+					++cores;
+
+				mask >>= 1;
+			} while (--count);
+
+			DWORD index = Random() % cores;
+			mask = 1;
+			while (index--)
+				mask <<= 1;
+		}
+
+		SetProcessAffinityMask(GetCurrentProcess(), mask);
 	}
 }
