@@ -191,8 +191,9 @@ struct AddressSpace
 	DWORD move_object;
 	DWORD move_address;
 	DWORD bpp_address;
-	/*DWORD video_address;
-	DWORD video_count;*/
+	DWORD start_bonus_fix;
+	DWORD video_address;
+	DWORD video_count;
 	LCID resLanguage;
 	DWORD atof;
 	DWORD move_oldCenter;
@@ -213,8 +214,10 @@ struct VideoInfo
 {
 	CHAR* fileName;
 	CHAR* altName;
-	BYTE isBink;
-	BYTE flags[11];
+	BYTE bink;
+	BYTE flags_0[2];
+	BYTE preload;
+	BYTE flags_1[8];
 };
 
 struct VideoFile
@@ -304,4 +307,14 @@ enum MenuType
 	MenuSmoothMove,
 	MenuRenderer,
 	MenuLanguage
+};
+
+class OpenDraw;
+struct DialogParams {
+	HWND hWnd;
+	HWND hWndDefault;
+	BOOL isGrayed;
+	OpenDraw* ddraw;
+	BOOL isFullscreen;
+	ULONG_PTR cookie;
 };

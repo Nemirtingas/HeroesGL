@@ -70,20 +70,11 @@ typedef struct _iobuf {
 } FILE;
 #endif
 
-//#define BINKNOFILLIOBUF 0x00200000L // Don't Fill the IO buffer (in BinkOpen and BinkCopyTo)
-//#define BINKSIMULATE 0x00400000L // Simulate the speed (call BinkSim first)
-//#define BINKNOTHREADEDIO 0x08000000L // Don't use a background thread for IO 
-
 extern "C"
 {
 	_CRTIMP int __cdecl sprintf(char*, const char*, ...);
 	_CRTIMP FILE* __cdecl fopen(const char*, const char*);
 	_CRTIMP int __cdecl fclose(FILE*);
-
-	/*_CRTIMP HANDLE __stdcall _BinkOpen(HANDLE, DWORD);
-	_CRTIMP VOID __stdcall _BinkClose(HANDLE);
-	_CRTIMP BOOL __stdcall _BinkPause(HANDLE, DWORD);
-	_CRTIMP BOOL __stdcall _BinkSetSimulate(DWORD);*/
 }
 
 #define M_PI 3.14159265358979323846

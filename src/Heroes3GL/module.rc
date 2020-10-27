@@ -706,8 +706,8 @@ IDR_SCALENX_FRAGMENT_3X		RCDATA		DISCARDABLE		"..\\glsl\\scalenx\\fragment_3x.gl
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2020,8,7,412
- PRODUCTVERSION 1,4,9,0
+ FILEVERSION 2020,10,27,429
+ PRODUCTVERSION 1,5,0,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS VS_FF_DEBUG
@@ -723,10 +723,10 @@ BEGIN
 		BLOCK "040904b0"
 		BEGIN
 			VALUE "FileDescription", "HoMM III - OpenGL wrapper"
-			VALUE "FileVersion", "2020.08.07.412"
+			VALUE "FileVersion", "2020.10.27.429"
 			VALUE "LegalCopyright", "© 2020 Verok (verokster@gmail.com)"
 			VALUE "OriginalFilename", "ddraw.dll"
-			VALUE "ProductVersion", "1.4.9"
+			VALUE "ProductVersion", "1.5.0"
 			VALUE "ProductName", "Heroes3GL"
 		END
 	END

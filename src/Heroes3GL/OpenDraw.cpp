@@ -215,9 +215,9 @@ VOID OpenDraw::RenderOld()
 		if (!isPixelStore)
 			frameBuffer = AlignedAlloc(maxTexSize * maxTexSize * (this->mode.bpp == 16 && config.gl.version.value > GL_VER_1_1 ? sizeof(WORD) : sizeof(DWORD)));
 		{
-			BOOL isVSync = config.image.vSync;
+			BOOL isVSync = FALSE;
 			if (WGLSwapInterval)
-				WGLSwapInterval(isVSync);
+				WGLSwapInterval(0);
 
 			BOOL first = TRUE;
 			DWORD clear = 0;
@@ -229,9 +229,10 @@ VOID OpenDraw::RenderOld()
 				if (!surface)
 					continue;
 
-				if (isVSync != config.image.vSync)
+				BOOL vs = config.image.vSync && this->windowState != WinStateWindowed;
+				if (isVSync != vs)
 				{
-					isVSync = config.image.vSync;
+					isVSync = vs;
 					if (WGLSwapInterval)
 						WGLSwapInterval(isVSync);
 				}
@@ -651,9 +652,9 @@ VOID OpenDraw::RenderMid()
 
 					GLClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-					BOOL isVSync = config.image.vSync;
+					BOOL isVSync = FALSE;
 					if (WGLSwapInterval)
-						WGLSwapInterval(isVSync);
+						WGLSwapInterval(0);
 
 					FLOAT oldScale = 1.0f;
 					BOOL first = TRUE;
@@ -666,9 +667,10 @@ VOID OpenDraw::RenderMid()
 						if (!surface)
 							continue;
 
-						if (isVSync != config.image.vSync)
+						BOOL vs = config.image.vSync && this->windowState != WinStateWindowed;
+						if (isVSync != vs)
 						{
-							isVSync = config.image.vSync;
+							isVSync = vs;
 							if (WGLSwapInterval)
 								WGLSwapInterval(isVSync);
 						}
@@ -959,9 +961,9 @@ VOID OpenDraw::RenderNew()
 								{
 									GLClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-									BOOL isVSync = config.image.vSync;
+									BOOL isVSync = FALSE;
 									if (WGLSwapInterval)
-										WGLSwapInterval(isVSync);
+										WGLSwapInterval(0);
 
 									FLOAT oldScale = 1.0f;
 									BOOL first = TRUE;
@@ -974,9 +976,10 @@ VOID OpenDraw::RenderNew()
 										if (!surface)
 											continue;
 
-										if (isVSync != config.image.vSync)
+										BOOL vs = config.image.vSync && this->windowState != WinStateWindowed;
+										if (isVSync != vs)
 										{
-											isVSync = config.image.vSync;
+											isVSync = vs;
 											if (WGLSwapInterval)
 												WGLSwapInterval(isVSync);
 										}
