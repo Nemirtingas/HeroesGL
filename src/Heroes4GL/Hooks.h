@@ -26,6 +26,8 @@
 
 namespace Hooks
 {
+	INT_PTR __stdcall DialogBoxParamHook(HINSTANCE, LPCSTR, HWND, DLGPROC, LPARAM);
 	INT __stdcall MessageBoxHook(HWND, LPCSTR, LPCSTR, UINT);
+
 	BOOL Load();
 }

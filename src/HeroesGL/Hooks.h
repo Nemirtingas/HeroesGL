@@ -32,8 +32,10 @@ namespace Hooks
 	extern const DWORD monoEntries[2];
 	extern const DWORD palEntries[256];
 
+	INT_PTR __stdcall DialogBoxParamHook(HINSTANCE, LPCSTR, HWND, DLGPROC, LPARAM);
+	INT __stdcall MessageBoxHook(HWND, LPCSTR, LPCSTR, UINT);
+
 	VOID __fastcall ScalePointer(FLOAT, FLOAT);
 	BOOL __stdcall EnumChildProc(HWND, LPARAM);
-	INT __stdcall MessageBoxHook(HWND, LPCSTR, LPCSTR, UINT);
 	BOOL Load();
 }

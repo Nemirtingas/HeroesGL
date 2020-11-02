@@ -41,6 +41,62 @@ namespace Window
 	HHOOK OldKeysHook;
 	WNDPROC OldWindowProc, OldPanelProc;
 
+	VOID __fastcall BeginDialog(DialogParams* params)
+	{
+		if (!params->hWnd)
+			params->hWnd = params->hWndDefault;
+
+		params->ddraw = Main::FindOpenDrawByWindow(params->hWnd);
+		if (params->ddraw)
+		{
+			params->isFullscreen = params->ddraw->windowState == WinStateFullScreen;
+			if (params->isFullscreen)
+			{
+				params->ddraw->RenderStop();
+				if (params->isGrayed)
+					config.colors.current = &inactiveColors;
+				params->ddraw->windowState = WinStateWindowed;
+				params->ddraw->RenderStart();
+			}
+			else
+			{
+				if (params->isGrayed)
+					config.colors.current = &inactiveColors;
+				SetEvent(params->ddraw->hDrawEvent);
+			}
+		}
+
+		if (hActCtx && hActCtx != INVALID_HANDLE_VALUE && !ActivateActCtxC(hActCtx, &params->cookie))
+			params->cookie = NULL;
+	}
+
+	VOID __fastcall EndDialog(DialogParams* params)
+	{
+		if (params->cookie)
+			DeactivateActCtxC(0, params->cookie);
+
+		if (params->ddraw)
+		{
+			if (params->isFullscreen)
+			{
+				params->ddraw->RenderStop();
+				if (params->isGrayed)
+					config.colors.current = &config.colors.active;
+				params->ddraw->windowState = WinStateFullScreen;
+				params->ddraw->RenderStart();
+			}
+			else
+			{
+				if (params->isGrayed)
+					config.colors.current = &config.colors.active;
+				SetEvent(params->ddraw->hDrawEvent);
+			}
+		}
+
+		if (params->hWnd)
+			SetForegroundWindow(params->hWnd);
+	}
+
 	BYTE __fastcall CubicInterpolate(BYTE p0, BYTE p1, BYTE p2, BYTE p3, FLOAT x)
 	{
 		INT d = INT(p1 + 0.5 * x * (p2 - p0 + x * (2 * p0 - 5 * p1 + 4 * p2 - p3 + x * (3 * (p1 - p2) + p3 - p0))));
@@ -755,6 +811,7 @@ namespace Window
 
 			rc = { pt.x, pt.y, pt.x + (rc.right - rc.left), pt.y + (rc.bottom - rc.top) };
 			InvalidateRect(hDlg, &rc, FALSE);
+			return NULL;
 		}
 
 		case WM_DRAWITEM: {
@@ -1422,6 +1479,7 @@ namespace Window
 			MemoryFree(levelsData);
 
 			EndDialog(hDlg, TRUE);
+			return NULL;
 		}
 
 		default:
@@ -1611,39 +1669,22 @@ namespace Window
 			}
 
 			case IDM_HELP_WRAPPER: {
-				config.colors.current = &inactiveColors;
-				OpenDraw* ddraw = Main::FindOpenDrawByWindow(hWnd);
-				if (ddraw)
-					SetEvent(ddraw->hDrawEvent);
-
-				ULONG_PTR cookie = NULL;
-				if (hActCtx && hActCtx != INVALID_HANDLE_VALUE && !ActivateActCtxC(hActCtx, &cookie))
-					cookie = NULL;
-
-				DialogBoxParam(hDllModule, MAKEINTRESOURCE(cookie ? IDD_ABOUT : IDD_ABOUT_OLD), hWnd, (DLGPROC)AboutProc, cookie);
-
-				if (cookie)
-					DeactivateActCtxC(0, cookie);
-
-				config.colors.current = &config.colors.active;
-				if (ddraw)
-					SetEvent(ddraw->hDrawEvent);
-
-				SetForegroundWindow(hWnd);
+				DialogParams params = { hWnd, hWnd, TRUE, NULL };
+				BeginDialog(&params);
+				{
+					DialogBoxParam(hDllModule, MAKEINTRESOURCE(params.cookie ? IDD_ABOUT : IDD_ABOUT_OLD), hWnd, (DLGPROC)AboutProc, params.cookie);
+				}
+				EndDialog(&params);
 				return NULL;
 			}
 
 			case IDM_COLOR_ADJUST: {
-				ULONG_PTR cookie = NULL;
-				if (hActCtx && hActCtx != INVALID_HANDLE_VALUE && !ActivateActCtxC(hActCtx, &cookie))
-					cookie = NULL;
-
-				DialogBoxParam(hDllModule, MAKEINTRESOURCE(IDD_COLOR_ADJUSTMENT), hWnd, (DLGPROC)ColorAdjustmentProc, 0);
-
-				if (cookie)
-					DeactivateActCtxC(0, cookie);
-
-				SetForegroundWindow(hWnd);
+				DialogParams params = { hWnd, hWnd, FALSE, NULL };
+				BeginDialog(&params);
+				{
+					DialogBoxParam(hDllModule, MAKEINTRESOURCE(IDD_COLOR_ADJUSTMENT), hWnd, (DLGPROC)ColorAdjustmentProc, NULL);
+				}
+				EndDialog(&params);
 				return NULL;
 			}
 

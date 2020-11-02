@@ -31,6 +31,30 @@
 #include "Window.h"
 #include "Resource.h"
 
+VOID LoadModule(const CHAR* pattern)
+{
+	CHAR file[MAX_PATH];
+	GetModuleFileName(NULL, file, sizeof(file));
+	CHAR* p = StrLastChar(file, '\\');
+	if (!p)
+		return;
+
+	StrCopy(++p, "*.asi");
+
+	WIN32_FIND_DATA fData;
+	HANDLE hFile = FindFirstFile(file, &fData);
+	if (hFile && hFile != INVALID_HANDLE_VALUE)
+	{
+		do
+		{
+			StrCopy(p, fData.cFileName);
+			LoadLibrary(file);
+		} while (FindNextFile(hFile, &fData));
+
+		FindClose(hFile);
+	}
+}
+
 BOOL __stdcall DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 {
 	switch (fdwReason)
@@ -94,6 +118,8 @@ BOOL __stdcall DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 			LoadShcore();
 			if (SetProcessDpiAwarenessC)
 				SetProcessDpiAwarenessC(PROCESS_PER_MONITOR_DPI_AWARE);
+
+			LoadModule("*.asi");
 
 			timeBeginPeriod(1);
 		}

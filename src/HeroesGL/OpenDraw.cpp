@@ -2042,6 +2042,13 @@ VOID OpenDraw::RenderNew()
 												//GLFinish();
 												GLBindFramebuffer(GL_DRAW_FRAMEBUFFER, NULL);
 
+												if (this->CheckView())
+													clear = 0;
+												GLViewport(this->viewport.rectangle.x, this->viewport.rectangle.y, this->viewport.rectangle.width, this->viewport.rectangle.height);
+
+												if (clear++ <= 1)
+													GLClear(GL_COLOR_BUFFER_BIT);
+
 												switch (state.interpolation)
 												{
 												case InterpolateHermite:
@@ -2058,60 +2065,51 @@ VOID OpenDraw::RenderNew()
 													break;
 												}
 
-												program->Use(texSize);
+												program->Use(viewSize);
+												
+												GLBindTexture(GL_TEXTURE_2D, tboId);
+
+												DWORD filter = state.interpolation == InterpolateLinear || state.interpolation == InterpolateHermite ? GL_LINEAR : GL_NEAREST;
+												GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+												GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+
+												GLDrawArrays(GL_TRIANGLE_FAN, 4, 4);
+
+												if (isTakeSnapshot && OpenClipboard(NULL))
 												{
-													if (this->CheckView())
-														clear = 0;
+													EmptyClipboard();
 
-													GLViewport(this->viewport.rectangle.x, this->viewport.rectangle.y, this->viewport.rectangle.width, this->viewport.rectangle.height);
-
-													if (clear++ <= 1)
-														GLClear(GL_COLOR_BUFFER_BIT);
-
-													GLBindTexture(GL_TEXTURE_2D, tboId);
-
-													DWORD filter = state.interpolation == InterpolateLinear || state.interpolation == InterpolateHermite ? GL_LINEAR : GL_NEAREST;
-													GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
-													GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
-
-													GLDrawArrays(GL_TRIANGLE_FAN, 4, 4);
-
-													if (isTakeSnapshot && OpenClipboard(NULL))
+													DWORD size = LOWORD(viewSize) * HIWORD(viewSize) * 3;
+													DWORD slice = sizeof(BITMAPINFOHEADER);
+													HGLOBAL hMemory = GlobalAlloc(GMEM_MOVEABLE, slice + size);
+													if (hMemory)
 													{
-														EmptyClipboard();
-
-														DWORD size = LOWORD(viewSize) * HIWORD(viewSize) * 3;
-														DWORD slice = sizeof(BITMAPINFOHEADER);
-														HGLOBAL hMemory = GlobalAlloc(GMEM_MOVEABLE, slice + size);
-														if (hMemory)
+														VOID* data = GlobalLock(hMemory);
+														if (data)
 														{
-															VOID* data = GlobalLock(hMemory);
-															if (data)
-															{
-																BITMAPINFOHEADER* bmi = (BITMAPINFOHEADER*)data;
-																bmi->biSize = sizeof(BITMAPINFOHEADER);
-																bmi->biWidth = LOWORD(viewSize);
-																bmi->biHeight = HIWORD(viewSize);
-																bmi->biPlanes = 1;
-																bmi->biBitCount = 24;
-																bmi->biCompression = BI_RGB;
-																bmi->biSizeImage = size;
-																bmi->biXPelsPerMeter = 1;
-																bmi->biYPelsPerMeter = 1;
-																bmi->biClrUsed = 0;
-																bmi->biClrImportant = 0;
+															BITMAPINFOHEADER* bmi = (BITMAPINFOHEADER*)data;
+															bmi->biSize = sizeof(BITMAPINFOHEADER);
+															bmi->biWidth = LOWORD(viewSize);
+															bmi->biHeight = HIWORD(viewSize);
+															bmi->biPlanes = 1;
+															bmi->biBitCount = 24;
+															bmi->biCompression = BI_RGB;
+															bmi->biSizeImage = size;
+															bmi->biXPelsPerMeter = 1;
+															bmi->biYPelsPerMeter = 1;
+															bmi->biClrUsed = 0;
+															bmi->biClrImportant = 0;
 
-																GLGetTexImage(GL_TEXTURE_2D, 0, GL_BGR_EXT, GL_UNSIGNED_BYTE, (BYTE*)data + slice);
+															GLGetTexImage(GL_TEXTURE_2D, 0, GL_BGR_EXT, GL_UNSIGNED_BYTE, (BYTE*)data + slice);
 
-																GlobalUnlock(hMemory);
-																SetClipboardData(CF_DIB, hMemory);
-															}
-
-															GlobalFree(hMemory);
+															GlobalUnlock(hMemory);
+															SetClipboardData(CF_DIB, hMemory);
 														}
 
-														CloseClipboard();
+														GlobalFree(hMemory);
 													}
+
+													CloseClipboard();
 												}
 											}
 											else if (isTakeSnapshot)

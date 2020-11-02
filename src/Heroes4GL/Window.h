@@ -32,6 +32,9 @@
 
 namespace Window
 {
+	VOID __fastcall BeginDialog(DialogParams* params);
+	VOID __fastcall EndDialog(DialogParams* params);
+
 	BOOL __fastcall GetMenuByChildID(HMENU, MenuItemData* mData);
 
 	VOID __fastcall CheckMenu(HMENU hMenu, MenuType type);

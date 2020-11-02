@@ -171,8 +171,7 @@ const AddressSpace addressArray[] = {
 namespace Hooks
 {
 	const AddressSpace* hookSpace;
-	//Hooker* mainHooker;
-	HWND hWnd;
+	HWND hWndMain;
 
 #pragma region Fix paint rectangle on VM
 	RECT rcPaint;
@@ -182,7 +181,7 @@ namespace Hooks
 		rcPaint = { (LONG)src[2], (LONG)src[3], LONG(src[2] + src[0]), LONG(src[3] + src[1]) };
 
 		RECT rc = { 0, 0, 1, 1 };
-		InvalidateRect(hWnd, &rc, FALSE);
+		InvalidateRect(hWndMain, &rc, FALSE);
 	}
 
 	DWORD invalidEsp;
@@ -229,9 +228,9 @@ namespace Hooks
 		rcPaint = { 0, 0, RES_WIDTH, RES_HEIGHT };
 
 		RECT rc = { 0, 0, 1, 1 };
-		InvalidateRect(hWnd, &rc, FALSE);
+		InvalidateRect(hWndMain, &rc, FALSE);
 
-		UpdateWindow(hWnd);
+		UpdateWindow(hWndMain);
 	}
 
 	DWORD ddSetFullScreenStatus;
@@ -291,22 +290,22 @@ namespace Hooks
 		if (dwStyle == STYLE_FULL_OLD)
 			dwStyle = STYLE_FULL_NEW;
 
-		hWnd = CreateWindow(lpClassName, config.title, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
-		if (hWnd)
+		hWndMain = CreateWindow(lpClassName, config.title, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
+		if (hWndMain)
 		{
-			Window::SetCaptureWindow(hWnd);
+			Window::SetCaptureWindow(hWndMain);
 
-			HDC hDc = GetDC(hWnd);
+			HDC hDc = GetDC(hWndMain);
 			if (hDc)
 			{
 				RECT rc;
-				GetClientRect(hWnd, &rc);
+				GetClientRect(hWndMain, &rc);
 				FillRect(hDc, &rc, (HBRUSH)GetStockObject(BLACK_BRUSH));
-				ReleaseDC(hWnd, hDc);
+				ReleaseDC(hWndMain, hDc);
 			}
 		}
 
-		return hWnd;
+		return hWndMain;
 	}
 
 	LONG __stdcall SetWindowLongHook(HWND hWnd, INT nIndex, LONG dwNewLong)
@@ -331,18 +330,27 @@ namespace Hooks
 		return FALSE;
 	}
 
+	INT_PTR __stdcall DialogBoxParamHook(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWnd, DLGPROC lpDialogFunc, LPARAM dwInitParam)
+	{
+		INT_PTR res;
+		DialogParams params = { hWnd, hWndMain, TRUE, NULL };
+		Window::BeginDialog(&params);
+		{
+			res = DialogBoxParam(hInstance, lpTemplateName, hWnd, lpDialogFunc, dwInitParam);
+		}
+		Window::EndDialog(&params);
+		return res;
+	}
+
 	INT __stdcall MessageBoxHook(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType)
 	{
 		INT res;
-		ULONG_PTR cookie = NULL;
-		if (hActCtx && hActCtx != INVALID_HANDLE_VALUE && !ActivateActCtxC(hActCtx, &cookie))
-			cookie = NULL;
-
-		res = MessageBox(hWnd, lpText, lpCaption, uType);
-
-		if (cookie)
-			DeactivateActCtxC(0, cookie);
-
+		DialogParams params = { hWnd, hWndMain, TRUE, NULL };
+		Window::BeginDialog(&params);
+		{
+			res = MessageBox(hWnd, lpText, lpCaption, uType);
+		}
+		Window::EndDialog(&params);
 		return res;
 	}
 
@@ -483,6 +491,7 @@ namespace Hooks
 		return TRUE;
 	}
 
+#pragma region About dialog
 	DLGPROC OldDialogProc;
 	LRESULT __stdcall AboutProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
@@ -494,31 +503,12 @@ namespace Hooks
 		return OldDialogProc(hDlg, uMsg, wParam, lParam);
 	}
 
-	INT_PTR __stdcall DialogBoxParamHook(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam)
+	INT_PTR __stdcall AboutBoxParamHook(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam)
 	{
 		OldDialogProc = lpDialogFunc;
-
-		config.colors.current = &inactiveColors;
-		OpenDraw* ddraw = Main::FindOpenDrawByWindow(hWndParent);
-		if (ddraw)
-			SetEvent(ddraw->hDrawEvent);
-
-		INT_PTR res;
-		ULONG_PTR cookie = NULL;
-		if (hActCtx && hActCtx != INVALID_HANDLE_VALUE && !ActivateActCtxC(hActCtx, &cookie))
-			cookie = NULL;
-
-		res = DialogBoxParam(hInstance, lpTemplateName, hWndParent, (DLGPROC)AboutProc, dwInitParam);
-
-		if (cookie)
-			DeactivateActCtxC(0, cookie);
-
-		config.colors.current = &config.colors.active;
-		if (ddraw)
-			SetEvent(ddraw->hDrawEvent);
-
-		return res;
+		return DialogBoxParamHook(hInstance, lpTemplateName, hWndParent, (DLGPROC)AboutProc, dwInitParam);
 	}
+#pragma endregion
 
 	HMODULE __stdcall LoadLibraryHook(LPCSTR lpLibFileName)
 	{
@@ -862,7 +852,7 @@ namespace Hooks
 		{
 			HBITMAP hBmp = NULL;
 
-			HDC hDc = GetDC(hWnd);
+			HDC hDc = GetDC(hWndMain);
 			if (hDc)
 			{
 				if (GetDeviceCaps(hDc, BITSPIXEL) == 32)
@@ -1106,7 +1096,7 @@ namespace Hooks
 					}
 				}
 
-				ReleaseDC(hWnd, hDc);
+				ReleaseDC(hWndMain, hDc);
 			}
 
 			return hBmp;
@@ -1122,11 +1112,11 @@ namespace Hooks
 			piconinfo->xHotspot = (DWORD)MathRound(scale.cx * piconinfo->xHotspot);
 			piconinfo->yHotspot = (DWORD)MathRound(scale.cy * piconinfo->yHotspot);
 
-			HDC hDc = GetDC(hWnd);
+			HDC hDc = GetDC(hWndMain);
 			if (hDc)
 			{
 				INT bpp = GetDeviceCaps(hDc, BITSPIXEL);
-				ReleaseDC(hWnd, hDc);
+				ReleaseDC(hWndMain, hDc);
 
 				if (bpp == 32)
 				{
@@ -1495,7 +1485,7 @@ namespace Hooks
 	}
 #pragma endregion
 
-#pragma region Increase Stack size for main thread, by vreating new thread;
+#pragma region Increase Stack size for main thread, by creating new thread;
 	struct EntryParams {
 		HINSTANCE hInstance;
 		HINSTANCE hPrevInstance;
@@ -1507,7 +1497,10 @@ namespace Hooks
 	DWORD __stdcall MainThread(EntryParams* eParams)
 	{
 		SetThreadLanguage(config.language.current);
-		return ((INT(__stdcall*)(EntryParams))realEntry)(*eParams); 
+		Window::SetCaptureKeys(TRUE);
+		DWORD res = ((DWORD(__stdcall*)(EntryParams))realEntry)(*eParams);
+		Window::SetCaptureKeys(FALSE);
+		return res; 
 	}
 
 	INT __stdcall WinMain(EntryParams eParams)
@@ -1538,57 +1531,67 @@ namespace Hooks
 			{
 				Config::Load(GetHookerModule(hooker), hookSpace);
 
+				HOOKER user = CreateHooker(GetModuleHandle("USER32.dll"));
 				{
-					PatchImport(hooker, "AdjustWindowRect", AdjustWindowRectHook);
-					PatchImport(hooker, "CreateWindowExA", CreateWindowExHook);
-					PatchImport(hooker, "SetWindowLongA", SetWindowLongHook);
+					PatchExport(user, "PeekMessageA", PeekMessageHook);
+					PatchExport(user, "MessageBoxA", MessageBoxHook);
+					PatchExport(user, "DialogBoxParamA", DialogBoxParamHook);
+				}
+				ReleaseHooker(user);
 
-					PatchImport(hooker, "MessageBoxA", MessageBoxHook);
-					PatchImport(hooker, "WinHelpA", WinHelpHook);
+				{
+					PatchImportByName(hooker, "PeekMessageA", PeekMessageHook);
+					PatchImportByName(hooker, "MessageBoxA", MessageBoxHook);
+					PatchImportByName(hooker, "DialogBoxParamA", AboutBoxParamHook);
 
-					PatchImport(hooker, "LoadMenuA", LoadMenuHook);
-					PatchImport(hooker, "SetMenu", SetMenuHook);
-					PatchImport(hooker, "EnableMenuItem", EnableMenuItemHook);
+					PatchImportByName(hooker, "AdjustWindowRect", AdjustWindowRectHook);
+					PatchImportByName(hooker, "CreateWindowExA", CreateWindowExHook);
+					PatchImportByName(hooker, "SetWindowLongA", SetWindowLongHook);
 
-					PatchImport(hooker, "Sleep", SleepHook);
-					PatchImport(hooker, "DialogBoxParamA", DialogBoxParamHook);
+					
+					PatchImportByName(hooker, "WinHelpA", WinHelpHook);
 
-					PatchImport(hooker, "PeekMessageA", PeekMessageHook);
-					PatchImport(hooker, "LoadIconA", LoadIconHook);
-					PatchImport(hooker, "RegisterClassA", RegisterClassHook);
+					PatchImportByName(hooker, "LoadMenuA", LoadMenuHook);
+					PatchImportByName(hooker, "SetMenu", SetMenuHook);
+					PatchImportByName(hooker, "EnableMenuItem", EnableMenuItemHook);
 
-					PatchImport(hooker, "RegCreateKeyA", RegCreateKeyHook);
-					PatchImport(hooker, "RegOpenKeyExA", RegOpenKeyExHook);
-					PatchImport(hooker, "RegCloseKey", RegCloseKeyHook);
-					PatchImport(hooker, "RegQueryValueExA", RegQueryValueExHook);
-					PatchImport(hooker, "RegSetValueExA", RegSetValueExHook);
+					PatchImportByName(hooker, "Sleep", SleepHook);
+					
+					PatchImportByName(hooker, "LoadIconA", LoadIconHook);
+					PatchImportByName(hooker, "RegisterClassA", RegisterClassHook);
 
-					PatchImport(hooker, "_AdrOpenDevice@8", AdrOpenDeviceHook, (DWORD*)&AudiereOpenDevice);
-					PatchImport(hooker, "_AdrOpenSampleSource@4", AdrOpenSampleSourceHook, (DWORD*)&AudiereOpenSampleSource);
+					PatchImportByName(hooker, "RegCreateKeyA", RegCreateKeyHook);
+					PatchImportByName(hooker, "RegOpenKeyExA", RegOpenKeyExHook);
+					PatchImportByName(hooker, "RegCloseKey", RegCloseKeyHook);
+					PatchImportByName(hooker, "RegQueryValueExA", RegQueryValueExHook);
+					PatchImportByName(hooker, "RegSetValueExA", RegSetValueExHook);
+
+					PatchImportByName(hooker, "_AdrOpenDevice@8", AdrOpenDeviceHook, (DWORD*)&AudiereOpenDevice);
+					PatchImportByName(hooker, "_AdrOpenSampleSource@4", AdrOpenSampleSourceHook, (DWORD*)&AudiereOpenSampleSource);
 
 					if (!config.isDDraw)
 					{
-						PatchImport(hooker, "LoadLibraryA", LoadLibraryHook);
-						PatchImport(hooker, "FreeLibrary", FreeLibraryHook);
-						PatchImport(hooker, "GetProcAddress", GetProcAddressHook);
+						PatchImportByName(hooker, "LoadLibraryA", LoadLibraryHook);
+						PatchImportByName(hooker, "FreeLibrary", FreeLibraryHook);
+						PatchImportByName(hooker, "GetProcAddress", GetProcAddressHook);
 
-						PatchImport(hooker, "ScreenToClient", ScreenToClientHook);
-						PatchImport(hooker, "InvalidateRect", hook_InvalidateRect);
-						PatchImport(hooker, "BeginPaint", BeginPaintHook);
+						PatchImportByName(hooker, "ScreenToClient", ScreenToClientHook);
+						PatchImportByName(hooker, "InvalidateRect", hook_InvalidateRect);
+						PatchImportByName(hooker, "BeginPaint", BeginPaintHook);
 					}
 
 					if (config.cursor.fix)
 					{
 						if (hookSpace->icons_list)
 						{
-							PatchImport(hooker, "CreateBitmapIndirect", CreateBitmapIndirectHook);
-							PatchImport(hooker, "CreateIconIndirect", CreateIconIndirectHook);
+							PatchImportByName(hooker, "CreateBitmapIndirect", CreateBitmapIndirectHook);
+							PatchImportByName(hooker, "CreateIconIndirect", CreateIconIndirectHook);
 
 							if (!config.isDDraw)
 							{
-								PatchImport(hooker, "SetCursor", SetCursorHook);
-								PatchImport(hooker, "ShowCursor", ShowCursorHook);
-								PatchImport(hooker, "LoadCursorA", LoadCursorHook);
+								PatchImportByName(hooker, "SetCursor", SetCursorHook);
+								PatchImportByName(hooker, "ShowCursor", ShowCursorHook);
+								PatchImportByName(hooker, "LoadCursorA", LoadCursorHook);
 							}
 							else
 								config.cursor.fix = FALSE;

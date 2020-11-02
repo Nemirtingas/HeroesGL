@@ -468,6 +468,31 @@ namespace Hooks
 		return TRUE;
 	}
 
+	INT_PTR __stdcall DialogBoxParamHook(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWnd, DLGPROC lpDialogFunc, LPARAM dwInitParam)
+	{
+		INT_PTR res;
+		DialogParams params = { hWnd, hWndMain, TRUE, NULL };
+		Window::BeginDialog(&params);
+		{
+			res = DialogBoxParam(hInstance, lpTemplateName, hWnd, lpDialogFunc, dwInitParam);
+		}
+		Window::EndDialog(&params);
+		return res;
+	}
+
+	INT __stdcall MessageBoxHook(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType)
+	{
+		INT res;
+		DialogParams params = { hWnd, hWndMain, TRUE, NULL };
+		Window::BeginDialog(&params);
+		{
+			res = MessageBox(hWnd, lpText, lpCaption, uType);
+		}
+		Window::EndDialog(&params);
+		return res;
+	}
+
+#pragma region About dialog
 	DLGPROC OldDialogProc;
 	LRESULT __stdcall AboutProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
@@ -483,33 +508,16 @@ namespace Hooks
 			MoveWindow(hDlg, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, TRUE);
 			EnumChildWindows(hDlg, EnumChildProc, NULL);
 		}
+
 		return OldDialogProc(hDlg, uMsg, wParam, lParam);
 	}
 
-	INT_PTR __stdcall DialogBoxParamHook(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam)
+	INT_PTR __stdcall AboutBoxParamHook(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam)
 	{
-		INT_PTR res;
-		DialogParams params = { hWndParent, hWndMain, TRUE, NULL };
-		Window::BeginDialog(&params);
-		{
-			OldDialogProc = lpDialogFunc;
-			res = DialogBoxParam(hInstance, lpTemplateName, params.ddraw ? params.ddraw->hWnd : hWndParent, hInstance == GetModuleHandle(NULL) ? (DLGPROC)AboutProc : lpDialogFunc, dwInitParam);
-		}
-		Window::EndDialog(&params);
-		return res;
+		OldDialogProc = lpDialogFunc;
+		return DialogBoxParamHook(hInstance, lpTemplateName, hWndParent, (DLGPROC)AboutProc, dwInitParam);
 	}
-
-	INT __stdcall MessageBoxHook(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType)
-	{
-		INT res;
-		DialogParams params = { hWnd, hWndMain, TRUE, NULL };
-		Window::BeginDialog(&params);
-		{
-			res = MessageBox(params.ddraw ? params.ddraw->hWnd : hWnd, lpText, lpCaption, uType);
-		}
-		Window::EndDialog(&params);
-		return res;
-	}
+#pragma endregion
 
 #pragma region Music
 	AIL_WAVEOUTOPEN AIL_waveOutOpen;
@@ -1155,7 +1163,7 @@ namespace Hooks
 			{
 				PatchImportByName(hooker, "PeekMessageA", PeekMessageHook);
 				PatchImportByName(hooker, "MessageBoxA", MessageBoxHook);
-				PatchImportByName(hooker, "DialogBoxParamA", DialogBoxParamHook);
+				PatchImportByName(hooker, "DialogBoxParamA", AboutBoxParamHook);
 
 				PatchImportByName(hooker, "WinHelpA", WinHelpHook);
 

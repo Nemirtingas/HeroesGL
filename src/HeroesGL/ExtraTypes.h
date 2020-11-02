@@ -317,3 +317,13 @@ enum MenuType
 	MenuRenderer,
 	MenuLanguage
 };
+
+class OpenDraw;
+struct DialogParams {
+	HWND hWnd;
+	HWND hWndDefault;
+	BOOL isGrayed;
+	OpenDraw* ddraw;
+	BOOL isFullscreen;
+	ULONG_PTR cookie;
+};

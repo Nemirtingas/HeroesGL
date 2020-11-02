@@ -836,6 +836,7 @@ namespace Window
 
 			rc = { pt.x, pt.y, pt.x + (rc.right - rc.left), pt.y + (rc.bottom - rc.top) };
 			InvalidateRect(hDlg, &rc, FALSE);
+			return NULL;
 		}
 
 		case WM_DRAWITEM: {
@@ -1503,6 +1504,7 @@ namespace Window
 			MemoryFree(levelsData);
 
 			EndDialog(hDlg, TRUE);
+			return NULL;
 		}
 
 		default:
@@ -1721,7 +1723,7 @@ namespace Window
 				DialogParams params = { hWnd, hWnd, FALSE, NULL };
 				BeginDialog(&params);
 				{
-					DialogBoxParam(hDllModule, MAKEINTRESOURCE(IDD_COLOR_ADJUSTMENT), hWnd, (DLGPROC)ColorAdjustmentProc, params.cookie);
+					DialogBoxParam(hDllModule, MAKEINTRESOURCE(IDD_COLOR_ADJUSTMENT), hWnd, (DLGPROC)ColorAdjustmentProc, NULL);
 				}
 				EndDialog(&params);
 				return NULL;

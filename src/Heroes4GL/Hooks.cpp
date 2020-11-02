@@ -266,18 +266,27 @@ namespace Hooks
 
 	HWND __stdcall SetActiveWindowHook(HWND hWnd) { return hWnd; }
 
+	INT_PTR __stdcall DialogBoxParamHook(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWnd, DLGPROC lpDialogFunc, LPARAM dwInitParam)
+	{
+		INT_PTR res;
+		DialogParams params = { hWnd, hWndMain, TRUE, NULL };
+		Window::BeginDialog(&params);
+		{
+			res = DialogBoxParam(hInstance, lpTemplateName, hWnd, lpDialogFunc, dwInitParam);
+		}
+		Window::EndDialog(&params);
+		return res;
+	}
+
 	INT __stdcall MessageBoxHook(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType)
 	{
 		INT res;
-		ULONG_PTR cookie = NULL;
-		if (hActCtx && hActCtx != INVALID_HANDLE_VALUE && !ActivateActCtxC(hActCtx, &cookie))
-			cookie = NULL;
-
-		res = MessageBox(hWnd, lpText, lpCaption, uType);
-
-		if (cookie)
-			DeactivateActCtxC(0, cookie);
-
+		DialogParams params = { hWnd, hWndMain, TRUE, NULL };
+		Window::BeginDialog(&params);
+		{
+			res = MessageBox(hWnd, lpText, lpCaption, uType);
+		}
+		Window::EndDialog(&params);
 		return res;
 	}
 
@@ -506,34 +515,43 @@ namespace Hooks
 			{
 				Config::Load(GetHookerModule(hooker), hookSpace);
 
+				HOOKER user = CreateHooker(GetModuleHandle("USER32.dll"));
 				{
-					PatchImport(hooker, "CreateWindowExA", CreateWindowExHook);
-					PatchImport(hooker, "MessageBoxA", MessageBoxHook);
+					PatchExport(user, "PeekMessageA", PeekMessageHook);
+					PatchExport(user, "MessageBoxA", MessageBoxHook);
+					PatchExport(user, "DialogBoxParamA", DialogBoxParamHook);
+				}
+				ReleaseHooker(user);
 
-					PatchImport(hooker, "LoadMenuA", LoadMenuHook);
-					PatchImport(hooker, "SetMenu", SetMenuHook);
-					PatchImport(hooker, "EnableMenuItem", EnableMenuItemHook);
-					PatchImport(hooker, "PeekMessageA", PeekMessageHook);
+				{
+					PatchImportByName(hooker, "PeekMessageA", PeekMessageHook);
+					PatchImportByName(hooker, "MessageBoxA", MessageBoxHook);
+					PatchImportByName(hooker, "DialogBoxParamA", DialogBoxParamHook);
 
-					PatchImport(hooker, "RegCreateKeyExA", RegCreateKeyExHook);
-					PatchImport(hooker, "RegOpenKeyExA", RegOpenKeyExHook);
-					PatchImport(hooker, "RegCloseKey", RegCloseKeyHook);
-					PatchImport(hooker, "RegQueryValueExA", RegQueryValueExHook);
-					PatchImport(hooker, "RegSetValueExA", RegSetValueExHook);
+					PatchImportByName(hooker, "CreateWindowExA", CreateWindowExHook);
+					PatchImportByName(hooker, "LoadMenuA", LoadMenuHook);
+					PatchImportByName(hooker, "SetMenu", SetMenuHook);
+					PatchImportByName(hooker, "EnableMenuItem", EnableMenuItemHook);
+					
+					PatchImportByName(hooker, "RegCreateKeyExA", RegCreateKeyExHook);
+					PatchImportByName(hooker, "RegOpenKeyExA", RegOpenKeyExHook);
+					PatchImportByName(hooker, "RegCloseKey", RegCloseKeyHook);
+					PatchImportByName(hooker, "RegQueryValueExA", RegQueryValueExHook);
+					PatchImportByName(hooker, "RegSetValueExA", RegSetValueExHook);
 
-					PatchImport(hooker, "DirectDrawCreateEx", Main::DirectDrawCreateEx);
+					PatchImportByName(hooker, "DirectDrawCreateEx", Main::DirectDrawCreateEx);
 
 					if (!config.isDDraw)
 					{
-						PatchImport(hooker, "SetWindowLongA", SetWindowLongHook);
-						PatchImport(hooker, "AdjustWindowRectEx", AdjustWindowRectExHook);
-						PatchImport(hooker, "MoveWindow", MoveWindowHook);
+						PatchImportByName(hooker, "SetWindowLongA", SetWindowLongHook);
+						PatchImportByName(hooker, "AdjustWindowRectEx", AdjustWindowRectExHook);
+						PatchImportByName(hooker, "MoveWindow", MoveWindowHook);
 
-						PatchImport(hooker, "GetWindowRect", GetWindowRectHook);
-						PatchImport(hooker, "GetClientRect", GetClientRectHook);
-						PatchImport(hooker, "GetCursorPos", GetCursorPosHook);
+						PatchImportByName(hooker, "GetWindowRect", GetWindowRectHook);
+						PatchImportByName(hooker, "GetClientRect", GetClientRectHook);
+						PatchImportByName(hooker, "GetCursorPos", GetCursorPosHook);
 
-						PatchImport(hooker, "SetActiveWindow", SetActiveWindowHook);
+						PatchImportByName(hooker, "SetActiveWindow", SetActiveWindowHook);
 					}
 				}
 
