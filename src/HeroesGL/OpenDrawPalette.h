@@ -33,7 +33,6 @@ protected:
 
 public:
 	DWORD entries[256];
-	BOOL isChanged;
 
 	OpenDrawPalette(IDraw*);
 

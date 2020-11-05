@@ -57,6 +57,7 @@ public:
 
 	BOOL CheckView();
 	VOID __fastcall ScaleMouse(LPPOINT);
+	VOID CopyPointer(DWORD*);
 
 	VOID RenderStart();
 	VOID RenderStop();

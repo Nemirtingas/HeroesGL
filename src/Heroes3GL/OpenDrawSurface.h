@@ -41,18 +41,11 @@ public:
 	DisplayMode mode;
 	DWORD pitch;
 	FLOAT scale;
-	BOOL isSizeChanged;
 
 	OpenDrawClipper* attachedClipper;
 
 	BYTE* indexBuffer;
 	DWORD colorKey;
-
-	UpdateRect* clipsList;
-	UpdateRect* endClip;
-
-	UpdateRect* currentClip;
-	UpdateRect* poinetrClip;
 
 	OpenDrawSurface(IDraw*, DWORD);
 	~OpenDrawSurface();

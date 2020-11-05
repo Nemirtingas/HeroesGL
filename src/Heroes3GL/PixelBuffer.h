@@ -1,8 +1,4 @@
 /*
-	ScaleNx vertex shader
-	based on libretro ScaleNx shader
-	https://github.com/libretro/glsl-shaders/blob/master/scalenx/shaders
-
 	MIT License
 
 	Copyright (c) 2020 Oleksiy Ryabchun
@@ -26,22 +22,48 @@
 	SOFTWARE.
 */
 
-uniform sampler2D tex01;
-uniform vec2 texSize;
+#pragma once
 
-in vec4 vCoord;
-in vec2 vTex;
+#include "Allocation.h"
+#include "ExtraTypes.h"
 
-out vec4 t1;
-out vec4 t2;
-out vec2 fTex;
+#define BLOCK_SIZE 256
 
-void main() {
-	gl_Position = vCoord;
-	
-	vec2 d = 1.0 / texSize;
-	t1 = vTex.xyxy + vec4(  0,-d.y,-d.x,  0);
-	t2 = vTex.xyxy + vec4( d.x,  0,  0, d.y);
-	
-	fTex = vTex;
-}
+typedef DWORD(__fastcall* COMPARE)(DWORD, DWORD, DWORD*, DWORD*);
+typedef BOOL(__fastcall* BLOCKCOMPARE)(LONG, LONG, DWORD, DWORD, DWORD*, DWORD*, POINT*);
+typedef DWORD(__fastcall* SIDECOMPARE)(LONG, LONG, DWORD, DWORD, DWORD*, DWORD*);
+
+class PixelBuffer : public Allocation {
+private:
+	DWORD width;
+	DWORD height;
+	DWORD pitch; 
+	BOOL isTrue;
+	GLenum format;
+	GLenum type;
+	DWORD block;
+	DWORD size;
+	BOOL reset;
+	DWORD* primaryBuffer;
+	DWORD* secondaryBuffer;
+	DWORD* white;
+
+	COMPARE ForwardCompare;
+	COMPARE BackwardCompare;
+	BLOCKCOMPARE BlockForwardCompare;
+	BLOCKCOMPARE BlockBackwardCompare;
+	SIDECOMPARE SideForwardCompare;
+	SIDECOMPARE SideBackwardCompare;
+
+	VOID UpdateBlock(RECT*, POINT*);
+
+public:
+	PixelBuffer(DWORD, DWORD, BOOL, GLenum);
+	~PixelBuffer();
+
+	VOID Reset();
+	VOID Copy(VOID*);
+	VOID Update(Rect* = NULL);
+	VOID* GetBuffer();
+	VOID SwapBuffers();
+};

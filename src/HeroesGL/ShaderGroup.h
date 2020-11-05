@@ -33,14 +33,13 @@ private:
 	DWORD vertexName;
 	DWORD fragmentName;
 	DWORD flags;
-	GLfloat* mvp;
 	Adjustment* colors;
 	BOOL update;
 	ShaderProgram* current;
 	ShaderProgram* list;
 
 public:
-	ShaderGroup(const CHAR*, DWORD, DWORD, DWORD, GLfloat*);
+	ShaderGroup(const CHAR*, DWORD, DWORD, DWORD);
 	~ShaderGroup();
 
 	BOOL Check();

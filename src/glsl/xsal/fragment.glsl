@@ -27,25 +27,29 @@
 */
 
 uniform sampler2D tex01;
+uniform sampler2D tex02;
 uniform vec2 texSize;
 
 in vec2 fTex;
-
 out vec4 fragColor;
 
-const vec3 dt = vec3(1.0, 1.0, 1.0);
+const vec4 dt = vec4(1.0, 1.0, 1.0, 1.0);
 
 void main() {
-    float dx = 0.25 / texSize.x;
-	float dy = 0.25 / texSize.y;
-    
-    vec3 c00 = texture(tex01, fTex + vec2(-dx, -dy)).xyz;
-    vec3 c20 = texture(tex01, fTex + vec2( dx, -dy)).xyz;
-    vec3 c02 = texture(tex01, fTex + vec2(-dx,  dy)).xyz;
-    vec3 c22 = texture(tex01, fTex + vec2( dx,  dy)).xyz;
+	if (texture(tex01, fTex) == texture(tex02, fTex))
+		discard;
 
-    float m1 = dot(abs(c00 - c22), dt) + 0.001;
-    float m2 = dot(abs(c02 - c20), dt) + 0.001;
+	vec2 cTex = fTex * texSize * 1.00001;
 
-    fragColor = vec4((m1*(c02 + c20) + m2*(c22 + c00))/(2.0*(m1 + m2)), 1.0);
+	#define TEX(x, y) texture(tex01, (floor(cTex + vec2(x, y)) + 0.5) / texSize)
+	
+	vec4 c00 = TEX(-0.25, -0.25);
+	vec4 c20 = TEX( 0.25, -0.25);
+	vec4 c02 = TEX(-0.25,  0.25);
+	vec4 c22 = TEX( 0.25,  0.25);
+
+	float m1 = dot(abs(c00 - c22), dt) + 0.001;
+	float m2 = dot(abs(c02 - c20), dt) + 0.001;
+
+	fragColor = vec4((m1*(c02 + c20) + m2*(c22 + c00))/(2.0*(m1 + m2)));
 }

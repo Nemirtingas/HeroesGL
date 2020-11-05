@@ -27,13 +27,10 @@
 */
 
 uniform sampler2D tex01;
+uniform sampler2D tex02;
+uniform vec2 texSize;
 
-in vec4 t1;
-in vec4 t2;
-in vec4 t3;
-in vec4 t4;
 in vec2 fTex;
-
 out vec4 fragColor;
 
 #define MX 0.325
@@ -42,20 +39,32 @@ out vec4 fragColor;
 #define MIN_W -0.05
 #define LUM_ADD 0.25
 
-const vec3 dt = vec3(1.0);
+const vec4 dt = vec4(1.0);
 
-void main()
-{
-	vec3 c00 = texture(tex01, t1.xy).xyz; 
-	vec3 c10 = texture(tex01, t1.zw).xyz; 
-	vec3 c20 = texture(tex01, t2.xy).xyz; 
-	vec3 c01 = texture(tex01, t4.zw).xyz; 
-	vec3 c11 = texture(tex01, fTex).xyz; 
-	vec3 c21 = texture(tex01, t2.zw).xyz; 
-	vec3 c02 = texture(tex01, t4.xy).xyz; 
-	vec3 c12 = texture(tex01, t3.zw).xyz; 
-	vec3 c22 = texture(tex01, t3.xy).xyz; 
+void main() {
+	if (texture(tex01, fTex) == texture(tex02, fTex))
+		discard;
 
+	vec4 c11 = texture(tex01, (floor(fTex * texSize) + 0.5) / texSize); 
+
+	vec2 texel;
+
+	#define TEX2(x, y) texture(tex01, (texel + vec2(x, y)) / texSize)
+
+	texel = floor(fTex * texSize - 0.5) + 0.5;
+	vec4 c00 = TEX2(0.0, 0.0);
+	vec4 c02 = TEX2(0.0, 1.0);
+	vec4 c20 = TEX2(1.0, 0.0);
+	vec4 c22 = TEX2(1.0, 1.0);
+
+	texel = floor(fTex * texSize - vec2(0.0, 0.5)) + 0.5;
+	vec4 c10 = TEX2(0.0, 0.0); 
+	vec4 c12 = TEX2(0.0, 1.0); 
+
+	texel = floor(fTex * texSize - vec2(0.5, 0.0)) + 0.5;
+	vec4 c01 = TEX2(0.0, 0.0); 
+	vec4 c21 = TEX2(1.0, 0.0); 
+	
 	float md1 = dot(abs(c00 - c22), dt);
 	float md2 = dot(abs(c02 - c20), dt);
 
@@ -78,5 +87,5 @@ void main()
 	w3 = clamp(lc1 * dot(abs(c11 - c12), dt) + MX, MIN_W, MAX_W);
 	w4 = clamp(lc2 * dot(abs(c11 - c01), dt) + MX, MIN_W, MAX_W);
 
-	fragColor = vec4(w1 * c10 + w2 * c21 + w3 * c12 + w4 * c01 + (1.0 - w1 - w2 - w3 - w4) * c11, 1.0);
+	fragColor = vec4(w1 * c10 + w2 * c21 + w3 * c12 + w4 * c01 + (1.0 - w1 - w2 - w3 - w4) * c11);
 }

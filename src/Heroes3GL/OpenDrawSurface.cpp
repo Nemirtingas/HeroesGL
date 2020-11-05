@@ -45,11 +45,8 @@ OpenDrawSurface::OpenDrawSurface(IDraw* lpDD, DWORD index)
 	this->pitch = 0;
 
 	this->scale = 1.0f;
-	this->isSizeChanged = TRUE;
 
 	this->colorKey = 0;
-
-	this->clipsList = NULL;
 }
 
 OpenDrawSurface::~OpenDrawSurface()
@@ -67,9 +64,6 @@ VOID OpenDrawSurface::ReleaseBuffer()
 {
 	if (this->indexBuffer)
 		AlignedFree(this->indexBuffer);
-
-	if (this->clipsList)
-		MemoryFree(this->clipsList);
 }
 
 VOID OpenDrawSurface::TakeSnapshot()
@@ -174,10 +168,6 @@ VOID OpenDrawSurface::CreateBuffer(DWORD width, DWORD height)
 	DWORD size = this->mode.height * this->pitch;
 	this->indexBuffer = (BYTE*)AlignedAlloc(size);
 	MemoryZero(this->indexBuffer, size);
-
-	this->clipsList = !this->index ? (UpdateRect*)MemoryAlloc(STENCIL_COUNT * sizeof(UpdateRect)) : NULL;
-	this->endClip = this->clipsList + (!this->index ? STENCIL_COUNT : 0);
-	this->poinetrClip = this->currentClip = this->clipsList;
 }
 
 ULONG __stdcall OpenDrawSurface::AddRef()
@@ -383,50 +373,7 @@ HRESULT __stdcall OpenDrawSurface::Blt(LPRECT lpDestRect, LPDIRECTDRAWSURFACE lp
 		}
 
 		if (this->scale != currScale)
-		{
 			this->scale = currScale;
-			this->isSizeChanged = TRUE;
-		}
-
-		if (!this->index)
-		{
-			this->currentClip->rect = *lpDestRect;
-			this->currentClip->isActive = TRUE;
-
-			if (lpDestRect->right - lpDestRect->left == ((OpenDraw*)this->ddraw)->mode.width &&
-				lpDestRect->bottom - lpDestRect->top == ((OpenDraw*)this->ddraw)->mode.height)
-				this->poinetrClip = this->currentClip;
-			else
-			{
-				UpdateRect* oldClip = surface->poinetrClip;
-				UpdateRect* currClip = surface->currentClip;
-
-				while (oldClip != currClip)
-				{
-					if (oldClip->isActive)
-					{
-						if (oldClip->rect.left >= currClip->rect.left &&
-							oldClip->rect.top >= currClip->rect.top &&
-							oldClip->rect.right <= currClip->rect.right &&
-							oldClip->rect.bottom <= currClip->rect.bottom)
-							oldClip->isActive = FALSE;
-						else if (currClip->rect.left >= oldClip->rect.left &&
-							currClip->rect.top >= oldClip->rect.top &&
-							currClip->rect.right <= oldClip->rect.right &&
-							currClip->rect.bottom <= oldClip->rect.bottom)
-						{
-							currClip->isActive = FALSE;
-							break;
-						}
-					}
-
-					if (++oldClip == surface->endClip)
-						oldClip = surface->clipsList;
-				}
-			}
-
-			this->currentClip = this->currentClip + 1 != this->endClip ? this->currentClip + 1 : this->clipsList;
-		}
 
 		if (((OpenDraw*)this->ddraw)->attachedSurface == this)
 		{

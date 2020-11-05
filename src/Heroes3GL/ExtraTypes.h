@@ -113,12 +113,6 @@ struct DisplayMode
 	DWORD bpp;
 };
 
-struct UpdateRect
-{
-	RECT rect;
-	BOOL isActive;
-};
-
 union Levels
 {
 	struct {
@@ -226,6 +220,13 @@ struct VideoFile
 	DWORD stride;
 };
 
+enum UpdateMode
+{
+	UpdateNone = 0,
+	UpdateCPP = 1,
+	UpdateASM = 2
+};
+
 struct ConfigItems
 {
 	BOOL isDDraw;
@@ -238,6 +239,7 @@ struct ConfigItems
 	BOOL singleWindow;
 	BOOL coldCPU;
 	RendererType renderer;
+	UpdateMode updateMode;
 
 	struct {
 		LCID current;

@@ -41,19 +41,10 @@ OpenDrawSurface::OpenDrawSurface(IDraw* lpDD, DWORD index)
 	if (!index)
 	{
 		this->pixelBuffer = (DWORD*)MemoryAlloc(RES_WIDTH * RES_HEIGHT * sizeof(DWORD));
-		this->clipsList = (UpdateRect*)MemoryAlloc(STENCIL_COUNT * sizeof(UpdateRect));
-		this->endClip = this->clipsList + STENCIL_COUNT;
-
 		MemoryZero(this->pixelBuffer, RES_WIDTH * RES_HEIGHT * sizeof(DWORD));
 	}
 	else
-	{
 		this->pixelBuffer = NULL;
-		this->clipsList = NULL;
-		this->endClip = this->clipsList;
-	}
-
-	this->poinetrClip = this->currentClip = this->clipsList;
 
 	this->attachedPalette = NULL;
 	this->attachedClipper = NULL;
@@ -72,9 +63,6 @@ OpenDrawSurface::~OpenDrawSurface()
 
 	if (this->pixelBuffer)
 		MemoryFree(this->pixelBuffer);
-
-	if (this->clipsList)
-		MemoryFree(this->clipsList);
 }
 
 VOID OpenDrawSurface::TakeSnapshot(DWORD width, DWORD height)
@@ -199,36 +187,6 @@ HRESULT __stdcall OpenDrawSurface::Blt(LPRECT, LPDIRECTDRAWSURFACE lpDDSrcSurfac
 		pix += pitch;
 		dst += pitch;
 	} while (--ch);
-
-	this->currentClip->rect = { config.update.rect.left, config.update.rect.top, config.update.rect.left + width, config.update.rect.top + height };
-	this->currentClip->isActive = TRUE;
-
-	if (width == *(LONG*)&((OpenDraw*)this->ddraw)->width && height == *(LONG*)&((OpenDraw*)this->ddraw)->height)
-		this->poinetrClip = this->currentClip;
-	else
-	{
-		UpdateRect* oldClip = surface->poinetrClip;
-		UpdateRect* currClip = surface->currentClip;
-
-		while (oldClip != currClip)
-		{
-			if (oldClip->isActive)
-			{
-				if (oldClip->rect.left >= currClip->rect.left && oldClip->rect.top >= currClip->rect.top && oldClip->rect.right <= currClip->rect.right && oldClip->rect.bottom <= currClip->rect.bottom)
-					oldClip->isActive = FALSE;
-				else if (currClip->rect.left >= oldClip->rect.left && currClip->rect.top >= oldClip->rect.top && currClip->rect.right <= oldClip->rect.right && currClip->rect.bottom <= oldClip->rect.bottom)
-				{
-					currClip->isActive = FALSE;
-					break;
-				}
-			}
-
-			if (++oldClip == surface->endClip)
-				oldClip = surface->clipsList;
-		}
-	}
-
-	this->currentClip = this->currentClip + 1 != this->endClip ? this->currentClip + 1 : this->clipsList;
 
 	SetEvent(((OpenDraw*)this->ddraw)->hDrawEvent);
 	Sleep(0);

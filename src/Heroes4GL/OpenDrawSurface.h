@@ -47,12 +47,6 @@ public:
 	HBITMAP hBmp;
 	HDC hDc;
 
-	UpdateRect* clipsList;
-	UpdateRect* endClip;
-
-	UpdateRect* currentClip;
-	UpdateRect* poinetrClip;
-
 	OpenDrawSurface(IDraw7*, DWORD);
 	~OpenDrawSurface();
 

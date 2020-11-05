@@ -26,13 +26,12 @@
 #include "ShaderGroup.h"
 #include "Config.h"
 
-ShaderGroup::ShaderGroup(const CHAR* version, DWORD vertexName, DWORD fragmentName, DWORD flags, GLfloat* mvp)
+ShaderGroup::ShaderGroup(const CHAR* version, DWORD vertexName, DWORD fragmentName, DWORD flags)
 {
 	this->version = version;
 	this->vertexName = vertexName;
 	this->fragmentName = fragmentName;
 	this->flags = flags;
-	this->mvp = mvp;
 	this->update = TRUE;
 
 	if (this->flags & SHADER_LEVELS)
@@ -108,7 +107,7 @@ VOID ShaderGroup::Use(DWORD texSize)
 		}
 
 		if (!this->current)
-			this->current = this->list = new ShaderProgram(this->version, this->vertexName, this->fragmentName, flags, this->mvp, this->list);
+			this->current = this->list = new ShaderProgram(this->version, this->vertexName, this->fragmentName, flags, this->list);
 	}
 
 	this->current->Update(texSize, this->colors);

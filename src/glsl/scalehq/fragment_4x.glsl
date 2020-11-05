@@ -27,15 +27,10 @@
 */
 
 uniform sampler2D tex01;
+uniform sampler2D tex02;
+uniform vec2 texSize;
 
-in vec4 t1;
-in vec4 t2;
-in vec4 t3;
-in vec4 t4;
-in vec4 t5;
-in vec4 t6;
 in vec2 fTex;
-
 out vec4 fragColor;
 
 #define MX 1.0
@@ -44,23 +39,38 @@ out vec4 fragColor;
 #define MIN_W 0.03
 #define LUM_ADD 0.33
 
-const vec3 dt = vec3(1.0);
+const vec4 dt = vec4(1.0);
 
-void main()
-{
-	vec3 c  = texture(tex01, fTex).xyz;
-	vec3 i1 = texture(tex01, t1.xy).xyz; 
-	vec3 i2 = texture(tex01, t2.xy).xyz; 
-	vec3 i3 = texture(tex01, t3.xy).xyz; 
-	vec3 i4 = texture(tex01, t4.xy).xyz; 
-	vec3 o1 = texture(tex01, t5.xy).xyz; 
-	vec3 o3 = texture(tex01, t6.xy).xyz; 
-	vec3 o2 = texture(tex01, t5.zw).xyz;
-	vec3 o4 = texture(tex01, t6.zw).xyz;
-	vec3 s1 = texture(tex01, t1.zw).xyz; 
-	vec3 s2 = texture(tex01, t2.zw).xyz; 
-	vec3 s3 = texture(tex01, t3.zw).xyz; 
-	vec3 s4 = texture(tex01, t4.zw).xyz; 
+void main() {
+	if (texture(tex01, fTex) == texture(tex02, fTex))
+		discard;
+
+	#define TEX(x, y) texture(tex01, (floor(fTex * texSize + vec2(x, y)) + 0.5) / texSize)
+
+	vec4 c  = TEX( 0.0,   0.0);
+
+	vec4 i1 = TEX(-0.25, -0.25); 
+	vec4 i2 = TEX( 0.25, -0.25); 
+	vec4 i3 = TEX( 0.25,  0.25); 
+	vec4 i4 = TEX(-0.25,  0.25); 
+
+	vec2 texel;
+
+	#define TEX2(x, y) texture(tex01, (texel + vec2(x, y)) / texSize)
+
+	texel = floor(fTex * texSize - 0.5) + 0.5;
+	vec4 o1 = TEX2(0.0, 0.0); 
+	vec4 o3 = TEX2(1.0, 1.0); 
+	vec4 o2 = TEX2(1.0, 0.0);
+	vec4 o4 = TEX2(0.0, 1.0);
+
+	texel = floor(fTex * texSize - vec2(0.0, 0.5)) + 0.5;
+	vec4 s1 = TEX2(0.0, 0.0); 
+	vec4 s3 = TEX2(0.0, 1.0);
+
+	texel = floor(fTex * texSize - vec2(0.5, 0.0)) + 0.5;
+	vec4 s2 = TEX2(1.0, 0.0); 
+	vec4 s4 = TEX2(0.0, 0.0);
 
 	float ko1=dot(abs(o1-c),dt);
 	float ko2=dot(abs(o2-c),dt);
@@ -86,5 +96,5 @@ void main()
 	w3 = clamp(w3+MX,MIN_W,MAX_W); 
 	w4 = clamp(w4+MX,MIN_W,MAX_W);
 
-	fragColor = vec4((w1*(i1+i3)+w2*(i2+i4)+w3*(s1+s3)+w4*(s2+s4)+c)/(2.0*(w1+w2+w3+w4)+1.0), 1.0);
+	fragColor = vec4((w1*(i1+i3)+w2*(i2+i4)+w3*(s1+s3)+w4*(s2+s4)+c)/(2.0*(w1+w2+w3+w4)+1.0));
 }

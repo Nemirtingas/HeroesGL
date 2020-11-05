@@ -40,6 +40,7 @@ public:
 
 	DisplayMode mode;
 	DWORD pitch;
+	DWORD texWidth;
 	BOOL isNextIsMode;
 	BOOL isFinish;
 

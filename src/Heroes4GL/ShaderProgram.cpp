@@ -25,12 +25,11 @@
 #include "stdafx.h"
 #include "ShaderProgram.h"
 
-ShaderProgram::ShaderProgram(const CHAR* version, DWORD vertexName, DWORD fragmentName, DWORD flags, GLfloat* mvp, ShaderProgram* last)
+ShaderProgram::ShaderProgram(const CHAR* version, DWORD vertexName, DWORD fragmentName, DWORD flags, ShaderProgram* last)
 {
 	this->last = last;
 
 	this->flags = flags;
-	this->mvp = mvp;
 	this->texSize = 0;
 
 	if (this->flags & SHADER_LEVELS)
@@ -68,10 +67,10 @@ ShaderProgram::ShaderProgram(const CHAR* version, DWORD vertexName, DWORD fragme
 
 	GLUseProgram(this->id);
 
-	if (this->mvp)
-		GLUniformMatrix4fv(GLGetUniformLocation(this->id, "mvp"), 1, GL_FALSE, this->mvp);
-
 	GLUniform1i(GLGetUniformLocation(this->id, "tex01"), 0);
+	GLint loc = GLGetUniformLocation(this->id, "tex02");
+	if (loc >= 0)
+		GLUniform1i(loc, 1);
 
 	this->loc.texSize = GLGetUniformLocation(this->id, "texSize");
 

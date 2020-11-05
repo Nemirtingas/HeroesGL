@@ -105,12 +105,6 @@ struct FilterState {
 	BYTE flags;
 };
 
-struct UpdateRect
-{
-	RECT rect;
-	BOOL isActive;
-};
-
 union Levels
 {
 	struct {
@@ -224,6 +218,13 @@ struct TrackInfo
 	CHAR* path;
 };
 
+enum UpdateMode
+{
+	UpdateNone = 0,
+	UpdateCPP = 1,
+	UpdateASM = 2
+};
+
 struct ConfigItems
 {
 	BOOL isDDraw;
@@ -235,6 +236,7 @@ struct ConfigItems
 	BOOL singleWindow;
 	BOOL coldCPU;
 	RendererType renderer;
+	UpdateMode updateMode;
 
 	struct {
 		LCID current;
@@ -290,13 +292,6 @@ struct ConfigItems
 
 	BOOL isExist;
 	CHAR file[MAX_PATH];
-};
-
-struct Pointer {
-	BOOL isActive;
-	POINT pos;
-	SIZE size;
-	POINT offset;
 };
 
 struct MenuItemData {

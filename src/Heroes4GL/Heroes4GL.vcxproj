@@ -178,6 +178,7 @@
     <ClCompile Include="DllMain.cpp" />
     <ClCompile Include="GLib.cpp" />
     <ClCompile Include="Hooks.cpp" />
+    <ClCompile Include="PixelBuffer.cpp" />
     <ClCompile Include="ShaderGroup.cpp" />
     <ClCompile Include="ShaderProgram.cpp" />
     <ClCompile Include="StdAfx.cpp">
@@ -200,6 +201,7 @@
     <ClInclude Include="GLib.h" />
     <ClInclude Include="Hooks.h" />
     <ClInclude Include="Main.h" />
+    <ClInclude Include="PixelBuffer.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="ShaderGroup.h" />
     <ClInclude Include="ShaderProgram.h" />

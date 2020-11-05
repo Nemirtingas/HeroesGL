@@ -32,7 +32,6 @@
 class ShaderProgram : public Allocation {
 private:
 	GLuint id;
-	GLfloat* mvp;
 	DWORD texSize;
 	struct {
 		GLint texSize;
@@ -54,7 +53,7 @@ private:
 public:
 	ShaderProgram* last;
 	DWORD flags;
-	ShaderProgram(const CHAR*, DWORD, DWORD, DWORD, GLfloat*, ShaderProgram*);
+	ShaderProgram(const CHAR*, DWORD, DWORD, DWORD, ShaderProgram*);
 	~ShaderProgram();
 
 	VOID Use();

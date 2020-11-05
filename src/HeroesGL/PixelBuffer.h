@@ -22,8 +22,48 @@
 	SOFTWARE.
 */
 
-out vec4 fragColor;
+#pragma once
 
-void main() {
-	fragColor = vec4(1.0, 1.0, 1.0, 1.0);
-}
+#include "Allocation.h"
+#include "ExtraTypes.h"
+
+#define BLOCK_SIZE 256
+
+typedef DWORD(__fastcall* COMPARE)(DWORD, DWORD, DWORD*, DWORD*);
+typedef BOOL(__fastcall* BLOCKCOMPARE)(LONG, LONG, DWORD, DWORD, DWORD*, DWORD*, POINT*);
+typedef DWORD(__fastcall* SIDECOMPARE)(LONG, LONG, DWORD, DWORD, DWORD*, DWORD*);
+
+class PixelBuffer : public Allocation {
+private:
+	DWORD width;
+	DWORD height;
+	DWORD pitch; 
+	BOOL isTrue;
+	GLenum format;
+	GLenum type;
+	DWORD block;
+	DWORD size;
+	BOOL reset;
+	DWORD* primaryBuffer;
+	DWORD* secondaryBuffer;
+	DWORD* white;
+
+	COMPARE ForwardCompare;
+	COMPARE BackwardCompare;
+	BLOCKCOMPARE BlockForwardCompare;
+	BLOCKCOMPARE BlockBackwardCompare;
+	SIDECOMPARE SideForwardCompare;
+	SIDECOMPARE SideBackwardCompare;
+
+	VOID UpdateBlock(RECT*, POINT*);
+
+public:
+	PixelBuffer(DWORD, DWORD, BOOL, GLenum);
+	~PixelBuffer();
+
+	VOID Reset();
+	VOID Copy(VOID*);
+	VOID Update(Rect* = NULL);
+	VOID* GetBuffer();
+	VOID SwapBuffers();
+};

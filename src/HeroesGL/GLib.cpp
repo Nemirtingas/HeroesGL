@@ -47,22 +47,18 @@ GLLOADIDENTITY GLLoadIdentity;
 GLORTHO GLOrtho;
 GLFINISH GLFinish;
 GLENABLE GLEnable;
-GLDISABLE GLDisable;
 GLBINDTEXTURE GLBindTexture;
 GLDELETETEXTURES GLDeleteTextures;
 GLTEXPARAMETERI GLTexParameteri;
 GLTEXENVI GLTexEnvi;
 GLGETTEXIMAGE GLGetTexImage;
-GLTEXSUBIMAGE1D GLTexSubImage1D;
 GLTEXIMAGE2D GLTexImage2D;
 GLTEXSUBIMAGE2D GLTexSubImage2D;
 GLGENTEXTURES GLGenTextures;
 GLGETINTEGERV GLGetIntegerv;
 GLCLEAR GLClear;
 GLCLEARCOLOR GLClearColor;
-GLCOLORMASK GLColorMask;
-GLSTENCILFUNC GLStencilFunc;
-GLSTENCILOP GLStencilOp;
+GLPIXELSTOREI GLPixelStorei;
 
 #ifdef _DEBUG
 GLGETERROR GLGetError;
@@ -99,7 +95,6 @@ GLUNIFORM1I GLUniform1i;
 GLUNIFORM1F GLUniform1f;
 GLUNIFORM2F GLUniform2f;
 GLUNIFORM4F GLUniform4f;
-GLUNIFORMMATRIX4FV GLUniformMatrix4fv;
 
 GLGENVERTEXARRAYS GLGenVertexArrays;
 GLBINDVERTEXARRAY GLBindVertexArray;
@@ -109,12 +104,6 @@ GLGENFRAMEBUFFERS GLGenFramebuffers;
 GLDELETEFRAMEBUFFERS GLDeleteFramebuffers;
 GLBINDFRAMEBUFFER GLBindFramebuffer;
 GLFRAMEBUFFERTEXTURE2D GLFramebufferTexture2D;
-
-GLGENRENDERBUFFERS GLGenRenderbuffers;
-GLDELETERENDERBUFFERS GLDeleteRenderbuffers;
-GLBINDRENDERBUFFER GLBindRenderbuffer;
-GLRENDERBUFFERSTORAGE GLRenderbufferStorage;
-GLFRAMEBUFFERRENDERBUFFER GLFramebufferRenderbuffer;
 
 HMODULE hGLModule;
 
@@ -203,22 +192,18 @@ namespace GL
 		LoadFunction(buffer, PREFIX_GL, "Ortho", (PROC*)&GLOrtho);
 		LoadFunction(buffer, PREFIX_GL, "Finish", (PROC*)&GLFinish);
 		LoadFunction(buffer, PREFIX_GL, "Enable", (PROC*)&GLEnable);
-		LoadFunction(buffer, PREFIX_GL, "Disable", (PROC*)&GLDisable);
 		LoadFunction(buffer, PREFIX_GL, "BindTexture", (PROC*)&GLBindTexture);
 		LoadFunction(buffer, PREFIX_GL, "DeleteTextures", (PROC*)&GLDeleteTextures);
 		LoadFunction(buffer, PREFIX_GL, "TexParameteri", (PROC*)&GLTexParameteri);
 		LoadFunction(buffer, PREFIX_GL, "TexEnvi", (PROC*)&GLTexEnvi);
 		LoadFunction(buffer, PREFIX_GL, "GetTexImage", (PROC*)&GLGetTexImage);
-		LoadFunction(buffer, PREFIX_GL, "TexSubImage1D", (PROC*)&GLTexSubImage1D);
 		LoadFunction(buffer, PREFIX_GL, "TexImage2D", (PROC*)&GLTexImage2D);
 		LoadFunction(buffer, PREFIX_GL, "TexSubImage2D", (PROC*)&GLTexSubImage2D);
 		LoadFunction(buffer, PREFIX_GL, "GenTextures", (PROC*)&GLGenTextures);
 		LoadFunction(buffer, PREFIX_GL, "GetIntegerv", (PROC*)&GLGetIntegerv);
 		LoadFunction(buffer, PREFIX_GL, "Clear", (PROC*)&GLClear);
 		LoadFunction(buffer, PREFIX_GL, "ClearColor", (PROC*)&GLClearColor);
-		LoadFunction(buffer, PREFIX_GL, "ColorMask", (PROC*)&GLColorMask);
-		LoadFunction(buffer, PREFIX_GL, "StencilFunc", (PROC*)&GLStencilFunc);
-		LoadFunction(buffer, PREFIX_GL, "StencilOp", (PROC*)&GLStencilOp);
+		LoadFunction(buffer, PREFIX_GL, "PixelStorei", (PROC*)&GLPixelStorei);
 
 #ifdef _DEBUG
 		LoadFunction(buffer, PREFIX_GL, "GetError", (PROC*)&GLGetError);
@@ -255,7 +240,6 @@ namespace GL
 		LoadFunction(buffer, PREFIX_GL, "Uniform1f", (PROC*)&GLUniform1f);
 		LoadFunction(buffer, PREFIX_GL, "Uniform2f", (PROC*)&GLUniform2f);
 		LoadFunction(buffer, PREFIX_GL, "Uniform4f", (PROC*)&GLUniform4f);
-		LoadFunction(buffer, PREFIX_GL, "UniformMatrix4fv", (PROC*)&GLUniformMatrix4fv);
 
 		LoadFunction(buffer, PREFIX_GL, "GenVertexArrays", (PROC*)&GLGenVertexArrays);
 		LoadFunction(buffer, PREFIX_GL, "BindVertexArray", (PROC*)&GLBindVertexArray);
@@ -265,12 +249,6 @@ namespace GL
 		LoadFunction(buffer, PREFIX_GL, "DeleteFramebuffers", (PROC*)&GLDeleteFramebuffers);
 		LoadFunction(buffer, PREFIX_GL, "BindFramebuffer", (PROC*)&GLBindFramebuffer);
 		LoadFunction(buffer, PREFIX_GL, "FramebufferTexture2D", (PROC*)&GLFramebufferTexture2D);
-
-		LoadFunction(buffer, PREFIX_GL, "GenRenderbuffers", (PROC*)&GLGenRenderbuffers);
-		LoadFunction(buffer, PREFIX_GL, "DeleteRenderbuffers", (PROC*)&GLDeleteRenderbuffers);
-		LoadFunction(buffer, PREFIX_GL, "BindRenderbuffer", (PROC*)&GLBindRenderbuffer);
-		LoadFunction(buffer, PREFIX_GL, "RenderbufferStorage", (PROC*)&GLRenderbufferStorage);
-		LoadFunction(buffer, PREFIX_GL, "FramebufferRenderbuffer", (PROC*)&GLFramebufferRenderbuffer);
 
 		if (GLGetString)
 		{
@@ -351,7 +329,6 @@ namespace GL
 
 		pfd->dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER | PFD_DEPTH_DONTCARE | PFD_SWAP_EXCHANGE;
 		pfd->cColorBits = LOBYTE(bpp);
-		pfd->cStencilBits = 8;
 	}
 
 	INT __fastcall PreparePixelFormat(PIXELFORMATDESCRIPTOR* pfd)
@@ -395,7 +372,6 @@ namespace GL
 									WGL_DOUBLE_BUFFER_ARB, (pfd->dwFlags & PFD_DOUBLEBUFFER) ? GL_TRUE : GL_FALSE,
 									WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
 									WGL_COLOR_BITS_ARB, pfd->cColorBits,
-									WGL_STENCIL_BITS_ARB, pfd->cStencilBits,
 									WGL_ACCELERATION_ARB, WGL_FULL_ACCELERATION_ARB,
 									WGL_SWAP_METHOD_ARB, (pfd->dwFlags & PFD_SWAP_EXCHANGE) ? WGL_SWAP_EXCHANGE_ARB : WGL_SWAP_COPY_ARB,
 									0

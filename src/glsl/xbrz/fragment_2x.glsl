@@ -27,17 +27,10 @@
 */
 
 uniform sampler2D tex01;
+uniform sampler2D tex02;
 uniform vec2 texSize;
 
-in vec4 t1;
-in vec4 t2;
-in vec4 t3;
-in vec4 t4;
-in vec4 t5;
-in vec4 t6;
-in vec4 t7;
 in vec2 fTex;
-
 out vec4 fragColor;
 
 #define BLEND_NONE 0
@@ -78,29 +71,36 @@ bool IsBlendingNeeded(const ivec4 blend) {
 }
 
 void main() {
+	if (texture(tex01, fTex) == texture(tex02, fTex))
+		discard;
+
+	vec2 texel = floor(fTex * texSize) + 0.5;
+
+	#define TEX(x, y) texture(tex01, (texel + vec2(x, y)) / texSize).rgb
+
 	vec3 src[25];
-	src[21] = texture(tex01, t1.xw).rgb;
-	src[22] = texture(tex01, t1.yw).rgb;
-	src[23] = texture(tex01, t1.zw).rgb;
-	src[ 6] = texture(tex01, t2.xw).rgb;
-	src[ 7] = texture(tex01, t2.yw).rgb;
-	src[ 8] = texture(tex01, t2.zw).rgb;
-	src[ 5] = texture(tex01, t3.xw).rgb;
-	src[ 0] = texture(tex01, t3.yw).rgb;
-	src[ 1] = texture(tex01, t3.zw).rgb;
-	src[ 4] = texture(tex01, t4.xw).rgb;
-	src[ 3] = texture(tex01, t4.yw).rgb;
-	src[ 2] = texture(tex01, t4.zw).rgb;
-	src[15] = texture(tex01, t5.xw).rgb;
-	src[14] = texture(tex01, t5.yw).rgb;
-	src[13] = texture(tex01, t5.zw).rgb;
-	src[19] = texture(tex01, t6.xy).rgb;
-	src[18] = texture(tex01, t6.xz).rgb;
-	src[17] = texture(tex01, t6.xw).rgb;
-	src[ 9] = texture(tex01, t7.xy).rgb;
-	src[10] = texture(tex01, t7.xz).rgb;
-	src[11] = texture(tex01, t7.xw).rgb;
-	
+	src[21] = TEX(-1.0, -2.0);
+	src[22] = TEX( 0.0, -2.0);
+	src[23] = TEX( 1.0, -2.0);
+	src[ 6] = TEX(-1.0, -1.0);
+	src[ 7] = TEX( 0.0, -1.0);
+	src[ 8] = TEX( 1.0, -1.0);
+	src[ 5] = TEX(-1.0,  0.0);
+	src[ 0] = TEX( 0.0,  0.0);
+	src[ 1] = TEX( 1.0,  0.0);
+	src[ 4] = TEX(-1.0,  1.0);
+	src[ 3] = TEX( 0.0,  1.0);
+	src[ 2] = TEX( 1.0,  1.0);
+	src[15] = TEX(-1.0,  2.0);
+	src[14] = TEX( 0.0,  2.0);
+	src[13] = TEX( 1.0,  2.0);
+	src[19] = TEX(-2.0, -1.0);
+	src[18] = TEX(-2.0,  0.0);
+	src[17] = TEX(-2.0,  1.0);
+	src[ 9] = TEX( 2.0, -1.0);
+	src[10] = TEX( 2.0,  0.0);
+	src[11] = TEX( 2.0,  1.0);
+
 	float v[9];
 	v[0] = reduce(src[0]);
 	v[1] = reduce(src[1]);
@@ -111,7 +111,7 @@ void main() {
 	v[6] = reduce(src[6]);
 	v[7] = reduce(src[7]);
 	v[8] = reduce(src[8]);
-	
+
 	ivec4 blendResult = ivec4(BLEND_NONE);
 	if (!((v[0] == v[1] && v[3] == v[2]) || (v[0] == v[3] && v[1] == v[2]))) {
 		float dist_03_01 = DistYCbCr(src[ 4], src[ 0]) + DistYCbCr(src[ 0], src[ 8]) + DistYCbCr(src[14], src[ 2]) + DistYCbCr(src[ 2], src[10]) + (4.0 * DistYCbCr(src[ 3], src[ 1]));
@@ -126,27 +126,27 @@ void main() {
 		bool dominantGradient = (DOMINANT_DIRECTION_THRESHOLD * dist_05_03) < dist_04_00;
 		blendResult.w = ((dist_04_00 > dist_05_03) && (v[0] != v[5]) && (v[0] != v[3])) ? ((dominantGradient) ? BLEND_DOMINANT : BLEND_NORMAL) : BLEND_NONE;
 	}
-	
+
 	if (!((v[7] == v[8] && v[0] == v[1]) || (v[7] == v[0] && v[8] == v[1]))) {
 		float dist_00_08 = DistYCbCr(src[ 5], src[ 7]) + DistYCbCr(src[ 7], src[23]) + DistYCbCr(src[ 3], src[ 1]) + DistYCbCr(src[ 1], src[ 9]) + (4.0 * DistYCbCr(src[ 0], src[ 8]));
 		float dist_07_01 = DistYCbCr(src[ 6], src[ 0]) + DistYCbCr(src[ 0], src[ 2]) + DistYCbCr(src[22], src[ 8]) + DistYCbCr(src[ 8], src[10]) + (4.0 * DistYCbCr(src[ 7], src[ 1]));
 		bool dominantGradient = (DOMINANT_DIRECTION_THRESHOLD * dist_07_01) < dist_00_08;
 		blendResult.y = ((dist_00_08 > dist_07_01) && (v[0] != v[7]) && (v[0] != v[1])) ? ((dominantGradient) ? BLEND_DOMINANT : BLEND_NORMAL) : BLEND_NONE;
 	}
-	
+
 	if (!((v[6] == v[7] && v[5] == v[0]) || (v[6] == v[5] && v[7] == v[0]))) {
 		float dist_05_07 = DistYCbCr(src[18], src[ 6]) + DistYCbCr(src[ 6], src[22]) + DistYCbCr(src[ 4], src[ 0]) + DistYCbCr(src[ 0], src[ 8]) + (4.0 * DistYCbCr(src[ 5], src[ 7]));
 		float dist_06_00 = DistYCbCr(src[19], src[ 5]) + DistYCbCr(src[ 5], src[ 3]) + DistYCbCr(src[21], src[ 7]) + DistYCbCr(src[ 7], src[ 1]) + (4.0 * DistYCbCr(src[ 6], src[ 0]));
 		bool dominantGradient = (DOMINANT_DIRECTION_THRESHOLD * dist_05_07) < dist_06_00;
 		blendResult.x = ((dist_05_07 < dist_06_00) && (v[0] != v[5]) && (v[0] != v[7])) ? ((dominantGradient) ? BLEND_DOMINANT : BLEND_NORMAL) : BLEND_NONE;
 	}
-	
+
 	vec3 dst[4];
 	dst[ 0] = src[0];
 	dst[ 1] = src[0];
 	dst[ 2] = src[0];
 	dst[ 3] = src[0];
-	
+
 	if (IsBlendingNeeded(blendResult)) {
 		float dist_01_04 = DistYCbCr(src[1], src[4]);
 		float dist_03_08 = DistYCbCr(src[3], src[8]);
@@ -157,12 +157,12 @@ void main() {
 						   ((blendResult.y != BLEND_NONE && !IsPixEqual(src[0], src[4])) ||
 							 (blendResult.w != BLEND_NONE && !IsPixEqual(src[0], src[8])) ||
 							 (IsPixEqual(src[4], src[3]) && IsPixEqual(src[3], src[2]) && IsPixEqual(src[2], src[1]) && IsPixEqual(src[1], src[8]) && IsPixEqual(src[0], src[2]) == false) ) == false );
-		
+	
 		vec3 blendPix = ( DistYCbCr(src[0], src[1]) <= DistYCbCr(src[0], src[3]) ) ? src[1] : src[3];
 		dst[1] = mix(dst[1], blendPix, (needBlend && doLineBlend && haveSteepLine) ? 0.25 : 0.00);
 		dst[2] = mix(dst[2], blendPix, (needBlend) ? ((doLineBlend) ? ((haveShallowLine) ? ((haveSteepLine) ? five_sixths : 0.75) : ((haveSteepLine) ? 0.75 : 0.50)) : M_PI_QUAD) : 0.00);
 		dst[3] = mix(dst[3], blendPix, (needBlend && doLineBlend && haveShallowLine) ? 0.25 : 0.00);
-		
+	
 		dist_01_04 = DistYCbCr(src[7], src[2]);
 		dist_03_08 = DistYCbCr(src[1], src[6]);
 		haveShallowLine = (STEEP_DIRECTION_THRESHOLD * dist_01_04 <= dist_03_08) && (v[0] != v[2]) && (v[3] != v[2]);
@@ -172,12 +172,12 @@ void main() {
 					  !((blendResult.x != BLEND_NONE && !IsPixEqual(src[0], src[2])) ||
 						(blendResult.z != BLEND_NONE && !IsPixEqual(src[0], src[6])) ||
 						(IsPixEqual(src[2], src[1]) && IsPixEqual(src[1], src[8]) && IsPixEqual(src[8], src[7]) && IsPixEqual(src[7], src[6]) && !IsPixEqual(src[0], src[8])) ) );
-		
+	
 		blendPix = ( DistYCbCr(src[0], src[7]) <= DistYCbCr(src[0], src[1]) ) ? src[7] : src[1];
 		dst[0] = mix(dst[0], blendPix, (needBlend && doLineBlend && haveSteepLine) ? 0.25 : 0.00);
 		dst[1] = mix(dst[1], blendPix, (needBlend) ? ((doLineBlend) ? ((haveShallowLine) ? ((haveSteepLine) ? five_sixths : 0.75) : ((haveSteepLine) ? 0.75 : 0.50)) : M_PI_QUAD) : 0.00);
 		dst[2] = mix(dst[2], blendPix, (needBlend && doLineBlend && haveShallowLine) ? 0.25 : 0.00);
-		
+	
 		dist_01_04 = DistYCbCr(src[5], src[8]);
 		dist_03_08 = DistYCbCr(src[7], src[4]);
 		haveShallowLine = (STEEP_DIRECTION_THRESHOLD * dist_01_04 <= dist_03_08) && (v[0] != v[8]) && (v[1] != v[8]);
@@ -187,12 +187,12 @@ void main() {
 					  !((blendResult.w != BLEND_NONE && !IsPixEqual(src[0], src[8])) ||
 						(blendResult.y != BLEND_NONE && !IsPixEqual(src[0], src[4])) ||
 						(IsPixEqual(src[8], src[7]) && IsPixEqual(src[7], src[6]) && IsPixEqual(src[6], src[5]) && IsPixEqual(src[5], src[4]) && !IsPixEqual(src[0], src[6])) ) );
-		
+	
 		blendPix = ( DistYCbCr(src[0], src[5]) <= DistYCbCr(src[0], src[7]) ) ? src[5] : src[7];
 		dst[3] = mix(dst[3], blendPix, (needBlend && doLineBlend && haveSteepLine) ? 0.25 : 0.00);
 		dst[0] = mix(dst[0], blendPix, (needBlend) ? ((doLineBlend) ? ((haveShallowLine) ? ((haveSteepLine) ? five_sixths : 0.75) : ((haveSteepLine) ? 0.75 : 0.50)) : M_PI_QUAD) : 0.00);
 		dst[1] = mix(dst[1], blendPix, (needBlend && doLineBlend && haveShallowLine) ? 0.25 : 0.00);
-		
+	
 		dist_01_04 = DistYCbCr(src[3], src[6]);
 		dist_03_08 = DistYCbCr(src[5], src[2]);
 		haveShallowLine = (STEEP_DIRECTION_THRESHOLD * dist_01_04 <= dist_03_08) && (v[0] != v[6]) && (v[7] != v[6]);
@@ -202,16 +202,16 @@ void main() {
 					  !((blendResult.z != BLEND_NONE && !IsPixEqual(src[0], src[6])) ||
 						(blendResult.x != BLEND_NONE && !IsPixEqual(src[0], src[2])) ||
 						(IsPixEqual(src[6], src[5]) && IsPixEqual(src[5], src[4]) && IsPixEqual(src[4], src[3]) && IsPixEqual(src[3], src[2]) && !IsPixEqual(src[0], src[4])) ) );
-		
+	
 		blendPix = ( DistYCbCr(src[0], src[3]) <= DistYCbCr(src[0], src[5]) ) ? src[3] : src[5];
 		dst[2] = mix(dst[2], blendPix, (needBlend && doLineBlend && haveSteepLine) ? 0.25 : 0.00);
 		dst[3] = mix(dst[3], blendPix, (needBlend) ? ((doLineBlend) ? ((haveShallowLine) ? ((haveSteepLine) ? five_sixths : 0.75) : ((haveSteepLine) ? 0.75 : 0.50)) : M_PI_QUAD) : 0.00);
 		dst[0] = mix(dst[0], blendPix, (needBlend && doLineBlend && haveShallowLine) ? 0.25 : 0.00);
 	}
-	
-	vec2 f = fract(fTex);
+
+	vec2 f = fract(fTex * texSize);
 	vec3 res = mix( mix(dst[0], dst[1], step(0.50, f.x)),
 						mix(dst[3], dst[2], step(0.50, f.x)), step(0.50, f.y) );
-								 
+
 	fragColor = vec4(res, 1.0);
 }

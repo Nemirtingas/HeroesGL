@@ -109,8 +109,8 @@ extern "C"
 #define Exit(code) exit(code)
 
 DOUBLE __fastcall MathRound(DOUBLE);
-VOID* __fastcall AlignedAlloc(size_t size);
-VOID __fastcall AlignedFree(VOID* block);
+VOID* __fastcall AlignedAlloc(size_t);
+VOID __fastcall AlignedFree(VOID*);
 
 extern HMODULE hDllModule;
 extern HANDLE hActCtx;

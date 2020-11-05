@@ -34,7 +34,6 @@ OpenDrawPalette::OpenDrawPalette(IDraw* lpDD)
 	this->ddraw = lpDD;
 	this->last = lpDD->paletteEntries;
 	lpDD->paletteEntries = this;
-	this->isChanged = FALSE;
 }
 
 ULONG __stdcall OpenDrawPalette::AddRef()
@@ -78,7 +77,6 @@ HRESULT __stdcall OpenDrawPalette::SetEntries(DWORD dwFlags, DWORD dwStartingEnt
 				surfaceEntry = surfaceEntry->last;
 			}
 
-			this->isChanged = TRUE;
 			SetEvent(((OpenDraw*)this->ddraw)->hDrawEvent);
 			Sleep(0);
 

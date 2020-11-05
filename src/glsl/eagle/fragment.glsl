@@ -27,63 +27,62 @@
 */
 
 uniform sampler2D tex01;
+uniform sampler2D tex02;
 uniform vec2 texSize;
 
-in vec4 t1;
-in vec4 t2;
-in vec4 t3;
-in vec4 t4;
-in vec4 t5;
-in vec4 t6;
-in vec4 t7;
-in vec4 t8;
 in vec2 fTex;
-
 out vec4 fragColor;
 
-vec3 dtt = vec3(65536.0,255.0,1.0);
+const vec4 dtt = vec4(65536.0,255.0,1.0,0.0);
 
-float reduce(vec3 color) {
+float reduce(vec4 color) {
 	return dot(color, dtt);
 }
 
 int GET_RESULT(float A, float B, float C, float D) {
-   int x = 0; int y = 0; int r = 0;
-   if (A == C) x+=1; else if (B == C) y+=1;
-   if (A == D) x+=1; else if (B == D) y+=1;
-   if (x <= 1) r+=1; 
-   if (y <= 1) r-=1;
-   return r;
-} 
+	int x = 0; int y = 0; int r = 0;
+	if (A == C) x+=1; else if (B == C) y+=1;
+	if (A == D) x+=1; else if (B == D) y+=1;
+	if (x <= 1) r+=1; 
+	if (y <= 1) r-=1;
+	return r;
+}
 
 void main() {
-	vec3 C0 = texture(tex01, t1.xy).xyz; 
-	vec3 C1 = texture(tex01, t1.zw).xyz;
-	vec3 C2 = texture(tex01, t2.xy).xyz;
-	vec3 D3 = texture(tex01, t2.zw).xyz;
-	vec3 C3 = texture(tex01, t3.xy).xyz;
-	vec3 C4 = texture(tex01, fTex).xyz;
-	vec3 C5 = texture(tex01, t3.zw).xyz;
-	vec3 D4 = texture(tex01, t4.xy).xyz;
-	vec3 C6 = texture(tex01, t4.zw).xyz;
-	vec3 C7 = texture(tex01, t5.xy).xyz;
-	vec3 C8 = texture(tex01, t5.zw).xyz;
-	vec3 D5 = texture(tex01, t6.xy).xyz;
-	vec3 D0 = texture(tex01, t6.zw).xyz;
-	vec3 D1 = texture(tex01, t7.xy).xyz;
-	vec3 D2 = texture(tex01, t7.zw).xyz;
-	vec3 D6 = texture(tex01, t8.xy).xyz;
+	if (texture(tex01, fTex) == texture(tex02, fTex))
+		discard;
 
-	vec3 p00,p10,p01,p11;
+	vec2 texel = floor(fTex * texSize) + 0.5;
 
-	float c0 = reduce(C0);float c1 = reduce(C1);
-	float c2 = reduce(C2);float c3 = reduce(C3);
-	float c4 = reduce(C4);float c5 = reduce(C5);
-	float c6 = reduce(C6);float c7 = reduce(C7);
-	float c8 = reduce(C8);float d0 = reduce(D0);
-	float d1 = reduce(D1);float d2 = reduce(D2);
-	float d3 = reduce(D3);float d4 = reduce(D4);
-	float d5 = reduce(D5);float d6 = reduce(D6);
+	#define TEX(x, y) texture(tex01, (texel + vec2(x, y)) / texSize)
+
+	vec4 C0 = TEX(-1.0, -1.0);
+	vec4 C1 = TEX(-1.0,  0.0);
+	vec4 C2 = TEX( 1.0, -1.0);
+	vec4 D3 = TEX( 2.0, -1.0);
+	vec4 C3 = TEX(-1.0,  0.0);
+	vec4 C4 = TEX( 0.0,  0.0);
+	vec4 C5 = TEX( 1.0,  0.0);
+	vec4 D4 = TEX( 2.0,  0.0);
+	vec4 C6 = TEX(-1.0,  1.0);
+	vec4 C7 = TEX( 0.0,  1.0);
+	vec4 C8 = TEX( 1.0,  1.0);
+	vec4 D5 = TEX( 0.0,  1.0);
+	vec4 D0 = TEX( 1.0,  1.0);
+	vec4 D1 = TEX( 0.0,  2.0);
+	vec4 D2 = TEX( 1.0,  2.0);
+	vec4 D6 = TEX( 2.0,  2.0);
+
+	vec4 p00,p10,p01,p11;
+
+	float c0 = reduce(C0); float c1 = reduce(C1);
+	float c2 = reduce(C2); float c3 = reduce(C3);
+	float c4 = reduce(C4); float c5 = reduce(C5);
+	float c6 = reduce(C6); float c7 = reduce(C7);
+	float c8 = reduce(C8); float d0 = reduce(D0);
+	float d1 = reduce(D1); float d2 = reduce(D2);
+	float d3 = reduce(D3); float d4 = reduce(D4);
+	float d5 = reduce(D5); float d6 = reduce(D6);
 
 	if (c4 != c8) {
 		if (c7 == c5) {
@@ -101,8 +100,7 @@ void main() {
 		p01 = c1 == c4 || c8 == d5 ? 0.25*(3.0*C4+C5) : 0.5*(C4+C5);
 		p10 = c8 == d2 || c3 == c4 ? 0.25*(3.0*C4+C7) : 0.5*(C7+C8);
 	} else {
-		int r = 0;
-		r += GET_RESULT(c5,c4,c6,d1);
+		int r = GET_RESULT(c5,c4,c6,d1);
 		r += GET_RESULT(c5,c4,c3,c1);
 		r += GET_RESULT(c5,c4,d2,d5);
 		r += GET_RESULT(c5,c4,c2,d4);
@@ -120,7 +118,5 @@ void main() {
 	}
 
 	vec2 fp = fract(fTex * texSize);
-	p10 = (fp.x < 0.50) ? (fp.y < 0.50 ? p00 : p10) : (fp.y < 0.50 ? p01: p11);
-
-	fragColor = vec4(p10, 1.0);
+	fragColor = fp.x < 0.50 ? (fp.y < 0.50 ? p00 : p10) : (fp.y < 0.50 ? p01: p11);
 }

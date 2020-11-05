@@ -46,12 +46,6 @@ public:
 	BYTE indexBuffer[RES_WIDTH * RES_HEIGHT];
 	DWORD* pixelBuffer;
 
-	UpdateRect* clipsList;
-	UpdateRect* endClip;
-
-	UpdateRect* currentClip;
-	UpdateRect* poinetrClip;
-
 	OpenDrawSurface(IDraw*, DWORD);
 	~OpenDrawSurface();
 

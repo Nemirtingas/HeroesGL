@@ -112,12 +112,6 @@ struct DisplayMode
 	DWORD bpp;
 };
 
-struct UpdateRect
-{
-	RECT rect;
-	BOOL isActive;
-};
-
 union Levels
 {
 	struct {
@@ -189,8 +183,15 @@ struct AddressSpace
 
 struct RGNRECTDATA
 {
-	RGNDATAHEADER   rdh;
-	RECT            rect;
+	RGNDATAHEADER rdh;
+	RECT rect;
+};
+
+enum UpdateMode
+{
+	UpdateNone = 0,
+	UpdateCPP = 1,
+	UpdateASM = 2
 };
 
 struct ConfigItems
@@ -206,6 +207,7 @@ struct ConfigItems
 	BOOL singleWindow;
 	BOOL coldCPU;
 	RendererType renderer;
+	UpdateMode updateMode;
 
 	struct {
 		BOOL allowed;
