@@ -23,57 +23,38 @@
 */
 
 #pragma once
-#include "IDraw7.h"
+#include "Allocation.h"
 #include "ExtraTypes.h"
-#include "OpenDrawSurface.h"
 
-class OpenDraw : public IDraw7
+#define FPS_X 3
+#define FPS_Y 5
+#define FPS_WIDTH 16
+#define FPS_HEIGHT 24
+#define FPS_COUNT 120
+#define FPS_ACCURACY 2000
+
+extern const WORD counters[10][FPS_HEIGHT];
+
+class FpsCounter : public Allocation
 {
-protected:
-	ULONG refCount;
+private:
+	FpsMode mode;
+	DWORD texWidth;
+	DWORD accuracy;
+	DWORD count;
+	DWORD checkIndex;
+	DWORD currentIndex;
+	DWORD summary;
+	DWORD lastTick;
+	FpsItem* tickQueue;
 
 public:
-	OpenDrawSurface* attachedSurface;
+	DWORD value;
 
-	HDC hDc;
-	HWND hDraw;
+	FpsCounter(FpsMode, DWORD, DWORD = FPS_ACCURACY);
+	~FpsCounter();
 
-	const DisplayMode* mode;
-
-	BOOL isFinish;
-
-	HANDLE hDrawThread;
-	HANDLE hDrawEvent;
-
-	Viewport viewport;
-	WindowState windowState;
-
-	FilterState filterState;
-	BOOL isTakeSnapshot;
-	BOOL isFpsChanged;
-
-	OpenDraw(IDraw7**);
-	~OpenDraw();
-
-	BOOL CheckView();
-	VOID __fastcall ScaleMouse(LPPOINT);
-
-	VOID RenderStart();
-	VOID RenderStop();
-
-	VOID RenderOld();
-	VOID RenderMid();
-	VOID RenderNew();
-	VOID LoadFilterState();
-
-	VOID ResetDisplayMode(DWORD, DWORD);
-
-	// Inherited via IDraw7
-	ULONG __stdcall AddRef();
-	ULONG __stdcall Release();
-	HRESULT __stdcall CreateClipper(DWORD, LPDIRECTDRAWCLIPPER*, IUnknown*);
-	HRESULT __stdcall CreateSurface(LPDDSURFACEDESC2, LPDIRECTDRAWSURFACE7*, IUnknown*);
-	HRESULT __stdcall EnumDisplayModes(DWORD, LPDDSURFACEDESC2, LPVOID, LPDDENUMMODESCALLBACK2);
-	HRESULT __stdcall SetCooperativeLevel(HWND, DWORD);
-	HRESULT __stdcall SetDisplayMode(DWORD, DWORD, DWORD, DWORD, DWORD);
+	VOID Reset();
+	VOID Calculate();
+	VOID Draw(FpsState, VOID*);
 };

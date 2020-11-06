@@ -266,25 +266,25 @@ namespace Hooks
 
 	HWND __stdcall SetActiveWindowHook(HWND hWnd) { return hWnd; }
 
-	INT_PTR __stdcall DialogBoxParamHook(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWnd, DLGPROC lpDialogFunc, LPARAM dwInitParam)
+	INT_PTR __stdcall DialogBoxParamHook(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND, DLGPROC lpDialogFunc, LPARAM dwInitParam)
 	{
 		INT_PTR res;
-		DialogParams params = { hWnd, hWndMain, TRUE, NULL };
+		DialogParams params = { hWndMain, TRUE, NULL };
 		Window::BeginDialog(&params);
 		{
-			res = DialogBoxParam(hInstance, lpTemplateName, hWnd, lpDialogFunc, dwInitParam);
+			res = DialogBoxParam(hInstance, lpTemplateName, params.hWnd, lpDialogFunc, dwInitParam);
 		}
 		Window::EndDialog(&params);
 		return res;
 	}
 
-	INT __stdcall MessageBoxHook(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType)
+	INT __stdcall MessageBoxHook(HWND, LPCSTR lpText, LPCSTR lpCaption, UINT uType)
 	{
 		INT res;
-		DialogParams params = { hWnd, hWndMain, TRUE, NULL };
+		DialogParams params = { hWndMain, TRUE, NULL };
 		Window::BeginDialog(&params);
 		{
-			res = MessageBox(hWnd, lpText, lpCaption, uType);
+			res = MessageBox(params.hWnd, lpText, lpCaption, uType);
 		}
 		Window::EndDialog(&params);
 		return res;

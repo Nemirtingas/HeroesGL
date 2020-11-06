@@ -837,8 +837,8 @@ IDR_SCALENX_FRAGMENT_3X		RCDATA		DISCARDABLE		"..\\glsl\\scalenx\\fragment_3x.gl
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2020,11,5,380
- PRODUCTVERSION 1,4,0,0
+ FILEVERSION 2020,11,6,387
+ PRODUCTVERSION 1,4,1,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS VS_FF_DEBUG
@@ -854,10 +854,10 @@ BEGIN
 		BLOCK "040904b0"
 		BEGIN
 			VALUE "FileDescription", "HoMM IV - OpenGL wrapper"
-			VALUE "FileVersion", "2020.11.05.380"
+			VALUE "FileVersion", "2020.11.06.387"
 			VALUE "LegalCopyright", "© 2020 Verok (verokster@gmail.com)"
 			VALUE "OriginalFilename", "ddraw.dll"
-			VALUE "ProductVersion", "1.4.0"
+			VALUE "ProductVersion", "1.4.1"
 			VALUE "ProductName", "Heroes4GL"
 		END
 	END

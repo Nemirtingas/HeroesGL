@@ -232,6 +232,8 @@ namespace Config
 			config.colors.active.output.right.blue = 1.0f;
 			Config::Set(CONFIG_COLORS, "BlueOutput", 0x03E80000);
 
+			Config::Set(CONFIG_KEYS, "FpsCounter", "");
+
 			config.keys.windowedMode = 4;
 			Config::Set(CONFIG_KEYS, "WindowedMode", config.keys.windowedMode);
 
@@ -404,6 +406,14 @@ namespace Config
 				}
 
 				CHAR buffer[20];
+				if (Config::Get(CONFIG_KEYS, "FpsCounter", "", buffer, sizeof(buffer)))
+				{
+					value = Config::Get(CONFIG_KEYS, "FpsCounter", 0);
+					config.keys.fpsCounter = LOBYTE(value);
+					if (config.keys.fpsCounter > 24)
+						config.keys.fpsCounter = 0;
+				}
+
 				if (Config::Get(CONFIG_KEYS, "ImageFilter", "", buffer, sizeof(buffer)))
 				{
 					value = Config::Get(CONFIG_KEYS, "ImageFilter", 0);
@@ -452,6 +462,7 @@ namespace Config
 			config.image.scaleHQ = 2;
 			config.image.xBRz = 2;
 
+			config.keys.fpsCounter = 0;
 			config.keys.imageFilter = 3;
 			config.keys.windowedMode = 4;
 			config.keys.aspectRatio = 5;

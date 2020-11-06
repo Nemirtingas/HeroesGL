@@ -51,13 +51,14 @@ public:
 
 	FilterState filterState;
 	BOOL isTakeSnapshot;
+	BOOL isFpsChanged;
 
 	OpenDraw(IDraw**);
 	~OpenDraw();
 
 	BOOL CheckView();
 	VOID __fastcall ScaleMouse(LPPOINT);
-	VOID CopyPointer(DWORD*);
+	VOID CopyPointer(VOID*);
 
 	VOID RenderStart();
 	VOID RenderStop();

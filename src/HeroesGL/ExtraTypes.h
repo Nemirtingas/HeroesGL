@@ -218,6 +218,25 @@ struct TrackInfo
 	CHAR* path;
 };
 
+enum FpsState
+{
+	FpsDisabled = 0,
+	FpsNormal,
+	FpsBenchmark
+};
+
+struct FpsItem {
+	DWORD tick;
+	DWORD span;
+};
+
+enum FpsMode
+{
+	FpsRgb,
+	FpsRgba,
+	FpsBgra
+};
+
 enum UpdateMode
 {
 	UpdateNone = 0,
@@ -267,6 +286,10 @@ struct ConfigItems
 	} gl;
 
 	struct {
+		FpsState state;
+	} fps;
+
+	struct {
 		BOOL aspect;
 		BOOL vSync;
 		InterpolationFilter interpolation;
@@ -279,6 +302,7 @@ struct ConfigItems
 	} image;
 
 	struct {
+		BYTE fpsCounter;
 		BYTE imageFilter;
 		BYTE windowedMode;
 		BYTE aspectRatio;
@@ -316,7 +340,6 @@ enum MenuType
 class OpenDraw;
 struct DialogParams {
 	HWND hWnd;
-	HWND hWndDefault;
 	BOOL isGrayed;
 	OpenDraw* ddraw;
 	BOOL isFullscreen;

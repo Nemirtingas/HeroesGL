@@ -52,6 +52,7 @@ public:
 
 	FilterState filterState;
 	BOOL isTakeSnapshot;
+	BOOL isFpsChanged;
 
 	OpenDraw(IDraw**);
 	~OpenDraw();

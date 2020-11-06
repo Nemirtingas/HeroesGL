@@ -43,9 +43,6 @@ namespace Window
 
 	VOID __fastcall BeginDialog(DialogParams* params)
 	{
-		if (!params->hWnd)
-			params->hWnd = params->hWndDefault;
-
 		params->ddraw = Main::FindOpenDrawByWindow(params->hWnd);
 		if (params->ddraw)
 		{
@@ -1600,7 +1597,31 @@ namespace Window
 		case WM_KEYDOWN: {
 			if (!(HIWORD(lParam) & KF_ALTDOWN))
 			{
-				if (config.keys.imageFilter && config.keys.imageFilter + VK_F1 - 1 == wParam)
+				if (config.keys.fpsCounter && config.keys.fpsCounter + VK_F1 - 1 == wParam)
+				{
+					switch (config.fps.state)
+					{
+					case FpsNormal:
+						config.fps.state = FpsBenchmark;
+						break;
+					case FpsBenchmark:
+						config.fps.state = FpsDisabled;
+						break;
+					default:
+						config.fps.state = FpsNormal;
+						break;
+					}
+
+					OpenDraw* ddraw = Main::FindOpenDrawByWindow(hWnd);
+					if (ddraw)
+					{
+						ddraw->isFpsChanged = TRUE;
+						SetEvent(ddraw->hDrawEvent);
+					}
+
+					return NULL;
+				}
+				else if (config.keys.imageFilter && config.keys.imageFilter + VK_F1 - 1 == wParam)
 				{
 					switch (config.image.interpolation)
 					{
@@ -1710,7 +1731,7 @@ namespace Window
 			}
 
 			case IDM_HELP_WRAPPER: {
-				DialogParams params = { hWnd, hWnd, TRUE, NULL };
+				DialogParams params = { hWnd, TRUE, NULL };
 				BeginDialog(&params);
 				{
 					DialogBoxParam(hDllModule, MAKEINTRESOURCE(params.cookie ? IDD_ABOUT : IDD_ABOUT_OLD), hWnd, (DLGPROC)AboutProc, params.cookie);
@@ -1720,7 +1741,7 @@ namespace Window
 			}
 
 			case IDM_COLOR_ADJUST: {
-				DialogParams params = { hWnd, hWnd, FALSE, NULL };
+				DialogParams params = { hWnd, FALSE, NULL };
 				BeginDialog(&params);
 				{
 					DialogBoxParam(hDllModule, MAKEINTRESOURCE(IDD_COLOR_ADJUSTMENT), hWnd, (DLGPROC)ColorAdjustmentProc, NULL);

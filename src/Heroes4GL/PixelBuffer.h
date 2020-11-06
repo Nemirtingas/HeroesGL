@@ -58,7 +58,7 @@ private:
 	VOID UpdateBlock(RECT*, POINT*);
 
 public:
-	PixelBuffer(DWORD, DWORD, BOOL, GLenum);
+	PixelBuffer(DWORD, DWORD, BOOL, GLenum, UpdateMode);
 	~PixelBuffer();
 
 	VOID Reset();

@@ -32,6 +32,7 @@
 #include "Window.h"
 #include "ShaderGroup.h"
 #include "PixelBuffer.h"
+#include "FpsCounter.h"
 
 DWORD __fastcall GetPow2(DWORD value)
 {
@@ -41,7 +42,7 @@ DWORD __fastcall GetPow2(DWORD value)
 	return res;
 }
 
-VOID OpenDraw::CopyPointer(DWORD* frameBuffer)
+VOID OpenDraw::CopyPointer(VOID* frameBuffer)
 {
 	if (config.cursor.index && !config.cursor.hidden)
 	{
@@ -90,7 +91,7 @@ VOID OpenDraw::CopyPointer(DWORD* frameBuffer)
 
 			if (size.cx > 0 && size.cy > 0)
 			{
-				DWORD* source = frameBuffer + pos.y * this->width + pos.x;
+				DWORD* source = (DWORD*)frameBuffer + pos.y * this->width + pos.x;
 
 				DWORD initMask = 8 - (offset.x % 8);
 				DWORD initOffset = offset.x & (8 - 1);
@@ -409,13 +410,23 @@ VOID OpenDraw::RenderOld()
 
 		DWORD clear = 0;
 
-		PixelBuffer* pixelBuffer = new PixelBuffer(this->width, this->height, TRUE, GL_RGBA);
+		FpsCounter* fpsCounter = new FpsCounter(FpsRgba, this->width);
+		PixelBuffer* pixelBuffer = new PixelBuffer(this->width, this->height, TRUE, GL_RGBA, config.updateMode);
 		{
 			do
 			{
 				OpenDrawSurface* surface = this->attachedSurface;
 				if (!surface)
 					continue;
+
+				BOOL isFps = this->isFpsChanged;
+				this->isFpsChanged = FALSE;
+				if (config.fps.state)
+				{
+					if (isFps)
+						fpsCounter->Reset();
+					fpsCounter->Calculate();
+				}
 
 				BOOL vs = config.image.vSync && this->windowState != WinStateWindowed;
 				if (isVSync != vs)
@@ -424,6 +435,20 @@ VOID OpenDraw::RenderOld()
 					if (WGLSwapInterval)
 						WGLSwapInterval(isVSync);
 				}
+
+				if (isFps)
+					clear = 0;
+
+				DWORD glFilter = 0;
+				FilterState state = this->filterState;
+				this->filterState.flags = FALSE;
+				if (state.flags)
+					glFilter = state.interpolation == InterpolateNearest ? GL_NEAREST : GL_LINEAR;
+
+				BOOL isSnapshot = this->isTakeSnapshot;
+				this->isTakeSnapshot = FALSE;
+				if (state.flags || isFps || isSnapshot)
+					clear = 0;
 
 				if (this->CheckView())
 				{
@@ -434,14 +459,9 @@ VOID OpenDraw::RenderOld()
 				if (clear++ <= 1)
 					GLClear(GL_COLOR_BUFFER_BIT);
 
-				DWORD glFilter = 0;
-				FilterState state = this->filterState;
-				this->filterState.flags = FALSE;
-				if (state.flags)
-					glFilter = state.interpolation == InterpolateNearest ? GL_NEAREST : GL_LINEAR;
-
 				pixelBuffer->Copy(surface->pixelBuffer);
-				this->CopyPointer((DWORD*)pixelBuffer->GetBuffer());
+				this->CopyPointer(pixelBuffer->GetBuffer());
+				fpsCounter->Draw(config.fps.state, pixelBuffer->GetBuffer());
 
 				DWORD count = frameCount;
 				frame = frames;
@@ -488,20 +508,18 @@ VOID OpenDraw::RenderOld()
 					++frame;
 				}
 
-				if (this->isTakeSnapshot)
-				{
-					this->isTakeSnapshot = FALSE;
+				if (isSnapshot)
 					surface->TakeSnapshot(this->width, this->height);
-				}
 
 				pixelBuffer->SwapBuffers();
 				SwapBuffers(this->hDc);
-				if (clear >= 2)
+				if (clear > 1 && config.fps.state != FpsBenchmark)
 					WaitForSingleObject(this->hDrawEvent, INFINITE);
 				GLFinish();
 			} while (!this->isFinish);
 		}
 		delete pixelBuffer;
+		delete fpsCounter;
 
 		frame = frames;
 		DWORD count = frameCount;
@@ -605,13 +623,23 @@ VOID OpenDraw::RenderMid()
 
 					DWORD clear = 0;
 
-					PixelBuffer* pixelBuffer = new PixelBuffer(this->width, this->height, TRUE, GL_RGBA);
+					FpsCounter* fpsCounter = new FpsCounter(FpsRgba, this->width);
+					PixelBuffer* pixelBuffer = new PixelBuffer(this->width, this->height, TRUE, GL_RGBA, config.updateMode);
 					{
 						do
 						{
 							OpenDrawSurface* surface = this->attachedSurface;
 							if (!surface)
 								continue;
+
+							BOOL isFps = this->isFpsChanged;
+							this->isFpsChanged = FALSE;
+							if (config.fps.state)
+							{
+								if (isFps)
+									fpsCounter->Reset();
+								fpsCounter->Calculate();
+							}
 
 							BOOL vs = config.image.vSync && this->windowState != WinStateWindowed;
 							if (isVSync != vs)
@@ -627,12 +655,10 @@ VOID OpenDraw::RenderMid()
 							if (program && program->Check())
 								state.flags = TRUE;
 
-							if (state.flags)
-								this->viewport.refresh = TRUE;
-
-							BOOL isTakeSnapshot = this->isTakeSnapshot;
-							if (isTakeSnapshot)
-								this->isTakeSnapshot = FALSE;
+							BOOL isSnapshot = this->isTakeSnapshot;
+							this->isTakeSnapshot = FALSE;
+							if (state.flags || isFps || isSnapshot)
+								clear = 0;
 
 							if (this->CheckView())
 							{
@@ -672,24 +698,26 @@ VOID OpenDraw::RenderMid()
 							// NEXT UNCHANGED
 							{
 								pixelBuffer->Copy(surface->pixelBuffer);
-								this->CopyPointer((DWORD*)pixelBuffer->GetBuffer());
+								this->CopyPointer(pixelBuffer->GetBuffer());
+								fpsCounter->Draw(config.fps.state, pixelBuffer->GetBuffer());
 								pixelBuffer->Update();
 								pixelBuffer->SwapBuffers();
 
 								GLDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 							}
 
-							if (isTakeSnapshot)
+							if (isSnapshot)
 								surface->TakeSnapshot(this->width, this->height);
 
 							// Swap
 							SwapBuffers(this->hDc);
-							if (clear >= 2)
+							if (clear > 1 && config.fps.state != FpsBenchmark)
 								WaitForSingleObject(this->hDrawEvent, INFINITE);
 							GLFinish();
 						} while (!this->isFinish);
 					}
 					delete pixelBuffer;
+					delete fpsCounter;
 				}
 				GLDeleteTextures(1, &textureId);
 			}
@@ -835,7 +863,8 @@ VOID OpenDraw::RenderNew()
 
 							DWORD clear = 0;
 
-							PixelBuffer* firstBuffer = new PixelBuffer(this->width, this->height, TRUE, GL_RGBA);
+							FpsCounter* fpsCounter = new FpsCounter(FpsRgba, this->width);
+							PixelBuffer* firstBuffer = new PixelBuffer(this->width, this->height, TRUE, GL_RGBA, config.updateMode);
 							{
 								GLuint fboId = 0;
 								DWORD viewSize;
@@ -848,6 +877,15 @@ VOID OpenDraw::RenderNew()
 									OpenDrawSurface* surface = this->attachedSurface;
 									if (!surface)
 										continue;
+
+									BOOL isFps = this->isFpsChanged;
+									this->isFpsChanged = FALSE;
+									if (config.fps.state)
+									{
+										if (isFps)
+											fpsCounter->Reset();
+										fpsCounter->Calculate();
+									}
 
 									BOOL vs = config.image.vSync && this->windowState != WinStateWindowed;
 									if (isVSync != vs)
@@ -863,12 +901,10 @@ VOID OpenDraw::RenderNew()
 									if (program && program->Check())
 										state.flags = TRUE;
 
-									if (state.flags)
-										this->viewport.refresh = TRUE;
-
-									BOOL isTakeSnapshot = this->isTakeSnapshot;
-									if (isTakeSnapshot)
-										this->isTakeSnapshot = FALSE;
+									BOOL isSnapshot = this->isTakeSnapshot;
+									this->isTakeSnapshot = FALSE;
+									if (state.flags || isFps || isSnapshot)
+										clear = 0;
 
 									PixelBuffer* pixelBuffer;
 
@@ -940,7 +976,7 @@ VOID OpenDraw::RenderNew()
 												viewSize = MAKELONG(this->width * state.value, this->height * state.value);
 												activeIndex = TRUE;
 												firstBuffer->Reset();
-												secondBuffer = new PixelBuffer(this->width, this->height, TRUE, GL_RGBA);
+												secondBuffer = new PixelBuffer(this->width, this->height, TRUE, GL_RGBA, config.updateMode);
 
 												DWORD size = this->width * this->height * sizeof(DWORD);
 												emptyBuffer = AlignedAlloc(size);
@@ -1007,7 +1043,9 @@ VOID OpenDraw::RenderNew()
 										else
 											GLBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboId);
 
-										this->CheckView();
+										if (this->CheckView())
+											clear = 0;
+
 										GLViewport(0, 0, LOWORD(viewSize), HIWORD(viewSize));
 
 										GLActiveTexture(GL_TEXTURE1);
@@ -1081,7 +1119,8 @@ VOID OpenDraw::RenderNew()
 									// NEXT UNCHANGED
 									{
 										pixelBuffer->Copy(surface->pixelBuffer);
-										this->CopyPointer((DWORD*)pixelBuffer->GetBuffer());
+										this->CopyPointer(pixelBuffer->GetBuffer());
+										fpsCounter->Draw(config.fps.state, pixelBuffer->GetBuffer());
 										pixelBuffer->Update();
 										pixelBuffer->SwapBuffers();
 
@@ -1094,8 +1133,6 @@ VOID OpenDraw::RenderNew()
 										GLFinish();
 										GLBindFramebuffer(GL_DRAW_FRAMEBUFFER, NULL);
 
-										if (this->CheckView())
-											clear = 0;
 										GLViewport(this->viewport.rectangle.x, this->viewport.rectangle.y, this->viewport.rectangle.width, this->viewport.rectangle.height);
 
 										if (clear++ <= 1)
@@ -1127,7 +1164,7 @@ VOID OpenDraw::RenderNew()
 
 										GLDrawArrays(GL_TRIANGLE_FAN, 4, 4);
 
-										if (isTakeSnapshot && OpenClipboard(NULL))
+										if (isSnapshot && OpenClipboard(NULL))
 										{
 											EmptyClipboard();
 
@@ -1164,11 +1201,11 @@ VOID OpenDraw::RenderNew()
 											CloseClipboard();
 										}
 									}
-									else if (isTakeSnapshot)
+									else if (isSnapshot)
 										surface->TakeSnapshot(this->width, this->height);
 
 									SwapBuffers(this->hDc);
-									if (clear >= 2)
+									if (clear > 1 && config.fps.state != FpsBenchmark)
 										WaitForSingleObject(this->hDrawEvent, INFINITE);
 									GLFinish();
 								} while (!this->isFinish);
@@ -1182,6 +1219,7 @@ VOID OpenDraw::RenderNew()
 								}
 							}
 							delete firstBuffer;
+							delete fpsCounter;
 						}
 						GLDeleteTextures(1, &texId.primary);
 					}

@@ -169,6 +169,7 @@
     <ClCompile Include="Allocation.cpp" />
     <ClCompile Include="Config.cpp" />
     <ClCompile Include="DirectDraw.cpp" />
+    <ClCompile Include="FpsCounter.cpp" />
     <ClCompile Include="IDraw.cpp" />
     <ClCompile Include="IDrawClipper.cpp" />
     <ClCompile Include="IDrawSurface.cpp" />
@@ -191,6 +192,7 @@
     <ClInclude Include="Allocation.h" />
     <ClInclude Include="Config.h" />
     <ClInclude Include="DirectDraw.h" />
+    <ClInclude Include="FpsCounter.h" />
     <ClInclude Include="IDraw.h" />
     <ClInclude Include="IDrawClipper.h" />
     <ClInclude Include="IDrawSurface.h" />

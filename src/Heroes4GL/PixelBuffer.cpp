@@ -24,7 +24,6 @@
 
 #include "stdafx.h"
 #include "PixelBuffer.h"
-#include "Config.h"
 
 namespace ASM
 {
@@ -481,7 +480,7 @@ namespace CPP
 	}
 }
 
-PixelBuffer::PixelBuffer(DWORD width, DWORD height, BOOL isTrue, GLenum format)
+PixelBuffer::PixelBuffer(DWORD width, DWORD height, BOOL isTrue, GLenum format, UpdateMode mode)
 {
 	this->width = width;
 	this->height = height;
@@ -506,7 +505,7 @@ PixelBuffer::PixelBuffer(DWORD width, DWORD height, BOOL isTrue, GLenum format)
 	MemoryZero(this->primaryBuffer, this->size);
 	MemoryZero(this->secondaryBuffer, this->size);
 
-	switch (config.updateMode)
+	switch (mode)
 	{
 	case UpdateCPP:
 		this->ForwardCompare = CPP::ForwardCompare;
