@@ -40,7 +40,7 @@ public:
 
 	DisplayMode mode;
 	DWORD pitch;
-	DWORD texWidth;
+	DWORD textureWidth;
 	BOOL isNextIsMode;
 	BOOL isFinish;
 

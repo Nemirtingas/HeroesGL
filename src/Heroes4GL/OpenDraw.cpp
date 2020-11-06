@@ -1107,10 +1107,7 @@ VOID OpenDraw::ResetDisplayMode(DWORD width, DWORD height)
 				this->mode = mode;
 				OpenDrawSurface* surface = this->attachedSurface;
 				if (surface)
-				{
-					surface->ReleaseBuffer();
 					surface->CreateBuffer(mode->width, mode->height);
-				}
 
 				return;
 			}

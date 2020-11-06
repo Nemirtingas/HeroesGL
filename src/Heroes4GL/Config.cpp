@@ -149,7 +149,7 @@ namespace Config
 			config.renderer = RendererAuto;
 			Config::Set(CONFIG_WRAPPER, "Renderer", *(INT*)&config.renderer);
 
-			config.updateMode = UpdateCPP;
+			config.updateMode = UpdateSSE;
 			Config::Set(CONFIG_WRAPPER, "UpdateMode", *(INT*)&config.updateMode);
 
 			config.coldCPU = TRUE;
@@ -266,10 +266,10 @@ namespace Config
 				if (config.renderer < RendererAuto || config.renderer > RendererOpenGL3)
 					config.renderer = RendererAuto;
 
-				value = Config::Get(CONFIG_WRAPPER, "UpdateMode", UpdateCPP);
+				value = Config::Get(CONFIG_WRAPPER, "UpdateMode", UpdateSSE);
 				config.updateMode = *(UpdateMode*)&value;
 				if (config.updateMode < UpdateNone || config.updateMode > UpdateASM)
-					config.updateMode = UpdateCPP;
+					config.updateMode = UpdateSSE;
 
 				config.image.aspect = (BOOL)Config::Get(CONFIG_WRAPPER, "ImageAspect", TRUE);
 				config.image.vSync = (BOOL)Config::Get(CONFIG_WRAPPER, "ImageVSync", TRUE);

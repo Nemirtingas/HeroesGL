@@ -66,8 +66,8 @@ VOID OpenDrawSurface::CreateBuffer(DWORD width, DWORD height)
 
 	this->mode = { width, height, ((OpenDraw*)this->ddraw)->mode.bpp };
 	this->pitch = this->mode.width * this->mode.bpp >> 3;
-	if (this->pitch & 3)
-		this->pitch = (this->pitch & 0xFFFFFFFC) + 4;
+	if (this->pitch & 15)
+		this->pitch = (this->pitch & 0xFFFFFFF0) + 16;
 
 	DWORD size = this->mode.height * this->pitch;
 	this->indexBuffer = (BYTE*)AlignedAlloc(size);

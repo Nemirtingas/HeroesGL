@@ -219,8 +219,8 @@ VOID OpenDraw::RenderOld()
 		DWORD clear = 0;
 
 		BOOL isDirectUpdate = this->mode.bpp == 32 && !config.gl.caps.bgra || this->mode.bpp == 16 && config.gl.version.value <= GL_VER_1_1;
-		FpsCounter* fpsCounter = new FpsCounter(isDirectUpdate ? FpsRgba : (this->mode.bpp == 32 ? FpsBgra : FpsRgb), this->texWidth);
-		PixelBuffer* pixelBuffer = new PixelBuffer(this->texWidth, this->mode.height, isDirectUpdate || this->mode.bpp == 32, isDirectUpdate ? GL_RGBA : (this->mode.bpp == 32 ? GL_BGRA_EXT : GL_RGB), config.updateMode);
+		FpsCounter* fpsCounter = new FpsCounter(isDirectUpdate ? FpsRgba : (this->mode.bpp == 32 ? FpsBgra : FpsRgb), this->textureWidth);
+		PixelBuffer* pixelBuffer = new PixelBuffer(this->textureWidth, this->mode.height, isDirectUpdate || this->mode.bpp == 32, isDirectUpdate ? GL_RGBA : (this->mode.bpp == 32 ? GL_BGRA_EXT : GL_RGB), config.updateMode);
 		{
 			do
 			{
@@ -473,8 +473,8 @@ VOID OpenDraw::RenderMid()
 					FLOAT oldScale = 1.0f;
 					DWORD clear = 0;
 
-					FpsCounter* fpsCounter = new FpsCounter(this->mode.bpp == 32 ? FpsBgra : FpsRgb, this->texWidth);
-					PixelBuffer* pixelBuffer = new PixelBuffer(this->texWidth, this->mode.height, this->mode.bpp == 32, this->mode.bpp == 32 ? GL_BGRA_EXT : GL_RGB, config.updateMode);
+					FpsCounter* fpsCounter = new FpsCounter(this->mode.bpp == 32 ? FpsBgra : FpsRgb, this->textureWidth);
+					PixelBuffer* pixelBuffer = new PixelBuffer(this->textureWidth, this->mode.height, this->mode.bpp == 32, this->mode.bpp == 32 ? GL_BGRA_EXT : GL_RGB, config.updateMode);
 					{
 						do
 						{
@@ -730,8 +730,8 @@ VOID OpenDraw::RenderNew()
 							FLOAT oldScale = 1.0f;
 							DWORD clear = 0;
 
-							FpsCounter* fpsCounter = new FpsCounter(this->mode.bpp == 32 ? FpsBgra : FpsRgb, this->texWidth);
-							PixelBuffer* firstBuffer = new PixelBuffer(this->texWidth, this->mode.height, this->mode.bpp == 32, this->mode.bpp == 32 ? GL_BGRA_EXT : GL_RGB, config.updateMode);
+							FpsCounter* fpsCounter = new FpsCounter(this->mode.bpp == 32 ? FpsBgra : FpsRgb, this->textureWidth);
+							PixelBuffer* firstBuffer = new PixelBuffer(this->textureWidth, this->mode.height, this->mode.bpp == 32, this->mode.bpp == 32 ? GL_BGRA_EXT : GL_RGB, config.updateMode);
 							{
 								GLuint fboId = 0;
 								DWORD viewSize;
@@ -844,7 +844,7 @@ VOID OpenDraw::RenderNew()
 												viewSize = MAKELONG(this->mode.width * state.value, this->mode.height * state.value);
 												activeIndex = TRUE;
 												firstBuffer->Reset();
-												secondBuffer = new PixelBuffer(this->texWidth, this->mode.height, this->mode.bpp == 32, this->mode.bpp == 32 ? GL_BGRA_EXT : GL_RGB, config.updateMode);
+												secondBuffer = new PixelBuffer(this->textureWidth, this->mode.height, this->mode.bpp == 32, this->mode.bpp == 32 ? GL_BGRA_EXT : GL_RGB, config.updateMode);
 
 												DWORD size = this->pitch * this->mode.height;
 												emptyBuffer = AlignedAlloc(size);
@@ -1349,9 +1349,9 @@ OpenDraw::OpenDraw(IDraw** last)
 
 	this->mode = displayMode;
 	this->pitch = this->mode.width * this->mode.bpp >> 3;
-	if (this->pitch & 3)
-		this->pitch = (this->pitch & 0xFFFFFFFC) + 4;
-	this->texWidth = this->pitch / (this->mode.bpp >> 3);
+	if (this->pitch & 15)
+		this->pitch = (this->pitch & 0xFFFFFFF0) + 16;
+	this->textureWidth = this->pitch / (this->mode.bpp >> 3);
 
 	this->isNextIsMode = FALSE;
 	this->isTakeSnapshot = FALSE;
@@ -1394,9 +1394,9 @@ HRESULT __stdcall OpenDraw::SetDisplayMode(DWORD dwWidth, DWORD dwHeight, DWORD 
 {
 	this->mode = { dwWidth, dwHeight, dwBPP };
 	this->pitch = this->mode.width * this->mode.bpp >> 3;
-	if (this->pitch & 3)
-		this->pitch = (this->pitch & 0xFFFFFFFC) + 4;
-	this->texWidth = this->pitch / (this->mode.bpp >> 3);
+	if (this->pitch & 15)
+		this->pitch = (this->pitch & 0xFFFFFFF0) + 16;
+	this->textureWidth = this->pitch / (this->mode.bpp >> 3);
 
 	RECT rect = { 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN) };
 	AdjustWindowRect(&rect, GetWindowLong(this->hWnd, GWL_STYLE), FALSE);

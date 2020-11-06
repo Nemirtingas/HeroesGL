@@ -59,7 +59,7 @@ OpenDrawSurface::~OpenDrawSurface()
 
 VOID OpenDrawSurface::CreateBuffer(DWORD width, DWORD height)
 {
-	ReleaseBuffer();
+	this->ReleaseBuffer();
 
 	if (width && height)
 	{

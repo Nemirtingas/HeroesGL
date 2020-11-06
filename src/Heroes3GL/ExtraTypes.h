@@ -242,8 +242,9 @@ enum FpsMode
 enum UpdateMode
 {
 	UpdateNone = 0,
-	UpdateCPP = 1,
-	UpdateASM = 2
+	UpdateSSE = 1,
+	UpdateCPP = 2,
+	UpdateASM = 3
 };
 
 struct ConfigItems

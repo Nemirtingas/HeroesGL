@@ -24,6 +24,7 @@
 
 #include "stdafx.h"
 #include "PixelBuffer.h"
+#include "intrin.h"
 
 namespace ASM
 {
@@ -359,8 +360,6 @@ namespace CPP
 		for (DWORD i = 0; i < count; ++i)
 			if (ptr1[i] != ptr2[i])
 				return count - i;
-
-		return 0;
 	}
 
 	DWORD __fastcall BackwardCompare(DWORD count, DWORD slice, DWORD* ptr1, DWORD* ptr2)
@@ -369,7 +368,7 @@ namespace CPP
 		ptr2 += slice;
 
 		for (DWORD i = 0; i < count; ++i)
-			if (*(ptr1 - i) != *(ptr2 - i))
+			if (ptr1[-i] != ptr2[-i])
 				return count - i;
 
 		return 0;
@@ -480,6 +479,122 @@ namespace CPP
 	}
 }
 
+namespace SSE
+{
+	DWORD __fastcall ForwardCompare(DWORD count, DWORD slice, DWORD* ptr1, DWORD* ptr2)
+	{
+		__m128i* a = (__m128i*)(ptr1 + slice);
+		__m128i* b = (__m128i*)(ptr2 + slice);
+		count >>= 2;
+		do
+		{
+			__m128i diff = _mm_xor_si128(_mm_load_si128(a), _mm_load_si128(b));
+			if (!_mm_testz_si128(diff, diff))
+				return count << 2;
+
+			++a;
+			++b;
+		} while (--count);
+
+		return 0;
+	}
+
+	DWORD __fastcall BackwardCompare(DWORD count, DWORD slice, DWORD* ptr1, DWORD* ptr2)
+	{
+		__m128i* a = (__m128i*)(ptr1 + slice - 3);
+		__m128i* b = (__m128i*)(ptr2 + slice - 3);
+		count >>= 2;
+
+		do
+		{
+			__m128i diff = _mm_xor_si128(_mm_load_si128(a), _mm_load_si128(b));
+			if (!_mm_testz_si128(diff, diff))
+				return count << 2;
+
+			--a;
+			--b;
+		} while (--count);
+
+		return 0;
+	}
+
+	BOOL __fastcall BlockForwardCompare(LONG width, LONG height, DWORD pitch, DWORD slice, DWORD* ptr1, DWORD* ptr2, POINT* p)
+	{
+		pitch -= width;
+		pitch >>= 2;
+		width >>= 2;
+
+		__m128i* a = (__m128i*)(ptr1 + slice);
+		__m128i* b = (__m128i*)(ptr2 + slice);
+		for (LONG y = 0; y < height; ++y, a += pitch, b += pitch)
+		{
+			DWORD count = width;
+			do
+			{
+				__m128i diff = _mm_xor_si128(_mm_load_si128(a), _mm_load_si128(b));
+				if (!_mm_testz_si128(diff, diff))
+				{
+					DWORD* ptr = (DWORD*)&diff;
+					DWORD c = 3;
+					do
+					{
+						if (*ptr)
+							break;
+						++ptr;
+					} while (--c);
+
+					p->x = ((width - count) << 2) + 3 - c;
+					p->y = y;
+					return TRUE;
+				}
+
+				++a;
+				++b;
+			} while (--count);
+		}
+
+		return FALSE;
+	}
+
+	BOOL __fastcall BlockBackwardCompare(LONG width, LONG height, DWORD pitch, DWORD slice, DWORD* ptr1, DWORD* ptr2, POINT* p)
+	{
+		pitch -= width;
+		pitch >>= 2;
+		width >>= 2;
+
+		__m128i* a = (__m128i*)(ptr1 + slice - 3);
+		__m128i* b = (__m128i*)(ptr2 + slice - 3);
+		for (LONG y = 0; y < height; ++y, a -= pitch, b -= pitch)
+		{
+			DWORD count = width;
+			do
+			{
+				__m128i diff = _mm_xor_si128(_mm_load_si128(a), _mm_load_si128(b));
+				if (!_mm_testz_si128(diff, diff))
+				{
+					DWORD* ptr = (DWORD*)&diff + 3;
+					DWORD c = 3;
+					do
+					{
+						if (*ptr)
+							break;
+						--ptr;
+					} while (--c);
+
+					p->x = (count << 2) - (4 - c);
+					p->y = height - y - 1;
+					return TRUE;
+				}
+
+				--a;
+				--b;
+			} while (--count);
+		}
+
+		return FALSE;
+	}
+}
+
 PixelBuffer::PixelBuffer(DWORD width, DWORD height, BOOL isTrue, GLenum format, UpdateMode mode)
 {
 	this->width = width;
@@ -507,6 +622,14 @@ PixelBuffer::PixelBuffer(DWORD width, DWORD height, BOOL isTrue, GLenum format, 
 
 	switch (mode)
 	{
+	case UpdateSSE:
+		this->ForwardCompare = SSE::ForwardCompare;
+		this->BackwardCompare = SSE::BackwardCompare;
+		this->BlockForwardCompare = SSE::BlockForwardCompare;
+		this->BlockBackwardCompare = SSE::BlockBackwardCompare;
+		this->SideForwardCompare = CPP::SideForwardCompare;
+		this->SideBackwardCompare = CPP::SideBackwardCompare;
+		break;
 	case UpdateCPP:
 		this->ForwardCompare = CPP::ForwardCompare;
 		this->BackwardCompare = CPP::BackwardCompare;

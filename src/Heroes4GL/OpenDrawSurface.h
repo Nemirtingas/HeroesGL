@@ -28,9 +28,6 @@
 #include "OpenDrawClipper.h"
 #include "ExtraTypes.h"
 
-#define STENCIL_COUNT 32
-#define STENCIL_POINTS 6
-
 class OpenDrawSurface : public IDrawSurface7
 {
 protected:

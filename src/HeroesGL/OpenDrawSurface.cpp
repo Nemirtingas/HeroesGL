@@ -42,15 +42,13 @@ OpenDrawSurface::OpenDrawSurface(IDraw* lpDD, DWORD index)
 	{
 		this->pixelBuffer = (DWORD*)MemoryAlloc(RES_WIDTH * RES_HEIGHT * sizeof(DWORD));
 		MemoryZero(this->pixelBuffer, RES_WIDTH * RES_HEIGHT * sizeof(DWORD));
+		((OpenDraw*)this->ddraw)->RenderStart();
 	}
 	else
 		this->pixelBuffer = NULL;
 
 	this->attachedPalette = NULL;
 	this->attachedClipper = NULL;
-
-	if (((OpenDraw*)this->ddraw)->attachedSurface == this)
-		((OpenDraw*)this->ddraw)->RenderStart();
 }
 
 OpenDrawSurface::~OpenDrawSurface()
