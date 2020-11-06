@@ -425,57 +425,35 @@ namespace CPP
 	DWORD __fastcall SideForwardCompare(LONG width, LONG height, DWORD pitch, DWORD slice, DWORD* ptr1, DWORD* ptr2)
 	{
 		DWORD count = width;
-
 		ptr1 += slice;
 		ptr2 += slice;
-
-		for (LONG y = 0; y < height; ++y)
+		for (LONG x = 0; x < width; ++x, ++ptr1, ++ptr2)
 		{
-			for (LONG x = 0; x < width; ++x)
-			{
-				if (ptr1[x] != ptr2[x])
-				{
-					width = x;
-					if (!width)
-						return count;
-
-					break;
-				}
-			}
-
-			ptr1 += pitch;
-			ptr2 += pitch;
+			DWORD* cmp1 = ptr1;
+			DWORD* cmp2 = ptr2;
+			for (LONG y = 0; y < height; ++y, cmp1 += pitch, cmp2 += pitch)
+				if (*cmp1 != *cmp2)
+					return count - x;
 		}
 
-		return count - width;
+		return 0;
 	}
 
 	DWORD __fastcall SideBackwardCompare(LONG width, LONG height, DWORD pitch, DWORD slice, DWORD* ptr1, DWORD* ptr2)
 	{
 		DWORD count = width;
-
 		ptr1 += slice;
 		ptr2 += slice;
-
-		for (LONG y = 0; y < height; ++y)
+		for (LONG x = 0; x < width; ++x, --ptr1, --ptr2)
 		{
-			for (LONG x = 0; x < width; ++x)
-			{
-				if (ptr1[-x] != ptr2[-x])
-				{
-					width = x;
-					if (!width)
-						return count;
-
-					break;
-				}
-			}
-
-			ptr1 -= pitch;
-			ptr2 -= pitch;
+			DWORD* cmp1 = ptr1;
+			DWORD* cmp2 = ptr2;
+			for (LONG y = 0; y < height; ++y, cmp1 -= pitch, cmp2 -= pitch)
+				if (*cmp1 != *cmp2)
+					return count - x;
 		}
 
-		return count - width;
+		return 0;
 	}
 }
 
@@ -535,7 +513,7 @@ namespace SSE
 				if (!_mm_testz_si128(diff, diff))
 				{
 					DWORD* ptr = (DWORD*)&diff;
-					DWORD c = 3;
+					LONG c = 3;
 					do
 					{
 						if (*ptr)
@@ -573,7 +551,7 @@ namespace SSE
 				if (!_mm_testz_si128(diff, diff))
 				{
 					DWORD* ptr = (DWORD*)&diff + 3;
-					DWORD c = 3;
+					LONG c = 3;
 					do
 					{
 						if (*ptr)
@@ -592,6 +570,114 @@ namespace SSE
 		}
 
 		return FALSE;
+	}
+
+	DWORD __fastcall SideForwardCompare(LONG width, LONG height, DWORD pitch, DWORD slice, DWORD* ptr1, DWORD* ptr2)
+	{
+		DWORD count = width;
+		DWORD swd = width >> 2;
+		DWORD spt = pitch >> 2;
+
+		__m128i* a = (__m128i*)(ptr1 + slice);
+		__m128i* b = (__m128i*)(ptr2 + slice);
+
+		LONG i = 0, j;
+		for (i = 0; i < swd; ++i, ++a, ++b)
+		{
+			__m128i* cmp1 = a;
+			__m128i* cmp2 = b;
+			for (j = 0; j < height; ++j, cmp1 += spt, cmp2 += spt)
+			{
+				__m128i diff = _mm_xor_si128(_mm_load_si128(cmp1), _mm_load_si128(cmp2));
+				if (!_mm_testz_si128(diff, diff))
+				{
+					DWORD* ptr = (DWORD*)&diff;
+					LONG c = 3;
+					do
+					{
+						if (*ptr)
+							break;
+						++ptr;
+					} while (--c);
+
+					++j;
+					a = cmp1 + spt;
+					b = cmp2 + spt;
+					width = (i << 2) + 3 - c;
+					goto lbl_dword;
+				}
+			}
+		}
+
+		j = 0;
+
+	lbl_dword:;
+		ptr1 = (DWORD*)a;
+		ptr2 = (DWORD*)b;
+		for (LONG x = i << 2; x < width; ++x, ++ptr1, ++ptr2)
+		{
+			DWORD* cmp1 = ptr1;
+			DWORD* cmp2 = ptr2;
+			for (LONG y = j; y < height; ++y, cmp1 += pitch, cmp2 += pitch)
+				if (*cmp1 != *cmp2)
+					return count - x;
+		}
+
+		return count - width;
+	}
+
+	DWORD __fastcall SideBackwardCompare(LONG width, LONG height, DWORD pitch, DWORD slice, DWORD* ptr1, DWORD* ptr2)
+	{
+		DWORD count = width;
+		DWORD swd = width >> 2;
+		DWORD spt = pitch >> 2;
+
+		__m128i* a = (__m128i*)(ptr1 + slice - 3);
+		__m128i* b = (__m128i*)(ptr2 + slice - 3);
+
+		LONG i = 0, j;
+		for (i = 0; i < swd; ++i, --a, --b)
+		{
+			__m128i* cmp1 = a;
+			__m128i* cmp2 = b;
+			for (j = 0; j < height; ++j, cmp1 -= spt, cmp2 -= spt)
+			{
+				__m128i diff = _mm_xor_si128(_mm_load_si128(cmp1), _mm_load_si128(cmp2));
+				if (!_mm_testz_si128(diff, diff))
+				{
+					DWORD* ptr = (DWORD*)&diff + 3;
+					LONG c = 3;
+					do
+					{
+						if (*ptr)
+							break;
+						--ptr;
+					} while (--c);
+
+					++j;
+					a = cmp1 - spt;
+					b = cmp2 - spt;
+					width = (i << 2) + 3 - c;
+					goto lbl_dword;
+				}
+			}
+		}
+
+		j = 0;
+
+	lbl_dword:;
+		ptr1 = (DWORD*)a + 3;
+		ptr2 = (DWORD*)b + 3;
+		for (LONG x = i; x < width; ++x, --ptr1, --ptr2)
+		{
+			DWORD* cmp1 = ptr1;
+			DWORD* cmp2 = ptr2;
+			for (LONG y = j; y < height; ++y, cmp1 -= pitch, cmp2 -= pitch)
+				if (*cmp1 != *cmp2)
+					return count - x;
+		}
+
+		return count - width;
 	}
 }
 
@@ -627,8 +713,8 @@ PixelBuffer::PixelBuffer(DWORD width, DWORD height, BOOL isTrue, GLenum format, 
 		this->BackwardCompare = SSE::BackwardCompare;
 		this->BlockForwardCompare = SSE::BlockForwardCompare;
 		this->BlockBackwardCompare = SSE::BlockBackwardCompare;
-		this->SideForwardCompare = CPP::SideForwardCompare;
-		this->SideBackwardCompare = CPP::SideBackwardCompare;
+		this->SideForwardCompare = SSE::SideForwardCompare;
+		this->SideBackwardCompare = SSE::SideBackwardCompare;
 		break;
 	case UpdateCPP:
 		this->ForwardCompare = CPP::ForwardCompare;

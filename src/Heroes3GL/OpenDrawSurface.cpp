@@ -313,69 +313,73 @@ HRESULT __stdcall OpenDrawSurface::Blt(LPRECT lpDestRect, LPDIRECTDRAWSURFACE lp
 		{
 			if (this->mode.bpp == 32)
 			{
-				BYTE* srcData = (BYTE*)((DWORD*)(surface->indexBuffer + lpSrcRect->top * sWidth) + lpSrcRect->left);
-				BYTE* dstData = (BYTE*)((DWORD*)(this->indexBuffer + lpDestRect->top * dWidth) + lpDestRect->left);
+				DWORD* src = (DWORD*)(surface->indexBuffer + lpSrcRect->top * sWidth) + lpSrcRect->left;
+				DWORD* dst = (DWORD*)(this->indexBuffer + lpDestRect->top * dWidth) + lpDestRect->left;
 
 				if (surface->colorKey)
 				{
+					sWidth -= width * sizeof(DWORD);
+					dWidth -= width * sizeof(DWORD);
+					DWORD key = surface->colorKey;
 					do
 					{
-						DWORD* src = (DWORD*)srcData;
-						DWORD* dst = (DWORD*)dstData;
-						srcData += sWidth;
-						dstData += dWidth;
-
 						DWORD count = width;
 						do
 						{
-							if (*src != surface->colorKey)
+							if (*src != key)
 								*dst = *src;
 							++src;
 							++dst;
 						} while (--count);
+
+						src = (DWORD*)((BYTE*)src + sWidth);
+						dst = (DWORD*)((BYTE*)dst + dWidth);
 					} while (--height);
 				}
 				else
 				{
+					width *= sizeof(DWORD);
 					do
 					{
-						MemoryCopy(dstData, srcData, width * sizeof(DWORD));
-						srcData += sWidth;
-						dstData += dWidth;
+						MemoryCopy(src, dst, width);
+						src = (DWORD*)((BYTE*)src + sWidth);
+						dst = (DWORD*)((BYTE*)dst + dWidth);
 					} while (--height);
 				}
 			}
 			else
 			{
-				BYTE* srcData = (BYTE*)((WORD*)(surface->indexBuffer + lpSrcRect->top * sWidth) + lpSrcRect->left);
-				BYTE* dstData = (BYTE*)((WORD*)(this->indexBuffer + lpDestRect->top * dWidth) + lpDestRect->left);
+				WORD* src = (WORD*)(surface->indexBuffer + lpSrcRect->top * sWidth) + lpSrcRect->left;
+				WORD* dst = (WORD*)(this->indexBuffer + lpDestRect->top * dWidth) + lpDestRect->left;
 
 				if (LOWORD(surface->colorKey))
 				{
+					sWidth -= width * sizeof(WORD);
+					dWidth -= width * sizeof(WORD);
+					WORD key = LOWORD(surface->colorKey);
 					do
 					{
-						WORD* src = (WORD*)srcData;
-						WORD* dst = (WORD*)dstData;
-						srcData += sWidth;
-						dstData += dWidth;
-
 						DWORD count = width;
 						do
 						{
-							if (*src != LOWORD(surface->colorKey))
+							if (*src != key)
 								*dst = *src;
 							++src;
 							++dst;
 						} while (--count);
+
+						src = (WORD*)((BYTE*)src + sWidth);
+						dst = (WORD*)((BYTE*)dst + dWidth);
 					} while (--height);
 				}
 				else
 				{
+					width *= sizeof(WORD);
 					do
 					{
-						MemoryCopy(dstData, srcData, width * sizeof(WORD));
-						srcData += sWidth;
-						dstData += dWidth;
+						MemoryCopy(dst, src, width);
+						src = (WORD*)((BYTE*)src + sWidth);
+						dst = (WORD*)((BYTE*)dst + dWidth);
 					} while (--height);
 				}
 			}

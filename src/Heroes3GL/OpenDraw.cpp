@@ -1353,7 +1353,6 @@ OpenDraw::OpenDraw(IDraw** last)
 		this->pitch = (this->pitch & 0xFFFFFFF0) + 16;
 	this->textureWidth = this->pitch / (this->mode.bpp >> 3);
 
-	this->isNextIsMode = FALSE;
 	this->isTakeSnapshot = FALSE;
 	this->isFinish = TRUE;
 
@@ -1419,29 +1418,19 @@ HRESULT __stdcall OpenDraw::CreateSurface(LPDDSURFACEDESC lpDDSurfaceDesc, LPDIR
 		DWORD height = lpDDSurfaceDesc->dwHeight;
 		((OpenDrawSurface*)this->surfaceEntries)->CreateBuffer(width, height);
 
-		if (this->isNextIsMode)
+		if (this->attachedSurface && !this->attachedSurface->indexBuffer)
 		{
 			this->mode.width = width;
 			this->mode.height = height;
 
-			if (this->attachedSurface)
-			{
-				width = GetSystemMetrics(SM_CXSCREEN);
-				height = GetSystemMetrics(SM_CYSCREEN);
+			width = GetSystemMetrics(SM_CXSCREEN);
+			height = GetSystemMetrics(SM_CYSCREEN);
 
-				this->attachedSurface->CreateBuffer(max(this->mode.width, width), max(this->mode.height, height));
-			}
-
-			this->isNextIsMode = FALSE;
+			this->attachedSurface->CreateBuffer(max(this->mode.width, width), max(this->mode.height, height));
 		}
 	}
 	else if (this->windowState != WinStateWindowed)
-	{
 		((OpenDrawSurface*)this->surfaceEntries)->CreateBuffer(this->mode.width, this->mode.height);
-		this->isNextIsMode = FALSE;
-	}
-	else
-		this->isNextIsMode = TRUE;
 
 	return DD_OK;
 }

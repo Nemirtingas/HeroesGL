@@ -41,7 +41,6 @@ public:
 	DisplayMode mode;
 	DWORD pitch;
 	DWORD textureWidth;
-	BOOL isNextIsMode;
 	BOOL isFinish;
 
 	HANDLE hDrawThread;

@@ -99,17 +99,15 @@ VOID OpenDrawSurface::CreateBuffer(DWORD width, DWORD height)
 
 VOID OpenDrawSurface::ReleaseBuffer()
 {
-	if (this->hBmp)
+	if (this->indexBuffer)
 	{
 		if (((OpenDraw*)this->ddraw)->attachedSurface == this)
 			((OpenDraw*)this->ddraw)->RenderStop();
 
 		DeleteObject(this->hBmp);
-		this->hBmp = NULL;
-	}
-
-	if (this->hDc)
 		DeleteDC(this->hDc);
+		this->indexBuffer = NULL;
+	}
 }
 
 VOID OpenDrawSurface::TakeSnapshot()

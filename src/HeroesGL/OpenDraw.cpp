@@ -1517,11 +1517,11 @@ HRESULT __stdcall OpenDraw::CreateSurface(LPDDSURFACEDESC lpDDSurfaceDesc, LPDIR
 	BOOL isPrimary = lpDDSurfaceDesc->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE;
 	*lplpDDSurface = new OpenDrawSurface(this, !isPrimary);
 
-	if (lpDDSurfaceDesc->dwFlags & DDSD_WIDTH)
+	if (lpDDSurfaceDesc->dwFlags & (DDSD_WIDTH | DDSD_HEIGHT))
+	{
 		this->width = lpDDSurfaceDesc->dwWidth;
-
-	if (lpDDSurfaceDesc->dwFlags & DDSD_HEIGHT)
 		this->height = lpDDSurfaceDesc->dwHeight;
+	}
 
 	if (isPrimary)
 		this->attachedSurface = (OpenDrawSurface*)this->surfaceEntries;
