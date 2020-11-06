@@ -478,7 +478,7 @@ VOID OpenDraw::RenderMid()
 							this->isTakeSnapshot = FALSE;
 							if (state.flags || isFps || isSnapshot)
 								clear = 0;
-							
+
 							if (this->CheckView())
 							{
 								GLViewport(this->viewport.rectangle.x, this->viewport.rectangle.y, this->viewport.rectangle.width, this->viewport.rectangle.height);
@@ -809,7 +809,7 @@ VOID OpenDraw::RenderNew()
 													GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
 													GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 													GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-													
+
 													GLPixelStorei(GL_UNPACK_ROW_LENGTH, this->mode->width);
 													{
 														GLTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, maxTexSize, maxTexSize, GL_NONE, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, NULL);
@@ -1104,17 +1104,14 @@ VOID OpenDraw::ResetDisplayMode(DWORD width, DWORD height)
 		{
 			if (mode->width == width && mode->height == height)
 			{
-				this->RenderStop();
+				this->mode = mode;
+				OpenDrawSurface* surface = this->attachedSurface;
+				if (surface)
 				{
-					this->mode = mode;
-					OpenDrawSurface* surface = this->attachedSurface;
-					if (surface)
-					{
-						surface->ReleaseBuffer();
-						surface->CreateBuffer(mode->width, mode->height);
-					}
+					surface->ReleaseBuffer();
+					surface->CreateBuffer(mode->width, mode->height);
 				}
-				this->RenderStart();
+
 				return;
 			}
 
@@ -1332,15 +1329,7 @@ ULONG __stdcall OpenDraw::Release()
 HRESULT __stdcall OpenDraw::SetCooperativeLevel(HWND hWnd, DWORD dwFlags)
 {
 	this->hWnd = hWnd;
-
-	if (dwFlags & DDSCL_FULLSCREEN)
-		this->windowState = WinStateFullScreen;
-	else
-	{
-		this->windowState = WinStateWindowed;
-		this->RenderStop();
-		this->RenderStart();
-	}
+	this->windowState = (dwFlags & DDSCL_FULLSCREEN) ? WinStateFullScreen : WinStateWindowed;
 
 	return DD_OK;
 }
@@ -1391,12 +1380,7 @@ HRESULT __stdcall OpenDraw::SetDisplayMode(DWORD dwWidth, DWORD dwHeight, DWORD 
 		return DDERR_INVALIDMODE;
 
 	MoveWindow(this->hWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), TRUE);
-
 	SetForegroundWindow(this->hWnd);
-
-	this->RenderStop();
-	this->RenderStart();
-
 	return DD_OK;
 }
 

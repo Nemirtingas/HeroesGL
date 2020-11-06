@@ -1384,8 +1384,6 @@ ULONG __stdcall OpenDraw::Release()
 HRESULT __stdcall OpenDraw::SetCooperativeLevel(HWND hWnd, DWORD dwFlags)
 {
 	this->hWnd = hWnd;
-
-	this->RenderStop();
 	this->windowState = (dwFlags & DDSCL_FULLSCREEN) ? WinStateFullScreen : WinStateWindowed;
 	Hooks::CheckRefreshRate();
 
@@ -1403,7 +1401,6 @@ HRESULT __stdcall OpenDraw::SetDisplayMode(DWORD dwWidth, DWORD dwHeight, DWORD 
 	RECT rect = { 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN) };
 	AdjustWindowRect(&rect, GetWindowLong(this->hWnd, GWL_STYLE), FALSE);
 	MoveWindow(this->hWnd, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, TRUE);
-
 	SetForegroundWindow(this->hWnd);
 	return DD_OK;
 }
@@ -1435,21 +1432,16 @@ HRESULT __stdcall OpenDraw::CreateSurface(LPDDSURFACEDESC lpDDSurfaceDesc, LPDIR
 				this->attachedSurface->CreateBuffer(max(this->mode.width, width), max(this->mode.height, height));
 			}
 
-			RenderStart();
 			this->isNextIsMode = FALSE;
 		}
+	}
+	else if (this->windowState != WinStateWindowed)
+	{
+		((OpenDrawSurface*)this->surfaceEntries)->CreateBuffer(this->mode.width, this->mode.height);
+		this->isNextIsMode = FALSE;
 	}
 	else
-	{
-		if (this->windowState != WinStateWindowed)
-		{
-			((OpenDrawSurface*)this->surfaceEntries)->CreateBuffer(this->mode.width, this->mode.height);
-			RenderStart();
-			this->isNextIsMode = FALSE;
-		}
-		else
-			this->isNextIsMode = TRUE;
-	}
+		this->isNextIsMode = TRUE;
 
 	return DD_OK;
 }

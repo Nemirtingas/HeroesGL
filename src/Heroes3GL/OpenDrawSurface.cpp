@@ -51,22 +51,42 @@ OpenDrawSurface::OpenDrawSurface(IDraw* lpDD, DWORD index)
 
 OpenDrawSurface::~OpenDrawSurface()
 {
+	this->ReleaseBuffer();
+
 	if (((OpenDraw*)this->ddraw)->attachedSurface == this)
-	{
-		((OpenDraw*)this->ddraw)->RenderStop();
 		((OpenDraw*)this->ddraw)->attachedSurface = NULL;
-	}
 
 	if (this->attachedClipper)
 		this->attachedClipper->Release();
+}
 
+VOID OpenDrawSurface::CreateBuffer(DWORD width, DWORD height)
+{
 	this->ReleaseBuffer();
+
+	this->mode = { width, height, ((OpenDraw*)this->ddraw)->mode.bpp };
+	this->pitch = this->mode.width * this->mode.bpp >> 3;
+	if (this->pitch & 3)
+		this->pitch = (this->pitch & 0xFFFFFFFC) + 4;
+
+	DWORD size = this->mode.height * this->pitch;
+	this->indexBuffer = (BYTE*)AlignedAlloc(size);
+	MemoryZero(this->indexBuffer, size);
+
+	if (((OpenDraw*)this->ddraw)->attachedSurface == this)
+		((OpenDraw*)this->ddraw)->RenderStart();
 }
 
 VOID OpenDrawSurface::ReleaseBuffer()
 {
 	if (this->indexBuffer)
+	{
+		if (((OpenDraw*)this->ddraw)->attachedSurface == this)
+			((OpenDraw*)this->ddraw)->RenderStop();
+
 		AlignedFree(this->indexBuffer);
+		this->indexBuffer = NULL;
+	}
 }
 
 VOID OpenDrawSurface::TakeSnapshot()
@@ -157,20 +177,6 @@ VOID OpenDrawSurface::TakeSnapshot()
 		
 		CloseClipboard();
 	}
-}
-
-VOID OpenDrawSurface::CreateBuffer(DWORD width, DWORD height)
-{
-	this->ReleaseBuffer();
-
-	this->mode = { width, height, ((OpenDraw*)this->ddraw)->mode.bpp };
-	this->pitch = this->mode.width * this->mode.bpp >> 3;
-	if (this->pitch & 3)
-		this->pitch = (this->pitch & 0xFFFFFFFC) + 4;
-
-	DWORD size = this->mode.height * this->pitch;
-	this->indexBuffer = (BYTE*)AlignedAlloc(size);
-	MemoryZero(this->indexBuffer, size);
 }
 
 ULONG __stdcall OpenDrawSurface::AddRef()

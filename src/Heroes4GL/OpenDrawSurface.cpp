@@ -48,25 +48,18 @@ OpenDrawSurface::OpenDrawSurface(IDraw7* lpDD, DWORD index)
 
 OpenDrawSurface::~OpenDrawSurface()
 {
+	this->ReleaseBuffer();
+
 	if (((OpenDraw*)this->ddraw)->attachedSurface == this)
-	{
 		((OpenDraw*)this->ddraw)->attachedSurface = NULL;
-		((OpenDraw*)this->ddraw)->RenderStop();
-	}
 
 	if (this->attachedClipper)
 		this->attachedClipper->Release();
-
-	this->ReleaseBuffer();
 }
 
 VOID OpenDrawSurface::CreateBuffer(DWORD width, DWORD height)
 {
-	if (this->hBmp)
-	{
-		DeleteObject(this->hBmp);
-		this->hBmp = NULL;
-	}
+	ReleaseBuffer();
 
 	if (width && height)
 	{
@@ -97,6 +90,9 @@ VOID OpenDrawSurface::CreateBuffer(DWORD width, DWORD height)
 		{
 			this->hDc = CreateCompatibleDC(NULL);
 			SelectObject(this->hDc, this->hBmp);
+
+			if (((OpenDraw*)this->ddraw)->attachedSurface == this)
+				((OpenDraw*)this->ddraw)->RenderStart();
 		}
 	}
 }
@@ -104,7 +100,13 @@ VOID OpenDrawSurface::CreateBuffer(DWORD width, DWORD height)
 VOID OpenDrawSurface::ReleaseBuffer()
 {
 	if (this->hBmp)
+	{
+		if (((OpenDraw*)this->ddraw)->attachedSurface == this)
+			((OpenDraw*)this->ddraw)->RenderStop();
+
 		DeleteObject(this->hBmp);
+		this->hBmp = NULL;
+	}
 
 	if (this->hDc)
 		DeleteDC(this->hDc);

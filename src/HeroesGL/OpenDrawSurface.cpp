@@ -48,6 +48,9 @@ OpenDrawSurface::OpenDrawSurface(IDraw* lpDD, DWORD index)
 
 	this->attachedPalette = NULL;
 	this->attachedClipper = NULL;
+
+	if (((OpenDraw*)this->ddraw)->attachedSurface == this)
+		((OpenDraw*)this->ddraw)->RenderStart();
 }
 
 OpenDrawSurface::~OpenDrawSurface()

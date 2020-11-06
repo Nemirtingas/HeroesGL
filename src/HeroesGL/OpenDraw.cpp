@@ -1487,15 +1487,7 @@ ULONG __stdcall OpenDraw::Release()
 HRESULT __stdcall OpenDraw::SetCooperativeLevel(HWND hWnd, DWORD dwFlags)
 {
 	this->hWnd = hWnd;
-
-	if (dwFlags & DDSCL_FULLSCREEN)
-		this->windowState = WinStateFullScreen;
-	else
-	{
-		this->windowState = WinStateWindowed;
-		this->RenderStop();
-		this->RenderStart();
-	}
+	this->windowState = (dwFlags & DDSCL_FULLSCREEN) ? WinStateFullScreen : WinStateWindowed;
 
 	return DD_OK;
 }
@@ -1509,9 +1501,6 @@ HRESULT __stdcall OpenDraw::SetDisplayMode(DWORD dwWidth, DWORD dwHeight, DWORD 
 	AdjustWindowRect(&rect, GetWindowLong(this->hWnd, GWL_STYLE), FALSE);
 	MoveWindow(this->hWnd, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, TRUE);
 	SetForegroundWindow(this->hWnd);
-
-	this->RenderStop();
-	this->RenderStart();
 
 	return DD_OK;
 }
