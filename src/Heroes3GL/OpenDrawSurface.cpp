@@ -52,7 +52,10 @@ OpenDrawSurface::OpenDrawSurface(IDraw* lpDD, DWORD index)
 OpenDrawSurface::~OpenDrawSurface()
 {
 	if (((OpenDraw*)this->ddraw)->attachedSurface == this)
+	{
+		((OpenDraw*)this->ddraw)->RenderStop();
 		((OpenDraw*)this->ddraw)->attachedSurface = NULL;
+	}
 
 	if (this->attachedClipper)
 		this->attachedClipper->Release();
