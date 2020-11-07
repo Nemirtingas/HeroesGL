@@ -575,7 +575,7 @@ namespace SSE
 	DWORD __fastcall SideForwardCompare(LONG width, LONG height, DWORD pitch, DWORD slice, DWORD* ptr1, DWORD* ptr2)
 	{
 		DWORD count = width;
-		DWORD swd = width >> 2;
+		LONG swd = width >> 2;
 		DWORD spt = pitch >> 2;
 
 		__m128i* a = (__m128i*)(ptr1 + slice);
@@ -629,7 +629,7 @@ namespace SSE
 	DWORD __fastcall SideBackwardCompare(LONG width, LONG height, DWORD pitch, DWORD slice, DWORD* ptr1, DWORD* ptr2)
 	{
 		DWORD count = width;
-		DWORD swd = width >> 2;
+		LONG swd = width >> 2;
 		DWORD spt = pitch >> 2;
 
 		__m128i* a = (__m128i*)(ptr1 + slice - 3);
@@ -668,7 +668,7 @@ namespace SSE
 	lbl_dword:;
 		ptr1 = (DWORD*)a + 3;
 		ptr2 = (DWORD*)b + 3;
-		for (LONG x = i; x < width; ++x, --ptr1, --ptr2)
+		for (LONG x = i << 2; x < width; ++x, --ptr1, --ptr2)
 		{
 			DWORD* cmp1 = ptr1;
 			DWORD* cmp2 = ptr2;
