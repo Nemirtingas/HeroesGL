@@ -360,6 +360,8 @@ namespace CPP
 		for (DWORD i = 0; i < count; ++i)
 			if (ptr1[i] != ptr2[i])
 				return count - i;
+
+		return 0;
 	}
 
 	DWORD __fastcall BackwardCompare(DWORD count, DWORD slice, DWORD* ptr1, DWORD* ptr2)
