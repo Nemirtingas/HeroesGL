@@ -468,8 +468,7 @@ namespace SSE
 		count >>= 2;
 		do
 		{
-			__m128i diff = _mm_xor_si128(_mm_load_si128(a), _mm_load_si128(b));
-			if (!_mm_testz_si128(diff, diff))
+			if (_mm_movemask_epi8(_mm_cmpeq_epi32(_mm_load_si128(a), _mm_load_si128(b))) != 0xFFFF)
 				return count << 2;
 
 			++a;
@@ -487,8 +486,7 @@ namespace SSE
 
 		do
 		{
-			__m128i diff = _mm_xor_si128(_mm_load_si128(a), _mm_load_si128(b));
-			if (!_mm_testz_si128(diff, diff))
+			if (_mm_movemask_epi8(_mm_cmpeq_epi32(_mm_load_si128(a), _mm_load_si128(b))) != 0xFFFF)
 				return count << 2;
 
 			--a;
@@ -511,16 +509,15 @@ namespace SSE
 			DWORD count = width;
 			do
 			{
-				__m128i diff = _mm_xor_si128(_mm_load_si128(a), _mm_load_si128(b));
-				if (!_mm_testz_si128(diff, diff))
+				INT mask = _mm_movemask_epi8(_mm_cmpeq_epi32(_mm_load_si128(a), _mm_load_si128(b)));
+				if (mask != 0xFFFF)
 				{
-					DWORD* ptr = (DWORD*)&diff;
 					LONG c = 3;
 					do
 					{
-						if (*ptr)
+						if (!(mask & 0x000F))
 							break;
-						++ptr;
+						mask >>= 4;
 					} while (--c);
 
 					p->x = ((width - count) << 2) + 3 - c;
@@ -549,16 +546,15 @@ namespace SSE
 			DWORD count = width;
 			do
 			{
-				__m128i diff = _mm_xor_si128(_mm_load_si128(a), _mm_load_si128(b));
-				if (!_mm_testz_si128(diff, diff))
+				INT mask = _mm_movemask_epi8(_mm_cmpeq_epi32(_mm_load_si128(a), _mm_load_si128(b)));
+				if (mask != 0xFFFF)
 				{
-					DWORD* ptr = (DWORD*)&diff + 3;
 					LONG c = 3;
 					do
 					{
-						if (*ptr)
+						if (!(mask & 0xF000))
 							break;
-						--ptr;
+						mask <<= 4;
 					} while (--c);
 
 					p->x = (count << 2) - (4 - c);
@@ -590,16 +586,15 @@ namespace SSE
 			__m128i* cmp2 = b;
 			for (j = 0; j < height; ++j, cmp1 += spt, cmp2 += spt)
 			{
-				__m128i diff = _mm_xor_si128(_mm_load_si128(cmp1), _mm_load_si128(cmp2));
-				if (!_mm_testz_si128(diff, diff))
+				INT mask = _mm_movemask_epi8(_mm_cmpeq_epi32(_mm_load_si128(cmp1), _mm_load_si128(cmp2)));
+				if (mask != 0xFFFF)
 				{
-					DWORD* ptr = (DWORD*)&diff;
 					LONG c = 3;
 					do
 					{
-						if (*ptr)
+						if (!(mask & 0x000F))
 							break;
-						++ptr;
+						mask >>= 4;
 					} while (--c);
 
 					++j;
@@ -644,16 +639,15 @@ namespace SSE
 			__m128i* cmp2 = b;
 			for (j = 0; j < height; ++j, cmp1 -= spt, cmp2 -= spt)
 			{
-				__m128i diff = _mm_xor_si128(_mm_load_si128(cmp1), _mm_load_si128(cmp2));
-				if (!_mm_testz_si128(diff, diff))
+				INT mask = _mm_movemask_epi8(_mm_cmpeq_epi32(_mm_load_si128(cmp1), _mm_load_si128(cmp2)));
+				if (mask != 0xFFFF)
 				{
-					DWORD* ptr = (DWORD*)&diff + 3;
 					LONG c = 3;
 					do
 					{
-						if (*ptr)
+						if (!(mask & 0xF000))
 							break;
-						--ptr;
+						mask <<= 4;
 					} while (--c);
 
 					++j;
@@ -713,7 +707,7 @@ PixelBuffer::PixelBuffer(DWORD width, DWORD height, BOOL isTrue, GLenum format, 
 	case UpdateSSE:
 		INT cpuinfo[4];
 		__cpuid(cpuinfo, 1);
-		if (cpuinfo[2] & (1 << 19) || FALSE) // SSE4.1
+		if (cpuinfo[3] & (1 << 26) || FALSE) // SSE2
 		{
 			this->ForwardCompare = SSE::ForwardCompare;
 			this->BackwardCompare = SSE::BackwardCompare;
