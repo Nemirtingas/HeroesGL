@@ -52,6 +52,12 @@ public:
 	BOOL isTakeSnapshot;
 	BOOL isFpsChanged;
 
+	struct {
+		DWORD width;
+		DWORD height;
+		WORD* data;
+	} temp;
+
 	OpenDraw(IDraw7**);
 	~OpenDraw();
 

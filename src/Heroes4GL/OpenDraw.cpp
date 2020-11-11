@@ -1299,6 +1299,7 @@ OpenDraw::OpenDraw(IDraw7** last)
 	this->isTakeSnapshot = FALSE;
 	this->isFinish = TRUE;
 
+	this->temp = { NULL };
 	this->hDrawEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 }
 
@@ -1307,6 +1308,9 @@ OpenDraw::~OpenDraw()
 	this->RenderStop();
 	CloseHandle(this->hDrawEvent);
 	ClipCursor(NULL);
+
+	if (this->temp.data)
+		AlignedFree(this->temp.data);
 }
 
 ULONG __stdcall OpenDraw::AddRef()

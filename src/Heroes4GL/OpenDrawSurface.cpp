@@ -91,6 +91,9 @@ VOID OpenDrawSurface::CreateBuffer(DWORD width, DWORD height)
 			this->hDc = CreateCompatibleDC(NULL);
 			SelectObject(this->hDc, this->hBmp);
 
+			if (((OpenDraw*)this->ddraw)->temp.data && ((OpenDraw*)this->ddraw)->temp.width == this->width && ((OpenDraw*)this->ddraw)->temp.height == this->height)
+				MemoryCopy(this->indexBuffer, ((OpenDraw*)this->ddraw)->temp.data, this->width * this->height * sizeof(WORD));
+
 			if (((OpenDraw*)this->ddraw)->attachedSurface == this)
 				((OpenDraw*)this->ddraw)->RenderStart();
 		}
@@ -103,6 +106,22 @@ VOID OpenDrawSurface::ReleaseBuffer()
 	{
 		if (((OpenDraw*)this->ddraw)->attachedSurface == this)
 			((OpenDraw*)this->ddraw)->RenderStop();
+
+		if (((OpenDraw*)this->ddraw)->temp.data && (((OpenDraw*)this->ddraw)->temp.width != this->width || ((OpenDraw*)this->ddraw)->temp.height != this->height))
+		{
+			AlignedFree(((OpenDraw*)this->ddraw)->temp.data);
+			((OpenDraw*)this->ddraw)->temp.data = NULL;
+		}
+
+		DWORD size = this->width * this->height * sizeof(WORD);
+		if (!((OpenDraw*)this->ddraw)->temp.data)
+		{
+			((OpenDraw*)this->ddraw)->temp.width = this->width;
+			((OpenDraw*)this->ddraw)->temp.height = this->height;
+			((OpenDraw*)this->ddraw)->temp.data = (WORD*)AlignedAlloc(size);
+		}
+
+		MemoryCopy(((OpenDraw*)this->ddraw)->temp.data, this->indexBuffer, size);
 
 		DeleteObject(this->hBmp);
 		DeleteDC(this->hDc);
