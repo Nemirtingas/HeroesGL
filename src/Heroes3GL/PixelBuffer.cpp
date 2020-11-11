@@ -705,18 +705,13 @@ PixelBuffer::PixelBuffer(DWORD width, DWORD height, BOOL isTrue, GLenum format, 
 	switch (mode)
 	{
 	case UpdateSSE:
-		INT cpuinfo[4];
-		__cpuid(cpuinfo, 1);
-		if (cpuinfo[3] & (1 << 26) || FALSE) // SSE2
-		{
-			this->ForwardCompare = SSE::ForwardCompare;
-			this->BackwardCompare = SSE::BackwardCompare;
-			this->BlockForwardCompare = SSE::BlockForwardCompare;
-			this->BlockBackwardCompare = SSE::BlockBackwardCompare;
-			this->SideForwardCompare = SSE::SideForwardCompare;
-			this->SideBackwardCompare = SSE::SideBackwardCompare;
-			break;
-		}
+		this->ForwardCompare = SSE::ForwardCompare;
+		this->BackwardCompare = SSE::BackwardCompare;
+		this->BlockForwardCompare = SSE::BlockForwardCompare;
+		this->BlockBackwardCompare = SSE::BlockBackwardCompare;
+		this->SideForwardCompare = SSE::SideForwardCompare;
+		this->SideBackwardCompare = SSE::SideBackwardCompare;
+		break;
 	case UpdateCPP:
 		this->ForwardCompare = CPP::ForwardCompare;
 		this->BackwardCompare = CPP::BackwardCompare;

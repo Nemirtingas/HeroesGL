@@ -226,6 +226,7 @@ struct ConfigItems
 
 	BOOL singleWindow;
 	BOOL coldCPU;
+	BOOL isSSE2;
 	RendererType renderer;
 	UpdateMode updateMode;
 

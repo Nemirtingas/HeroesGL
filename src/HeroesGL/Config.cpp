@@ -24,6 +24,7 @@
 
 #include "stdafx.h"
 #include "Config.h"
+#include "intrin.h"
 
 ConfigItems config;
 
@@ -470,6 +471,12 @@ namespace Config
 		}
 
 		config.colors.current = &config.colors.active;
+
+		INT cpuinfo[4];
+		__cpuid(cpuinfo, 1);
+		config.isSSE2 = cpuinfo[3] & (1 << 26) || FALSE;
+		if (!config.isSSE2 && config.updateMode == UpdateSSE)
+			config.updateMode = UpdateCPP;
 	}
 
 	INT __fastcall Get(const CHAR* app, const CHAR* key, INT default)

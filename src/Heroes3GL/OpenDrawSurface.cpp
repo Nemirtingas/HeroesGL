@@ -23,9 +23,11 @@
 */
 
 #include "stdafx.h"
+#include "intrin.h"
 #include "GLib.h"
 #include "OpenDrawSurface.h"
 #include "OpenDraw.h"
+#include "Config.h"
 
 OpenDrawSurface::OpenDrawSurface(IDraw* lpDD, DWORD index)
 {
@@ -174,7 +176,7 @@ VOID OpenDrawSurface::TakeSnapshot()
 
 			GlobalFree(hMemory);
 		}
-		
+
 		CloseClipboard();
 	}
 }
@@ -251,27 +253,35 @@ HRESULT __stdcall OpenDrawSurface::Blt(LPRECT lpDestRect, LPDIRECTDRAWSURFACE lp
 	{
 		DWORD count = this->mode.width * this->mode.height;
 
-		if (this->mode.bpp == 32)
+		if (config.isSSE2)
 		{
-			DWORD* dest = (DWORD*)this->indexBuffer;
-			DWORD color = lpDDBltFx->dwFillColor;
+			__m128i color;
+			if (this->mode.bpp == 32)
+			{
+				count >>= 2;
+				color = _mm_set1_epi32(lpDDBltFx->dwFillColor);
+			}
+			else
+			{
+				count >>= 3;
+				color = _mm_set1_epi16(LOWORD(lpDDBltFx->dwFillColor));
+			}
+
+			__m128i* dest = (__m128i*)this->indexBuffer;
 			do
-				*dest++ = color;
-			while (--count);
-		}
-		else if (count & 1)
-		{
-			WORD* dest = (WORD*)this->indexBuffer;
-			WORD color = LOWORD(lpDDBltFx->dwFillColor);
-			do
-				*dest++ = color;
+				_mm_store_si128(dest++, color);
 			while (--count);
 		}
 		else
 		{
-			count >>= 1;
+			DWORD color = lpDDBltFx->dwFillColor;
+			if (this->mode.bpp != 32)
+			{
+				color = LOWORD(color) | (color << 16);
+				count >>= 1;
+			}
+
 			DWORD* dest = (DWORD*)this->indexBuffer;
-			DWORD color = lpDDBltFx->dwFillColor | (lpDDBltFx->dwFillColor << 16);
 			do
 				*dest++ = color;
 			while (--count);
@@ -283,108 +293,320 @@ HRESULT __stdcall OpenDrawSurface::Blt(LPRECT lpDestRect, LPDIRECTDRAWSURFACE lp
 
 		OpenDrawSurface* surface = (OpenDrawSurface*)lpDDSrcSurface;
 
-		DWORD sWidth;
+		DWORD sPitch;
 		if (surface->attachedClipper)
 		{
 			POINT offset = { 0, 0 };
 			ClientToScreen(surface->attachedClipper->hWnd, &offset);
 			OffsetRect(lpSrcRect, -offset.x, -offset.y);
 
-			sWidth = ((OpenDraw*)this->ddraw)->pitch;
+			sPitch = ((OpenDraw*)this->ddraw)->pitch;
 		}
 		else
-			sWidth = surface->pitch;
+			sPitch = surface->pitch;
 
-		DWORD dWidth;
+		DWORD dPitch;
 		if (this->attachedClipper)
 		{
 			POINT offset = { 0, 0 };
 			ClientToScreen(this->attachedClipper->hWnd, &offset);
 			OffsetRect(lpDestRect, -offset.x, -offset.y);
 
-			dWidth = ((OpenDraw*)this->ddraw)->pitch;
+			dPitch = ((OpenDraw*)this->ddraw)->pitch;
 		}
 		else
-			dWidth = this->pitch;
+			dPitch = this->pitch;
 
 		INT width = lpSrcRect->right - lpSrcRect->left;
 		INT height = lpSrcRect->bottom - lpSrcRect->top;
 
+		if (this->mode.bpp == 32)
 		{
-			if (this->mode.bpp == 32)
+			sPitch /= sizeof(DWORD);
+			dPitch /= sizeof(DWORD);
+
+			DWORD* src = (DWORD*)surface->indexBuffer + lpSrcRect->top * sPitch + lpSrcRect->left;
+			DWORD* dst = (DWORD*)this->indexBuffer + lpDestRect->top * dPitch + lpDestRect->left;
+
+			if (surface->colorKey)
 			{
-				DWORD* src = (DWORD*)(surface->indexBuffer + lpSrcRect->top * sWidth) + lpSrcRect->left;
-				DWORD* dst = (DWORD*)(this->indexBuffer + lpDestRect->top * dWidth) + lpDestRect->left;
+				DWORD key = surface->colorKey;
 
-				if (surface->colorKey)
+				if (config.isSSE2)
 				{
-					sWidth -= width * sizeof(DWORD);
-					dWidth -= width * sizeof(DWORD);
-					DWORD key = surface->colorKey;
-					do
+					DWORD count = width >> 2;
+					if (count)
 					{
-						DWORD count = width;
-						do
+						DWORD sStep = (sPitch >> 2) - count;
+						DWORD dStep = (dPitch >> 2) - count;
+
+						__m128i* s = (__m128i*)src;
+						__m128i* d = (__m128i*)dst;
+						__m128i k = _mm_set1_epi32(key);
+						DWORD h = height;
+						if ((DWORD)s & 0xF)
 						{
-							if (*src != key)
-								*dst = *src;
-							++src;
-							++dst;
-						} while (--count);
+							if ((DWORD)d & 0xF)
+								do
+								{
+									DWORD w = count;
+									do
+									{
+										__m128i a = _mm_loadu_si128(s);
+										__m128i mask = _mm_cmpeq_epi32(a, k);
+										if (_mm_movemask_epi8(mask) != 0xFFFF)
+											_mm_storeu_si128(d, _mm_or_si128(_mm_andnot_si128(mask, a), _mm_and_si128(mask, _mm_loadu_si128(d))));
 
-						src = (DWORD*)((BYTE*)src + sWidth);
-						dst = (DWORD*)((BYTE*)dst + dWidth);
-					} while (--height);
+										++s;
+										++d;
+									} while (--w);
+
+									s += sStep;
+									d += dStep;
+								} while (--h);
+							else
+								do
+								{
+									DWORD w = count;
+									do
+									{
+										__m128i a = _mm_loadu_si128(s);
+										__m128i mask = _mm_cmpeq_epi32(a, k);
+										if (_mm_movemask_epi8(mask) != 0xFFFF)
+											_mm_store_si128(d, _mm_or_si128(_mm_andnot_si128(mask, a), _mm_and_si128(mask, _mm_load_si128(d))));
+
+										++s;
+										++d;
+									} while (--w);
+
+									s += sStep;
+									d += dStep;
+								} while (--h);
+						}
+						else
+						{
+							if ((DWORD)d & 0xF)
+								do
+								{
+									DWORD w = count;
+									do
+									{
+										__m128i a = _mm_load_si128(s);
+										__m128i mask = _mm_cmpeq_epi32(a, k);
+										if (_mm_movemask_epi8(mask) != 0xFFFF)
+											_mm_storeu_si128(d, _mm_or_si128(_mm_andnot_si128(mask, a), _mm_and_si128(mask, _mm_loadu_si128(d))));
+
+										++s;
+										++d;
+									} while (--w);
+
+									s += sStep;
+									d += dStep;
+								} while (--h);
+							else
+								do
+								{
+									DWORD w = count;
+									do
+									{
+										__m128i a = _mm_load_si128(s);
+										__m128i mask = _mm_cmpeq_epi32(a, k);
+										if (_mm_movemask_epi8(mask) != 0xFFFF)
+											_mm_store_si128(d, _mm_or_si128(_mm_andnot_si128(mask, a), _mm_and_si128(mask, _mm_load_si128(d))));
+
+										++s;
+										++d;
+									} while (--w);
+
+									s += sStep;
+									d += dStep;
+								} while (--h);
+						}
+
+						count <<= 2;
+						width -= count;
+						if (!width)
+							goto lbl_end;
+
+						src += count;
+						dst += count;
+					}
 				}
-				else
+
+				sPitch -= width;
+				dPitch -= width;
+
+				do
 				{
-					width *= sizeof(DWORD);
+					DWORD count = width;
 					do
 					{
-						MemoryCopy(src, dst, width);
-						src = (DWORD*)((BYTE*)src + sWidth);
-						dst = (DWORD*)((BYTE*)dst + dWidth);
-					} while (--height);
-				}
+						if (*src != key)
+							*dst = *src;
+
+						++src;
+						++dst;
+					} while (--count);
+
+					src += sPitch;
+					dst += dPitch;
+				} while (--height);
 			}
 			else
 			{
-				WORD* src = (WORD*)(surface->indexBuffer + lpSrcRect->top * sWidth) + lpSrcRect->left;
-				WORD* dst = (WORD*)(this->indexBuffer + lpDestRect->top * dWidth) + lpDestRect->left;
-
-				if (LOWORD(surface->colorKey))
+				width *= sizeof(DWORD);
+				do
 				{
-					sWidth -= width * sizeof(WORD);
-					dWidth -= width * sizeof(WORD);
-					WORD key = LOWORD(surface->colorKey);
-					do
+					MemoryCopy(src, dst, width);
+					src += sPitch;
+					dst += dPitch;
+				} while (--height);
+			}
+		}
+		else
+		{
+			sPitch /= sizeof(WORD);
+			dPitch /= sizeof(WORD);
+
+			WORD* src = (WORD*)surface->indexBuffer + lpSrcRect->top * sPitch + lpSrcRect->left;
+			WORD* dst = (WORD*)this->indexBuffer + lpDestRect->top * dPitch + lpDestRect->left;
+
+			if (LOWORD(surface->colorKey))
+			{
+				WORD key = LOWORD(surface->colorKey);
+				if (config.isSSE2)
+				{
+					DWORD count = width >> 3;
+					if (count)
 					{
-						DWORD count = width;
-						do
+						DWORD sStep = (sPitch >> 3) - count;
+						DWORD dStep = (dPitch >> 3) - count;
+
+						__m128i* s = (__m128i*)src;
+						__m128i* d = (__m128i*)dst;
+						__m128i k = _mm_set1_epi16(key);
+						DWORD h = height;
+						if ((DWORD)s & 0xF)
 						{
-							if (*src != key)
-								*dst = *src;
-							++src;
-							++dst;
-						} while (--count);
+							if ((DWORD)d & 0xF)
+								do
+								{
+									DWORD w = count;
+									do
+									{
+										__m128i a = _mm_loadu_si128(s);
+										__m128i mask = _mm_cmpeq_epi16(a, k);
+										if (_mm_movemask_epi8(mask) != 0xFFFF)
+											_mm_storeu_si128(d, _mm_or_si128(_mm_andnot_si128(mask, a), _mm_and_si128(mask, _mm_loadu_si128(d))));
 
-						src = (WORD*)((BYTE*)src + sWidth);
-						dst = (WORD*)((BYTE*)dst + dWidth);
-					} while (--height);
+										++s;
+										++d;
+									} while (--w);
+
+									s += sStep;
+									d += dStep;
+								} while (--h);
+							else
+								do
+								{
+									DWORD w = count;
+									do
+									{
+										__m128i a = _mm_loadu_si128(s);
+										__m128i mask = _mm_cmpeq_epi16(a, k);
+										if (_mm_movemask_epi8(mask) != 0xFFFF)
+											_mm_store_si128(d, _mm_or_si128(_mm_andnot_si128(mask, a), _mm_and_si128(mask, _mm_load_si128(d))));
+
+										++s;
+										++d;
+									} while (--w);
+
+									s += sStep;
+									d += dStep;
+								} while (--h);
+						}
+						else
+						{
+							if ((DWORD)d & 0xF)
+								do
+								{
+									DWORD w = count;
+									do
+									{
+										__m128i a = _mm_load_si128(s);
+										__m128i mask = _mm_cmpeq_epi16(a, k);
+										if (_mm_movemask_epi8(mask) != 0xFFFF)
+											_mm_storeu_si128(d, _mm_or_si128(_mm_andnot_si128(mask, a), _mm_and_si128(mask, _mm_loadu_si128(d))));
+
+										++s;
+										++d;
+									} while (--w);
+
+									s += sStep;
+									d += dStep;
+								} while (--h);
+							else
+								do
+								{
+									DWORD w = count;
+									do
+									{
+										__m128i a = _mm_load_si128(s);
+										__m128i mask = _mm_cmpeq_epi16(a, k);
+										if (_mm_movemask_epi8(mask) != 0xFFFF)
+											_mm_store_si128(d, _mm_or_si128(_mm_andnot_si128(mask, a), _mm_and_si128(mask, _mm_load_si128(d))));
+
+										++s;
+										++d;
+									} while (--w);
+
+									s += sStep;
+									d += dStep;
+								} while (--h);
+						}
+
+						count <<= 3;
+						width -= count;
+						if (!width)
+							goto lbl_end;
+
+						src += count;
+						dst += count;
+					}
 				}
-				else
+
+				sPitch -= width;
+				dPitch -= width;
+
+				do
 				{
-					width *= sizeof(WORD);
+					DWORD w = width;
 					do
 					{
-						MemoryCopy(dst, src, width);
-						src = (WORD*)((BYTE*)src + sWidth);
-						dst = (WORD*)((BYTE*)dst + dWidth);
-					} while (--height);
-				}
+						if (*src != key)
+							*dst = *src;
+
+						++src;
+						++dst;
+					} while (--w);
+
+					src += sPitch;
+					dst += dPitch;
+				} while (--height);
+			}
+			else
+			{
+				width *= sizeof(WORD);
+				do
+				{
+					MemoryCopy(dst, src, width);
+					src += sPitch;
+					dst += dPitch;
+				} while (--height);
 			}
 		}
 
+	lbl_end:
 		if (this->scale != currScale)
 			this->scale = currScale;
 
