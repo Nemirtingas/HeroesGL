@@ -26,6 +26,7 @@
 #include "OpenDrawSurface.h"
 #include "OpenDraw.h"
 #include "GLib.h"
+#include "Config.h"
 
 OpenDrawSurface::OpenDrawSurface(IDraw7* lpDD, DWORD index)
 {
@@ -66,33 +67,49 @@ VOID OpenDrawSurface::CreateBuffer(DWORD width, DWORD height)
 		this->width = width;
 		this->height = height;
 
-		BITMAPINFO* bmi = (BITMAPINFO*)MemoryAlloc(sizeof(BITMAPINFO) + 8);
-		MemoryZero(bmi, sizeof(BITMAPINFO) + 8);
+		if (!config.isGDIHooked)
 		{
-			bmi->bmiHeader.biSize = sizeof(BITMAPINFO) + 8; // 108
-			bmi->bmiHeader.biWidth = width;
-			bmi->bmiHeader.biHeight = -*(LONG*)&height;
-			bmi->bmiHeader.biPlanes = 1;
-			bmi->bmiHeader.biBitCount = 16;
-			bmi->bmiHeader.biCompression = BI_BITFIELDS;
-			DWORD* mask = (DWORD*)&bmi->bmiColors;
-			mask[0] = 0xF800;
-			mask[1] = 0x07E0;
-			mask[2] = 0x001F;
+			BITMAPINFO* bmi = (BITMAPINFO*)MemoryAlloc(sizeof(BITMAPINFO) + 8);
+			MemoryZero(bmi, sizeof(BITMAPINFO) + 8);
+			{
+				bmi->bmiHeader.biSize = sizeof(BITMAPINFO) + 8; // 108
+				bmi->bmiHeader.biWidth = width;
+				bmi->bmiHeader.biHeight = -*(LONG*)&height;
+				bmi->bmiHeader.biPlanes = 1;
+				bmi->bmiHeader.biBitCount = 16;
+				bmi->bmiHeader.biCompression = BI_BITFIELDS;
+				DWORD* mask = (DWORD*)&bmi->bmiColors;
+				mask[0] = 0xF800;
+				mask[1] = 0x07E0;
+				mask[2] = 0x001F;
 
-			HDC hDc = ::GetDC(NULL);
-			this->hBmp = CreateDIBSection(hDc, bmi, 0, (VOID**)&this->indexBuffer, 0, 0);
-			::ReleaseDC(NULL, hDc);
+				HDC hDc = ::GetDC(NULL);
+				this->hBmp = CreateDIBSection(hDc, bmi, 0, (VOID**)&this->indexBuffer, 0, 0);
+				::ReleaseDC(NULL, hDc);
+			}
+			MemoryFree(bmi);
+
+			if (this->hBmp)
+			{
+				this->hDc = CreateCompatibleDC(NULL);
+				SelectObject(this->hDc, this->hBmp);
+
+				RenderBuffer* temp = &((OpenDraw*)this->ddraw)->temp;
+				if (temp->data && temp->width == this->width && temp->height == this->height)
+					MemoryCopy(this->indexBuffer, temp->data, this->width * this->height * sizeof(WORD));
+
+				if (((OpenDraw*)this->ddraw)->attachedSurface == this)
+					((OpenDraw*)this->ddraw)->RenderStart();
+			}
 		}
-		MemoryFree(bmi);
-
-		if (this->hBmp)
+		else
 		{
-			this->hDc = CreateCompatibleDC(NULL);
-			SelectObject(this->hDc, this->hBmp);
+			DWORD size = this->width * this->height * sizeof(WORD);
+			this->indexBuffer = (WORD*)AlignedAlloc(size);
 
-			if (((OpenDraw*)this->ddraw)->temp.data && ((OpenDraw*)this->ddraw)->temp.width == this->width && ((OpenDraw*)this->ddraw)->temp.height == this->height)
-				MemoryCopy(this->indexBuffer, ((OpenDraw*)this->ddraw)->temp.data, this->width * this->height * sizeof(WORD));
+			RenderBuffer* temp = &((OpenDraw*)this->ddraw)->temp;
+			if (temp->data && temp->width == this->width && temp->height == this->height)
+				MemoryCopy(this->indexBuffer, temp->data, this->width * this->height * sizeof(WORD));
 
 			if (((OpenDraw*)this->ddraw)->attachedSurface == this)
 				((OpenDraw*)this->ddraw)->RenderStart();
@@ -107,24 +124,40 @@ VOID OpenDrawSurface::ReleaseBuffer()
 		if (((OpenDraw*)this->ddraw)->attachedSurface == this)
 			((OpenDraw*)this->ddraw)->RenderStop();
 
-		if (((OpenDraw*)this->ddraw)->temp.data && (((OpenDraw*)this->ddraw)->temp.width != this->width || ((OpenDraw*)this->ddraw)->temp.height != this->height))
+		RenderBuffer* temp = &((OpenDraw*)this->ddraw)->temp;
+		if (temp->data && (temp->width != this->width || temp->height != this->height))
 		{
-			AlignedFree(((OpenDraw*)this->ddraw)->temp.data);
-			((OpenDraw*)this->ddraw)->temp.data = NULL;
+			AlignedFree(temp->data);
+			temp->data = NULL;
 		}
 
 		DWORD size = this->width * this->height * sizeof(WORD);
 		if (!((OpenDraw*)this->ddraw)->temp.data)
 		{
-			((OpenDraw*)this->ddraw)->temp.width = this->width;
-			((OpenDraw*)this->ddraw)->temp.height = this->height;
-			((OpenDraw*)this->ddraw)->temp.data = (WORD*)AlignedAlloc(size);
+			temp->width = this->width;
+			temp->height = this->height;
+			temp->data = (WORD*)AlignedAlloc(size);
 		}
 
-		MemoryCopy(((OpenDraw*)this->ddraw)->temp.data, this->indexBuffer, size);
+		MemoryCopy(temp->data, this->indexBuffer, size);
 
-		DeleteObject(this->hBmp);
-		DeleteDC(this->hDc);
+		if (!config.isGDIHooked)
+		{
+			if (this->hDc)
+			{
+				DeleteDC(this->hDc);
+				this->hDc = NULL;
+			}
+
+			if (this->hBmp)
+			{
+				DeleteObject(this->hBmp);
+				this->hBmp = NULL;
+			}
+		}
+		else
+			AlignedFree(this->indexBuffer);
+
 		this->indexBuffer = NULL;
 	}
 }
@@ -181,10 +214,10 @@ VOID OpenDrawSurface::TakeSnapshot()
 				GlobalUnlock(hMemory);
 				SetClipboardData(CF_DIB, hMemory);
 			}
-			
+
 			GlobalFree(hMemory);
 		}
-		
+
 		CloseClipboard();
 	}
 }
@@ -244,7 +277,7 @@ HRESULT __stdcall OpenDrawSurface::GetSurfaceDesc(LPDDSURFACEDESC2 lpDDSurfaceDe
 
 HRESULT __stdcall OpenDrawSurface::GetDC(HDC* dcMem)
 {
-	*dcMem = this->hDc;
+	*dcMem = config.isGDIHooked ? (HDC)this : this->hDc;
 	return DD_OK;
 }
 
@@ -279,8 +312,8 @@ HRESULT __stdcall OpenDrawSurface::Blt(LPRECT lpDestRect, LPDIRECTDRAWSURFACE7 l
 	INT width = lpSrcRect->right - lpSrcRect->left;
 	INT height = lpSrcRect->bottom - lpSrcRect->top;
 
-	WORD* source = surface->indexBuffer + lpSrcRect->top* sWidth + lpSrcRect->left;
-	WORD* destination = this->indexBuffer + lpDestRect->top* dWidth + lpDestRect->left;
+	WORD* source = surface->indexBuffer + lpSrcRect->top * sWidth + lpSrcRect->left;
+	WORD* destination = this->indexBuffer + lpDestRect->top * dWidth + lpDestRect->left;
 
 	DWORD copyHeight = height;
 	do
@@ -309,7 +342,7 @@ HRESULT __stdcall OpenDrawSurface::BltFast(DWORD dwX, DWORD dwY, LPDIRECTDRAWSUR
 	INT width = lpSrcRect->right - lpSrcRect->left;
 	INT height = lpSrcRect->bottom - lpSrcRect->top;
 
-	WORD* source = surface->indexBuffer + lpSrcRect->top* sWidth + lpSrcRect->left;
+	WORD* source = surface->indexBuffer + lpSrcRect->top * sWidth + lpSrcRect->left;
 	WORD* destination = this->indexBuffer + dwY * dWidth + dwX;
 
 	DWORD copyHeight = height;

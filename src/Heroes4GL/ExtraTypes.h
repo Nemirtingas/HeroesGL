@@ -228,6 +228,7 @@ struct ConfigItems
 	BOOL singleWindow;
 	BOOL coldCPU;
 	BOOL isSSE2;
+	BOOL isGDIHooked;
 	RendererType renderer;
 	UpdateMode updateMode;
 
@@ -303,6 +304,16 @@ enum MenuType
 	MenuCore,
 	MenuRenderer,
 	MenuLanguage
+};
+
+struct RenderBuffer {
+	DWORD width;
+	DWORD height;
+	WORD* data;
+};
+
+struct RenderDC {
+	RenderBuffer* buffer;
 };
 
 class OpenDraw;

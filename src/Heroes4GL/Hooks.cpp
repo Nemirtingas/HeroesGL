@@ -380,6 +380,82 @@ namespace Hooks
 		return FALSE;
 	}
 
+	#pragma region GDI hooks
+	HBITMAP __stdcall CreateDIBSectionHook(HDC hdc, const BITMAPINFO* lpbmi, UINT usage, VOID** ppvBits, HANDLE hSection, DWORD offset)
+	{
+		RenderBuffer* buffer = (RenderBuffer*)MemoryAlloc(sizeof(RenderBuffer));
+		{
+			buffer->width = (DWORD)lpbmi->bmiHeader.biWidth;
+			buffer->height = (DWORD)-lpbmi->bmiHeader.biHeight;
+
+
+			DWORD pitch = buffer->width * sizeof(WORD);
+			if (pitch & 3)
+				pitch = (pitch & 0xFFFFFFFC) + 4;
+			buffer->width = pitch / sizeof(WORD);
+
+			DWORD size = buffer->width * buffer->height * sizeof(WORD);
+			*ppvBits = buffer->data = (WORD*)AlignedAlloc(size);
+		}
+		return (HBITMAP)buffer;
+	}
+
+	BOOL __stdcall DeleteObjectHook(HGDIOBJ ho)
+	{
+		RenderBuffer* buffer = (RenderBuffer*)ho;
+		AlignedFree(buffer->data);
+		MemoryFree(buffer);
+
+		return TRUE;
+	}
+
+	HDC __stdcall CreateCompatibleDCHook(HDC hdc)
+	{
+		RenderDC* res = (RenderDC*)MemoryAlloc(sizeof(RenderDC));
+		res->buffer = NULL;
+		return (HDC)res;
+	}
+
+	BOOL __stdcall DeleteDCHook(HDC hdc)
+	{
+		if (hdc)
+			MemoryFree(hdc);
+		return TRUE;
+	}
+
+	HGDIOBJ __stdcall SelectObjectHook(HDC hdc, HGDIOBJ h)
+	{
+		RenderDC* res = (RenderDC*)hdc;
+		res->buffer = (RenderBuffer*)h;
+		return NULL;
+	}
+
+	BOOL __stdcall BitBltHook(OpenDrawSurface* hdc, INT x, INT y, INT cx, INT cy, HDC hdcSrc, INT x1, INT y1, DWORD rop)
+	{
+		OpenDrawSurface* surface = (OpenDrawSurface*)hdc;
+		RenderBuffer* buffer = ((RenderDC*)hdcSrc)->buffer;
+		
+		DWORD sWidth = buffer->width;
+		DWORD dWidth = surface->width;
+
+		INT width = cx;
+		INT height = cy;
+
+		WORD* source = buffer->data + y1 * sWidth + x1;
+		WORD* destination = surface->indexBuffer + y * dWidth + x;
+
+		DWORD copyHeight = height;
+		do
+		{
+			MemoryCopy(destination, source, width << 1);
+			source += sWidth;
+			destination += dWidth;
+		} while (--copyHeight);
+
+		return TRUE;
+	}
+	#pragma endregion
+
 #pragma region Registry
 	struct {
 		BOOL type;
@@ -552,6 +628,14 @@ namespace Hooks
 						PatchImportByName(hooker, "GetCursorPos", GetCursorPosHook);
 
 						PatchImportByName(hooker, "SetActiveWindow", SetActiveWindowHook);
+
+						PatchImportByName(hooker, "CreateDIBSection", CreateDIBSectionHook);
+						PatchImportByName(hooker, "CreateCompatibleDC", CreateCompatibleDCHook);
+						PatchImportByName(hooker, "DeleteDC", DeleteDCHook);
+						PatchImportByName(hooker, "SelectObject", SelectObjectHook);
+						PatchImportByName(hooker, "DeleteObject", DeleteObjectHook);
+						PatchImportByName(hooker, "BitBlt", BitBltHook);
+						config.isGDIHooked = TRUE;
 					}
 				}
 
