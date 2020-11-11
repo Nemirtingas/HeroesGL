@@ -154,7 +154,8 @@ struct LevelsData {
 	HDC hDc;
 	HBITMAP hBmp;
 	DWORD* data;
-	LevelColorsFloat* colors;
+	DWORD bmpData[100 * 516];
+	LevelColorsFloat colors[256];
 	FLOAT delta;
 	Adjustment values;
 };
