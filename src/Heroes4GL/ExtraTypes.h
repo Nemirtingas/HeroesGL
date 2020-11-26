@@ -177,6 +177,7 @@ struct AddressSpace
 	DWORD clientrect_nop[2];
 	DWORD updateWindow_nop[4];
 	DWORD updateWindowReg_nop;
+	DWORD load_package;
 	LCID resLanguage;
 	WORD resDialog;
 	DWORD windowName;
@@ -228,7 +229,6 @@ struct ConfigItems
 	BOOL singleWindow;
 	BOOL coldCPU;
 	BOOL isSSE2;
-	BOOL isGDIHooked;
 	RendererType renderer;
 	UpdateMode updateMode;
 

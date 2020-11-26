@@ -185,7 +185,7 @@ namespace Hooks
 	}
 
 	DWORD invalidEsp;
-	BOOL __declspec(naked) hook_InvalidateRect()
+	VOID __declspec(naked) hook_InvalidateRect()
 	{
 		_asm {
 			MOV ECX, invalidEsp
@@ -1500,7 +1500,7 @@ namespace Hooks
 		Window::SetCaptureKeys(TRUE);
 		DWORD res = ((DWORD(__stdcall*)(EntryParams))realEntry)(*eParams);
 		Window::SetCaptureKeys(FALSE);
-		return res; 
+		return res;
 	}
 
 	INT __stdcall WinMain(EntryParams eParams)
@@ -1518,179 +1518,181 @@ namespace Hooks
 	}
 #pragma endregion
 
+#pragma optimize("s", on)
 	BOOL Load()
 	{
+		BOOL res = FALSE;
 		HOOKER hooker = CreateHooker(GetModuleHandle(NULL));
 		{
-		hookSpace = addressArray;
-		DWORD hookCount = sizeof(addressArray) / sizeof(AddressSpace);
-		do
-		{
-			DWORD check;
-			if (ReadDWord(hooker, hookSpace->check + 6, &check) && check == STYLE_FULL_OLD)
+			hookSpace = addressArray;
+			DWORD hookCount = sizeof(addressArray) / sizeof(AddressSpace);
+			do
 			{
-				Config::Load(GetHookerModule(hooker), hookSpace);
-
-				HOOKER user = CreateHooker(GetModuleHandle("USER32.dll"));
+				DWORD check;
+				if (ReadDWord(hooker, hookSpace->check + 6, &check) && check == STYLE_FULL_OLD)
 				{
-					PatchExport(user, "PeekMessageA", PeekMessageHook);
-					PatchExport(user, "MessageBoxA", MessageBoxHook);
-					PatchExport(user, "DialogBoxParamA", DialogBoxParamHook);
-				}
-				ReleaseHooker(user);
+					Config::Load(GetHookerModule(hooker), hookSpace);
 
-				{
-					PatchImportByName(hooker, "PeekMessageA", PeekMessageHook);
-					PatchImportByName(hooker, "MessageBoxA", MessageBoxHook);
-					PatchImportByName(hooker, "DialogBoxParamA", AboutBoxParamHook);
-
-					PatchImportByName(hooker, "AdjustWindowRect", AdjustWindowRectHook);
-					PatchImportByName(hooker, "CreateWindowExA", CreateWindowExHook);
-					PatchImportByName(hooker, "SetWindowLongA", SetWindowLongHook);
-
-					
-					PatchImportByName(hooker, "WinHelpA", WinHelpHook);
-
-					PatchImportByName(hooker, "LoadMenuA", LoadMenuHook);
-					PatchImportByName(hooker, "SetMenu", SetMenuHook);
-					PatchImportByName(hooker, "EnableMenuItem", EnableMenuItemHook);
-
-					PatchImportByName(hooker, "Sleep", SleepHook);
-					
-					PatchImportByName(hooker, "LoadIconA", LoadIconHook);
-					PatchImportByName(hooker, "RegisterClassA", RegisterClassHook);
-
-					PatchImportByName(hooker, "RegCreateKeyA", RegCreateKeyHook);
-					PatchImportByName(hooker, "RegOpenKeyExA", RegOpenKeyExHook);
-					PatchImportByName(hooker, "RegCloseKey", RegCloseKeyHook);
-					PatchImportByName(hooker, "RegQueryValueExA", RegQueryValueExHook);
-					PatchImportByName(hooker, "RegSetValueExA", RegSetValueExHook);
-
-					PatchImportByName(hooker, "_AdrOpenDevice@8", AdrOpenDeviceHook, (DWORD*)&AudiereOpenDevice);
-					PatchImportByName(hooker, "_AdrOpenSampleSource@4", AdrOpenSampleSourceHook, (DWORD*)&AudiereOpenSampleSource);
-
-					if (!config.isDDraw)
+					HOOKER user = CreateHooker(GetModuleHandle("USER32.dll"));
 					{
-						PatchImportByName(hooker, "LoadLibraryA", LoadLibraryHook);
-						PatchImportByName(hooker, "FreeLibrary", FreeLibraryHook);
-						PatchImportByName(hooker, "GetProcAddress", GetProcAddressHook);
-
-						PatchImportByName(hooker, "ScreenToClient", ScreenToClientHook);
-						PatchImportByName(hooker, "InvalidateRect", hook_InvalidateRect);
-						PatchImportByName(hooker, "BeginPaint", BeginPaintHook);
+						PatchExport(user, "PeekMessageA", PeekMessageHook);
+						PatchExport(user, "MessageBoxA", MessageBoxHook);
+						PatchExport(user, "DialogBoxParamA", DialogBoxParamHook);
 					}
+					ReleaseHooker(user);
 
-					if (config.cursor.fix)
 					{
-						if (hookSpace->icons_list)
-						{
-							PatchImportByName(hooker, "CreateBitmapIndirect", CreateBitmapIndirectHook);
-							PatchImportByName(hooker, "CreateIconIndirect", CreateIconIndirectHook);
+						PatchImportByName(hooker, "PeekMessageA", PeekMessageHook);
+						PatchImportByName(hooker, "MessageBoxA", MessageBoxHook);
+						PatchImportByName(hooker, "DialogBoxParamA", AboutBoxParamHook);
 
-							if (!config.isDDraw)
+						PatchImportByName(hooker, "AdjustWindowRect", AdjustWindowRectHook);
+						PatchImportByName(hooker, "CreateWindowExA", CreateWindowExHook);
+						PatchImportByName(hooker, "SetWindowLongA", SetWindowLongHook);
+
+						PatchImportByName(hooker, "WinHelpA", WinHelpHook);
+
+						PatchImportByName(hooker, "LoadMenuA", LoadMenuHook);
+						PatchImportByName(hooker, "SetMenu", SetMenuHook);
+						PatchImportByName(hooker, "EnableMenuItem", EnableMenuItemHook);
+
+						PatchImportByName(hooker, "Sleep", SleepHook);
+
+						PatchImportByName(hooker, "LoadIconA", LoadIconHook);
+						PatchImportByName(hooker, "RegisterClassA", RegisterClassHook);
+
+						PatchImportByName(hooker, "RegCreateKeyA", RegCreateKeyHook);
+						PatchImportByName(hooker, "RegOpenKeyExA", RegOpenKeyExHook);
+						PatchImportByName(hooker, "RegCloseKey", RegCloseKeyHook);
+						PatchImportByName(hooker, "RegQueryValueExA", RegQueryValueExHook);
+						PatchImportByName(hooker, "RegSetValueExA", RegSetValueExHook);
+
+						PatchImportByName(hooker, "_AdrOpenDevice@8", AdrOpenDeviceHook, (DWORD*)&AudiereOpenDevice);
+						PatchImportByName(hooker, "_AdrOpenSampleSource@4", AdrOpenSampleSourceHook, (DWORD*)&AudiereOpenSampleSource);
+
+						if (!config.isDDraw)
+						{
+							PatchImportByName(hooker, "LoadLibraryA", LoadLibraryHook);
+							PatchImportByName(hooker, "FreeLibrary", FreeLibraryHook);
+							PatchImportByName(hooker, "GetProcAddress", GetProcAddressHook);
+
+							PatchImportByName(hooker, "ScreenToClient", ScreenToClientHook);
+							PatchImportByName(hooker, "InvalidateRect", hook_InvalidateRect);
+							PatchImportByName(hooker, "BeginPaint", BeginPaintHook);
+						}
+
+						if (config.cursor.fix)
+						{
+							if (hookSpace->icons_list)
 							{
-								PatchImportByName(hooker, "SetCursor", SetCursorHook);
-								PatchImportByName(hooker, "ShowCursor", ShowCursorHook);
-								PatchImportByName(hooker, "LoadCursorA", LoadCursorHook);
+								PatchImportByName(hooker, "CreateBitmapIndirect", CreateBitmapIndirectHook);
+								PatchImportByName(hooker, "CreateIconIndirect", CreateIconIndirectHook);
+
+								if (!config.isDDraw)
+								{
+									PatchImportByName(hooker, "SetCursor", SetCursorHook);
+									PatchImportByName(hooker, "ShowCursor", ShowCursorHook);
+									PatchImportByName(hooker, "LoadCursorA", LoadCursorHook);
+								}
+								else
+									config.cursor.fix = FALSE;
 							}
 							else
 								config.cursor.fix = FALSE;
 						}
+					}
+
+					realEntry = RedirectCall(hooker, hookSpace->entry, WinMain);
+
+					if (hookSpace->fadein_tick && hookSpace->fadein_update_1 && hookSpace->fadein_update_2)
+					{
+						PatchCall(hooker, hookSpace->fadein_tick, SetTickCount);
+						PatchCall(hooker, hookSpace->fadein_update_1, UpdatePaletteHook);
+						PatchCall(hooker, hookSpace->fadein_update_2, UpdatePaletteHook);
+					}
+
+					if (hookSpace->fadeout_tick && hookSpace->fadeout_update)
+					{
+						PatchCall(hooker, hookSpace->fadeout_tick, SetTickCount);
+						PatchCall(hooker, hookSpace->fadeout_update, UpdatePaletteHook);
+					}
+
+					if (!config.isDDraw)
+					{
+						if (hookSpace->resLanguage == LNG_ENGLISH)
+						{
+							PatchNop(hooker, hookSpace->method2_nop, 6);
+							PatchWord(hooker, hookSpace->method2_jmp, 0xE990);
+							PatchByte(hooker, hookSpace->invalid_jmp, 0xEB);
+						}
 						else
-							config.cursor.fix = FALSE;
+						{
+							PatchNop(hooker, hookSpace->method2_nop, 2);
+							PatchByte(hooker, hookSpace->method2_jmp, 0xEB);
+							PatchWord(hooker, hookSpace->invalid_jmp, 0xE990);
+						}
+
+						PatchHook(hooker, hookSpace->setFullScreenStatus, hookSpace->game_version == 2 ? hook_mode_v2 : hook_mode_v1);
+						DWORD baseOffset = GetBaseOffset(hooker);
+						ddSetFullScreenStatus = hookSpace->ddSetFullScreenStatus + baseOffset;
+						checkChangeCursor = hookSpace->checkChangeCursor + baseOffset;
+
+						config.update.offset = (POINT*)(hookSpace->moveOffset + baseOffset);
+						invalidEsp = hookSpace->invalid_esp;
 					}
-				}
 
-				realEntry = RedirectCall(hooker, hookSpace->entry, WinMain);
-
-				if (hookSpace->fadein_tick && hookSpace->fadein_update_1 && hookSpace->fadein_update_2)
-				{
-					PatchCall(hooker, hookSpace->fadein_tick, SetTickCount);
-					PatchCall(hooker, hookSpace->fadein_update_1, UpdatePaletteHook);
-					PatchCall(hooker, hookSpace->fadein_update_2, UpdatePaletteHook);
-				}
-
-				if (hookSpace->fadeout_tick && hookSpace->fadeout_update)
-				{
-					PatchCall(hooker, hookSpace->fadeout_tick, SetTickCount);
-					PatchCall(hooker, hookSpace->fadeout_update, UpdatePaletteHook);
-				}
-
-				if (!config.isDDraw)
-				{
-					if (hookSpace->resLanguage == LNG_ENGLISH)
+					if (hookSpace->icons_list && hookSpace->color_pointer && config.cursor.fix)
 					{
-						PatchNop(hooker, hookSpace->method2_nop, 6);
-						PatchWord(hooker, hookSpace->method2_jmp, 0xE990);
-						PatchByte(hooker, hookSpace->invalid_jmp, 0xEB);
+						PatchDWord(hooker, hookSpace->color_pointer, TRUE);
+						if (hookSpace->color_pointer_nop)
+							PatchNop(hooker, hookSpace->color_pointer_nop, 10);
 					}
-					else
+
+					//PatchWinMM();
+
+					if (hookSpace->pointer_fs_nop)
+						PatchNop(hooker, hookSpace->pointer_fs_nop, 2);
+
+					if (hookSpace->dispelMagicSwitch)
 					{
-						PatchNop(hooker, hookSpace->method2_nop, 2);
-						PatchByte(hooker, hookSpace->method2_jmp, 0xEB);
-						PatchWord(hooker, hookSpace->invalid_jmp, 0xE990);
+						BYTE caseList[15];
+						if (ReadBlock(hooker, hookSpace->dispelMagicSwitch, &caseList, sizeof(caseList)))
+						{
+							BYTE norm = caseList[0];
+							BYTE alt = caseList[1];
+
+							caseList[1] = norm;
+							caseList[2] = alt;
+							caseList[3] = norm;
+							caseList[4] = norm;
+							caseList[5] = alt;
+							caseList[6] = alt;
+							caseList[7] = alt;
+							caseList[8] = norm;
+							caseList[9] = norm;
+							caseList[10] = norm;
+							caseList[11] = alt;
+
+							caseList[13] = norm;
+							caseList[14] = norm;
+
+							PatchBlock(hooker, hookSpace->dispelMagicSwitch, &caseList, sizeof(caseList));
+
+							WORD inst;
+							if (ReadWord(hooker, hookSpace->dispelMagicFix, &inst))
+								PatchWord(hooker, hookSpace->dispelMagicFix, inst == 0xC1DE ? 0xE1DE : 0x6DD8); // faddp -> fsubrp
+						}
 					}
 
-					PatchHook(hooker, hookSpace->setFullScreenStatus, hookSpace->game_version == 2 ? hook_mode_v2 : hook_mode_v1);
-					DWORD baseOffset = GetBaseOffset(hooker);
-					ddSetFullScreenStatus = hookSpace->ddSetFullScreenStatus + baseOffset;
-					checkChangeCursor = hookSpace->checkChangeCursor + baseOffset;
-
-					config.update.offset = (POINT*)(hookSpace->moveOffset + baseOffset);
-					invalidEsp = hookSpace->invalid_esp;
+					res = TRUE;
+					break;
 				}
 
-				if (hookSpace->icons_list && hookSpace->color_pointer && config.cursor.fix)
-				{
-					PatchDWord(hooker, hookSpace->color_pointer, TRUE);
-					if (hookSpace->color_pointer_nop)
-						PatchNop(hooker, hookSpace->color_pointer_nop, 10);
-				}
-
-				//PatchWinMM();
-
-				if (hookSpace->pointer_fs_nop)
-					PatchNop(hooker, hookSpace->pointer_fs_nop, 2);
-
-				if (hookSpace->dispelMagicSwitch)
-				{
-					BYTE caseList[15];
-					if (ReadBlock(hooker, hookSpace->dispelMagicSwitch, &caseList, sizeof(caseList)))
-					{
-						BYTE norm = caseList[0];
-						BYTE alt = caseList[1];
-
-						caseList[1] = norm;
-						caseList[2] = alt;
-						caseList[3] = norm;
-						caseList[4] = norm;
-						caseList[5] = alt;
-						caseList[6] = alt;
-						caseList[7] = alt;
-						caseList[8] = norm;
-						caseList[9] = norm;
-						caseList[10] = norm;
-						caseList[11] = alt;
-
-						caseList[13] = norm;
-						caseList[14] = norm;
-
-						PatchBlock(hooker, hookSpace->dispelMagicSwitch, &caseList, sizeof(caseList));
-
-						WORD inst;
-						if (ReadWord(hooker, hookSpace->dispelMagicFix, &inst))
-							PatchWord(hooker, hookSpace->dispelMagicFix, inst == 0xC1DE ? 0xE1DE : 0x6DD8); // faddp -> fsubrp
-					}
-				}
-
-				return TRUE;
-			}
-
-			++hookSpace;
-		} while (--hookCount);
+				++hookSpace;
+			} while (--hookCount);
 		}
 		ReleaseHooker(hooker);
-
-		return FALSE;
+		return res;
 	}
+#pragma optimize("", on)
 }

@@ -39,6 +39,8 @@ public:
 	HWND hDraw;
 
 	const DisplayMode* mode;
+	DWORD pitch;
+	DWORD textureWidth;
 
 	BOOL isFinish;
 

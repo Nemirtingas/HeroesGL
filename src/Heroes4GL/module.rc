@@ -120,10 +120,14 @@ BEGIN
 			MENUITEM "&Украинский",					IDM_LANG_UKRAINIAN
 		END
 	END
+	POPUP "&Моды"
+	BEGIN
+		MENUITEM "",								IDM_MODS
+	END
 	POPUP "&Помощь"
 	BEGIN
-		MENUITEM "О &враппере...",					IDM_HELP_WRAPPER
 		MENUITEM "О &программе...",					IDM_HELP_ABOUT
+		MENUITEM "О &враппере...",					IDM_HELP_WRAPPER
 	END
 END
 
@@ -136,8 +140,8 @@ IDD_ABOUT DIALOGEX DISCARDABLE 29,23,216,190
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP
 FONT 8, "MS Sans Serif"
 BEGIN
-	CTEXT			"Герои Меча и Магии IV\nOpenGL враппер",IDC_STATIC,0,8,216,24
-	CTEXT			"Версия %d.%d%d   Сборка %d",IDC_VERSION,0,40,216,11
+	CTEXT			"Герои Меча и Магии IV\nOpenGL врапер",IDC_STATIC,0,8,216,24
+	CTEXT			"Версія %d.%d%d   Збірка %d",IDC_VERSION,0,40,216,11
 	CTEXT			"Проверить новые версии",IDC_STATIC,0,64,216,11
 	CONTROL			"",IDC_LNK_WEB,"SysLink",WS_TABSTOP,48,76,216,11
 	CTEXT			"Стать Патроном",IDC_STATIC,0,96,216,11
@@ -369,10 +373,14 @@ BEGIN
 			MENUITEM "&Українська",					IDM_LANG_UKRAINIAN
 		END
 	END
+	POPUP "&Моди"
+	BEGIN
+		MENUITEM "",								IDM_MODS
+	END
 	POPUP "&Довідка"
 	BEGIN
-		MENUITEM "Про &враппер...",					IDM_HELP_WRAPPER
 		MENUITEM "Про &програму...",				IDM_HELP_ABOUT
+		MENUITEM "Про &врапер...",					IDM_HELP_WRAPPER
 	END
 END
 
@@ -385,8 +393,8 @@ IDD_ABOUT DIALOGEX DISCARDABLE 29,23,216,190
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP
 FONT 8, "MS Sans Serif"
 BEGIN
-	CTEXT			"Герої Меча та Магії IV\nOpenGL враппер",IDC_STATIC,0,8,216,24
-	CTEXT			"Версия %d.%d%d   Сборка %d",IDC_VERSION,0,40,216,11
+	CTEXT			"Герої Меча та Магії IV\nOpenGL врапер",IDC_STATIC,0,8,216,24
+	CTEXT			"Версія %d.%d%d   Збірка %d",IDC_VERSION,0,40,216,11
 	CTEXT			"Перевірити нові версії",IDC_STATIC,0,64,216,11
 	CONTROL			"",IDC_LNK_WEB,"SysLink",WS_TABSTOP,48,76,216,11
 	CTEXT			"Стати Патроном",IDC_STATIC,0,96,216,11
@@ -401,8 +409,8 @@ IDD_ABOUT_OLD DIALOGEX DISCARDABLE 29,23,216,190
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP
 FONT 8, "MS Sans Serif"
 BEGIN
-	CTEXT			"Герої Меча та Магії IV\nOpenGL враппер",IDC_STATIC,0,8,216,24
-	CTEXT			"Версия %d.%d%d   Сборка %d",IDC_VERSION,0,40,216,11
+	CTEXT			"Герої Меча та Магії IV\nOpenGL врапер",IDC_STATIC,0,8,216,24
+	CTEXT			"Версія %d.%d%d   Збірка %d",IDC_VERSION,0,40,216,11
 	CTEXT			"Перевірити нові версії",IDC_STATIC,0,64,216,11
 	CTEXT			"",IDC_LNK_WEB,0,76,216,11
 	CTEXT			"Стати Патроном",IDC_STATIC,0,96,216,11
@@ -580,10 +588,14 @@ BEGIN
 			MENUITEM "&Ukrainian",					IDM_LANG_UKRAINIAN
 		END
 	END
+	POPUP "&Mods"
+	BEGIN
+		MENUITEM "",								IDM_MODS
+	END
 	POPUP "&Help"
 	BEGIN
-		MENUITEM "About &Wrapper...",				IDM_HELP_WRAPPER
 		MENUITEM "About &Application...",			IDM_HELP_ABOUT
+		MENUITEM "About &Wrapper...",				IDM_HELP_WRAPPER
 	END
 END
 
@@ -837,8 +849,8 @@ IDR_SCALENX_FRAGMENT_3X		RCDATA		DISCARDABLE		"..\\glsl\\scalenx\\fragment_3x.gl
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2020,11,11,447
- PRODUCTVERSION 1,4,4,0
+ FILEVERSION 2020,11,26,528
+ PRODUCTVERSION 1,4,5,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS VS_FF_DEBUG
@@ -854,10 +866,10 @@ BEGIN
 		BLOCK "040904b0"
 		BEGIN
 			VALUE "FileDescription", "HoMM IV - OpenGL wrapper"
-			VALUE "FileVersion", "2020.11.11.447"
+			VALUE "FileVersion", "2020.11.26.528"
 			VALUE "LegalCopyright", "© 2020 Verok (verokster@gmail.com)"
 			VALUE "OriginalFilename", "ddraw.dll"
-			VALUE "ProductVersion", "1.4.4"
+			VALUE "ProductVersion", "1.4.5"
 			VALUE "ProductName", "Heroes4GL"
 		END
 	END

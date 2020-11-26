@@ -1121,6 +1121,7 @@ namespace Hooks
 	}
 #pragma endregion
 
+#pragma optimize("s", on)
 	BOOL Load()
 	{
 		const AddressSpace* defaultSpace = NULL;
@@ -1243,4 +1244,5 @@ namespace Hooks
 
 		return FALSE;
 	}
+#pragma optimize("", on)
 }

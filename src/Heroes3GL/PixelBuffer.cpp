@@ -779,6 +779,9 @@ VOID PixelBuffer::Update(Rect* rect)
 		{
 			DWORD top = (length - left) / this->pitch;
 			DWORD bottom = (right - 1) / this->pitch + 1;
+			DWORD right = this->width;
+			if (!this->isTrue)
+				right >>= 1;
 
 			POINT offset = { 0, 0 };
 			for (DWORD y = top; y < bottom; y += this->block)
@@ -787,11 +790,11 @@ VOID PixelBuffer::Update(Rect* rect)
 				if (bt > bottom)
 					bt = bottom;
 
-				for (DWORD x = 0; x < this->width; x += this->block)
+				for (DWORD x = 0; x < right; x += this->block)
 				{
 					DWORD rt = x + this->block;
-					if (rt > this->width)
-						rt = this->width;
+					if (rt > right)
+						rt = right;
 
 					RECT rc = { *(LONG*)&x, *(LONG*)&y, *(LONG*)&rt, *(LONG*)&bt };
 					this->UpdateBlock(&rc, &offset);

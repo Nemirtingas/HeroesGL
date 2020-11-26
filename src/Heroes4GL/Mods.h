@@ -23,41 +23,32 @@
 */
 
 #pragma once
-#include "IDrawSurface7.h"
-#include "IDraw7.h"
-#include "OpenDrawClipper.h"
-#include "ExtraTypes.h"
 
-class OpenDrawSurface : public IDrawSurface7
-{
-protected:
-	ULONG refCount;
+typedef VOID(__cdecl* LOADPACKAGE)(const CHAR* name);
 
-public:
-	DWORD index;
-	DWORD width;
-	DWORD height;
-	DWORD pitch;
+typedef BOOL(__stdcall* ISSUPPORTED)();
+typedef const CHAR*(__stdcall* GETNAME)();
+typedef HMENU(__stdcall* GETMENU)();
+typedef VOID(__stdcall* SETHWND)(HWND);
+typedef VOID(__stdcall* PROCESS)();
+typedef VOID(__stdcall* LOADPACKAGES)(LOADPACKAGE callback);
 
-	OpenDrawClipper* attachedClipper;
-
-	WORD* indexBuffer;
-
-	OpenDrawSurface(IDraw7*, DWORD);
-	~OpenDrawSurface();
-
-	VOID CreateBuffer(DWORD, DWORD);
-	VOID ReleaseBuffer();
-	VOID TakeSnapshot();
-
-	// Inherited via IDrawSurface7
-	ULONG __stdcall AddRef();
-	ULONG __stdcall Release();
-	HRESULT __stdcall Blt(LPRECT, LPDIRECTDRAWSURFACE7, LPRECT, DWORD, LPDDBLTFX);
-	HRESULT __stdcall BltFast(DWORD, DWORD, LPDIRECTDRAWSURFACE7, LPRECT, DWORD);
-	HRESULT __stdcall GetDC(HDC *);
-	HRESULT __stdcall GetPixelFormat(LPDDPIXELFORMAT);
-	HRESULT __stdcall GetSurfaceDesc(LPDDSURFACEDESC2);
-	HRESULT __stdcall Lock(LPRECT, LPDDSURFACEDESC2, DWORD, HANDLE);
-	HRESULT __stdcall SetClipper(LPDIRECTDRAWCLIPPER);
+struct Mod {
+	Mod* last;
+	HMODULE hModule;
+	ISSUPPORTED IsSupported;
+	GETNAME GetName;
+	GETMENU GetMenu;
+	SETHWND SetHWND;
+	PROCESS Process;
+	LOADPACKAGES LoadPackages;
 };
+
+extern Mod* mods;
+
+namespace Mods
+{
+	VOID Load();
+	VOID SetHWND(HWND);
+	VOID LoadPackages(LOADPACKAGE);
+}

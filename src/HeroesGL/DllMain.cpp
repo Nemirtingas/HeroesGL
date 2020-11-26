@@ -39,7 +39,7 @@ VOID LoadModule(const CHAR* pattern)
 	if (!p)
 		return;
 
-	StrCopy(++p, "*.asi");
+	StrCopy(++p, pattern);
 
 	WIN32_FIND_DATA fData;
 	HANDLE hFile = FindFirstFile(file, &fData);

@@ -145,8 +145,8 @@ namespace Window
 			EnableMenuItem(mData->hParent, mData->index, MF_BYPOSITION | flags);
 			CheckMenuItem(mData->hParent, mData->index, MF_BYPOSITION | MF_UNCHECKED);
 
-			UINT count = (UINT)GetMenuItemCount(mData->hMenu);
-			for (UINT i = 0; i < count; ++i)
+			INT count = GetMenuItemCount(mData->hMenu);
+			for (INT i = 0; i < count; ++i)
 			{
 				EnableMenuItem(mData->hMenu, i, MF_BYPOSITION | flags);
 				CheckMenuItem(mData->hMenu, i, MF_BYPOSITION | MF_UNCHECKED);
@@ -363,8 +363,8 @@ namespace Window
 			mData.childId = IDM_LANG_ENGLISH;
 			if (GetMenuByChildID(hMenu, &mData))
 			{
-				UINT count = (UINT)GetMenuItemCount(mData.hMenu);
-				for (UINT i = 0; i < count; ++i)
+				INT count = GetMenuItemCount(mData.hMenu);
+				for (INT i = 0; i < count; ++i)
 					CheckMenuItem(mData.hMenu, i, MF_BYPOSITION | (GetMenuItemID(mData.hMenu, i) == config.language.futured ? MF_CHECKED : MF_UNCHECKED));
 			}
 		}
@@ -1592,27 +1592,6 @@ namespace Window
 			return CallWindowProc(OldWindowProc, hWnd, uMsg, wParam, lParam);
 		}
 
-		case WM_GETMINMAXINFO: {
-			OpenDraw* ddraw = Main::FindOpenDrawByWindow(hWnd);
-			if (ddraw && ddraw->windowState == WinStateWindowed)
-			{
-				RECT rect = { 0, 0, MIN_WIDTH, MIN_HEIGHT };
-				AdjustWindowRect(&rect, GetWindowLong(hWnd, GWL_STYLE), TRUE);
-
-				MINMAXINFO* mmi = (MINMAXINFO*)lParam;
-				mmi->ptMinTrackSize.x = rect.right - rect.left;
-				mmi->ptMinTrackSize.y = rect.bottom - rect.top;
-				mmi->ptMaxTrackSize.x = LONG_MAX >> 16;
-				mmi->ptMaxTrackSize.y = LONG_MAX >> 16;
-				mmi->ptMaxSize.x = LONG_MAX >> 16;
-				mmi->ptMaxSize.y = LONG_MAX >> 16;
-
-				return NULL;
-			}
-
-			return CallWindowProc(OldWindowProc, hWnd, uMsg, wParam, lParam);
-		}
-
 		case WM_ACTIVATEAPP: {
 			OpenDraw* ddraw = Main::FindOpenDrawByWindow(hWnd);
 			if (ddraw)
@@ -1950,8 +1929,8 @@ namespace Window
 					mData.childId = IDM_LANG_ENGLISH;
 					if (GetMenuByChildID(hMenu, &mData))
 					{
-						UINT count = (UINT)GetMenuItemCount(mData.hMenu);
-						for (UINT i = 0; i < count; ++i)
+						INT count = GetMenuItemCount(mData.hMenu);
+						for (INT i = 0; i < count; ++i)
 						{
 							UINT id = GetMenuItemID(mData.hMenu, i);
 							if (id == wParam)
@@ -1962,7 +1941,7 @@ namespace Window
 									Config::Set(CONFIG_WRAPPER, "Language", *(INT*)&config.language.futured);
 
 									if (config.language.current != id)
-									Main::ShowInfo(IDS_INFO_RESTART);
+										Main::ShowInfo(IDS_INFO_RESTART);
 
 									CheckMenu(hWnd, MenuLanguage);
 								}

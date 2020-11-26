@@ -58,6 +58,9 @@
     <ClCompile Include="FpsCounter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Mods.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Resource.h">
@@ -120,13 +123,13 @@
     <ClInclude Include="FpsCounter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Mods.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header Files">
       <UniqueIdentifier>{52949067-004a-4f89-954e-76cac391770d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{9894f9f1-3b2e-44c1-b85b-f89a3c64f6a8}</UniqueIdentifier>
     </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{b48440de-744c-470c-835a-b1527d1c4325}</UniqueIdentifier>
@@ -134,29 +137,32 @@
     <Filter Include="Header Files\Draw">
       <UniqueIdentifier>{a4b3becc-6829-4ea7-89b8-efc8d876f5ff}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Draw">
-      <UniqueIdentifier>{d92ccba3-8ac6-40a0-8ff6-cc3e2eaa8d9f}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Draw\Base">
       <UniqueIdentifier>{67f6672e-cdcc-4986-bc56-afc5a59df3cc}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Draw\Base">
-      <UniqueIdentifier>{91eb27d1-fb25-4df9-b677-81b0dc03c2d8}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\Draw\Direct">
       <UniqueIdentifier>{12d5590f-0460-4eda-9b3f-c7844f76013b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Draw\Direct">
-      <UniqueIdentifier>{ec42e068-be0c-473a-99ce-a7c416c4ed22}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Draw\Open">
       <UniqueIdentifier>{970cda90-8573-4659-9db6-8e714e4c2f31}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Draw\Open">
-      <UniqueIdentifier>{78672b15-32ef-4883-ae96-8fa97e7613aa}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Shader">
       <UniqueIdentifier>{0069fdbd-aa6e-4f99-a2d7-f6a925d124c8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{9894f9f1-3b2e-44c1-b85b-f89a3c64f6a8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Draw">
+      <UniqueIdentifier>{d92ccba3-8ac6-40a0-8ff6-cc3e2eaa8d9f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Draw\Base">
+      <UniqueIdentifier>{91eb27d1-fb25-4df9-b677-81b0dc03c2d8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Draw\Direct">
+      <UniqueIdentifier>{ec42e068-be0c-473a-99ce-a7c416c4ed22}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Draw\Open">
+      <UniqueIdentifier>{78672b15-32ef-4883-ae96-8fa97e7613aa}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\Shader">
       <UniqueIdentifier>{050d2f89-9fb4-4f5b-b0ae-ea4bc3c63ed3}</UniqueIdentifier>

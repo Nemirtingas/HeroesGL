@@ -30,6 +30,7 @@
 #include "Config.h"
 #include "Window.h"
 #include "Resource.h"
+#include "Mods.h"
 
 BOOL __stdcall DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 {
@@ -57,6 +58,8 @@ BOOL __stdcall DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 		{
 			if (!config.isDDraw)
 			{
+				Mods::Load();
+
 				Window::SetCaptureKeys(TRUE);
 
 				{

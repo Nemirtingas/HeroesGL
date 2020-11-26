@@ -29,6 +29,7 @@
 #include "Resource.h"
 #include "Window.h"
 #include "Hooker.h"
+#include "Mods.h"
 
 #define STYLE_FULL_OLD (WS_VISIBLE | WS_POPUP)
 #define STYLE_FULL_NEW (WS_VISIBLE | WS_POPUP | WS_SYSMENU | WS_CLIPSIBLINGS)
@@ -40,74 +41,74 @@ const AddressSpace addressArray[] = {
 // === RUS ======================================================================================================================================
 #pragma region RUS
 	0x00844A4D, 0x00844B35, 0x00401D18, 0x90909090, 0x0084497C, 0x006D59BB, 0x00843736, 0x00843F0E,
-	0x00000000, 0x00842B01, 0x00842B36, 0x00842BB2, 0x00842B18,
+	0x00000000, 0x00842B01, 0x00842B36, 0x00842BB2, 0x00842B18, 0x006D5363,
 	LNG_RUSSIAN, IDD_HELP_ABOUT_RUSSIAN_1_0, IDS_HOMM_4, // Heroes IV - 1.0
 
 	0x008C6411, 0x008C64F9, 0x00000000, 0x00000000, 0x008C6340, 0x00736E79, 0x008C4EEE, 0x008C58B2,
-	0x008C4259, 0x008C4290, 0x008C429A, 0x008C4323, 0x008C4272,
+	0x008C4259, 0x008C4290, 0x008C429A, 0x008C4323, 0x008C4272, 0x00736720,
 	LNG_RUSSIAN, IDD_HELP_ABOUT_RUSSIAN_2_2_GS, IDS_HOMM_4_GS, // Heroes IV - 2.2GS
 
 	0x008D38B1, 0x008D3999, 0x00000000, 0x00000000, 0x008D37E0, 0x0073D780, 0x008D238E, 0x008D2D52,
-	0x008D16F9, 0x008D1730, 0x008D173A, 0x008D17C3, 0x008D1712,
+	0x008D16F9, 0x008D1730, 0x008D173A, 0x008D17C3, 0x008D1712, 0x0073CDBD,
 	LNG_RUSSIAN, IDD_HELP_ABOUT_RUSSIAN_3_0_WOW, IDS_HOMM_4_WOW, // Heroes IV - 3.0WoW
 #pragma endregion
 
 // === ENG ======================================================================================================================================
 #pragma region ENG
 	0x00844A4D, 0x00844B35, 0x00000000, 0x00000000, 0x0084497C, 0x006D59BB, 0x00843736, 0x00843F0E,
-	0x00000000, 0x00842B01, 0x00842B36, 0x00842BB2, 0x00842B18,
+	0x00000000, 0x00842B01, 0x00842B36, 0x00842BB2, 0x00842B18, 0x006D5363,
 	LNG_ENGLISH, IDD_HELP_ABOUT_ENGLISH_1_0, IDS_HOMM_4, // Heroes IV - 1.0
 
 	0x0084C0FD, 0x0084C1E5, 0x00000000, 0x00000000, 0x0084C02C, 0x006DAC3B, 0x0084AD96, 0x0084B5BE,
-	0x00000000, 0x0084A161, 0x0084A196, 0x0084A212, 0x0084A178,
+	0x00000000, 0x0084A161, 0x0084A196, 0x0084A212, 0x0084A178, 0x006DA5E3,
 	LNG_ENGLISH, IDD_HELP_ABOUT_ENGLISH_1_2, IDS_HOMM_4, // Heroes IV - 1.2
 
 	0x008533C1, 0x008534A9, 0x00000000, 0x00000000, 0x008532F0, 0x006DF4F5, 0x0085201E, 0x00852862,
-	0x00851389, 0x008513C0, 0x008513CA, 0x00851453, 0x008513A2,
+	0x00851389, 0x008513C0, 0x008513CA, 0x00851453, 0x008513A2, 0x006DEE7C,
 	LNG_ENGLISH, IDD_HELP_ABOUT_ENGLISH_1_3, IDS_HOMM_4, // Heroes IV - 1.3
 
 	0x008C5F51, 0x008C6039, 0x00000000, 0x00000000, 0x008C5E80, 0x007362D9, 0x008C4A2E, 0x008C53F2,
-	0x008C3D99, 0x008C3DD0, 0x008C3DDA, 0x008C3E63, 0x008C3DB2,
+	0x008C3D99, 0x008C3DD0, 0x008C3DDA, 0x008C3E63, 0x008C3DB2, 0x00735B80,
 	LNG_ENGLISH, IDD_HELP_ABOUT_ENGLISH_2_0, IDS_HOMM_4, // Heroes IV - 2.0
 
 	0x008C63F1, 0x008C64D9, 0x00000000, 0x00000000, 0x008C6320, 0x007369F9, 0x008C4ECE, 0x008C5892,
-	0x008C4239, 0x008C4270, 0x008C427A, 0x008C4303, 0x008C4252,
+	0x008C4239, 0x008C4270, 0x008C427A, 0x008C4303, 0x008C4252, 0x007362A0,
 	LNG_ENGLISH, IDD_HELP_ABOUT_ENGLISH_2_2, IDS_HOMM_4, // Heroes IV - 2.2
 
 	0x008D3881, 0x008D3969, 0x00000000, 0x00000000, 0x008D37B0, 0x0073D9B0, 0x008D235E, 0x008D2D22,
-	0x008D16C9, 0x008D1700, 0x008D170A, 0x008D1793, 0x008D16E2,
+	0x008D16C9, 0x008D1700, 0x008D170A, 0x008D1793, 0x008D16E2, 0x0073CFED,
 	LNG_ENGLISH, IDD_HELP_ABOUT_ENGLISH_3_0, IDS_HOMM_4, // Heroes IV - 3.0
 
 	// ---------------------------------------------------------------------------------------------------------------------
 
 	0x008C5F51, 0x008C6039, 0x00401448, 0x00961278, 0x008C5E80, 0x007362D9, 0x008C4A2E, 0x008C53F2,
-	0x008C3D99, 0x008C3DD0, 0x008C3DDA, 0x008C3E63, 0x008C3DB2,
+	0x008C3D99, 0x008C3DD0, 0x008C3DDA, 0x008C3E63, 0x008C3DB2, 0x00735B80,
 	LNG_ENGLISH, IDD_HELP_ABOUT_ENGLISH_2_0_GS, IDS_HOMM_4_GS, // Heroes IV - 2.0GS
 
 	0x008C63F1, 0x008C64D9, 0x00401448, 0x00961278, 0x008C6320, 0x007369F9, 0x008C4ECE, 0x008C5892,
-	0x008C4239, 0x008C4270, 0x008C427A, 0x008C4303, 0x008C4252,
+	0x008C4239, 0x008C4270, 0x008C427A, 0x008C4303, 0x008C4252, 0x007362A0,
 	LNG_ENGLISH, IDD_HELP_ABOUT_ENGLISH_2_2_GS, IDS_HOMM_4_GS, // Heroes IV - 2.2GS
 
 	0x008D3881, 0x008D3969, 0x00401448, 0x00970278, 0x008D37B0, 0x0073D9B0, 0x008D235E, 0x008D2D22,
-	0x008D16C9, 0x008D1700, 0x008D170A, 0x008D1793, 0x008D16E2,
+	0x008D16C9, 0x008D1700, 0x008D170A, 0x008D1793, 0x008D16E2, 0x0073CFED,
 	LNG_ENGLISH, IDD_HELP_ABOUT_ENGLISH_3_0_GS, IDS_HOMM_4_GS, // Heroes IV - 3.0GS
 
 	// ---------------------------------------------------------------------------------------------------------------------
 
 	0x008D3881, 0x008D3969, 0x00401448, 0x00970200, 0x008D37B0, 0x0073D9B0, 0x008D235E, 0x008D2D22,
-	0x008D16C9, 0x008D1700, 0x008D170A, 0x008D1793, 0x008D16E2,
+	0x008D16C9, 0x008D1700, 0x008D170A, 0x008D1793, 0x008D16E2, 0x0073CFED,
 	LNG_ENGLISH, IDD_HELP_ABOUT_ENGLISH_3_0_WOW, IDS_HOMM_4_WOW, // Heroes IV - 3.0WoW
 #pragma endregion
 
 // === POL ======================================================================================================================================
 #pragma region POL
 	0x008D8F91, 0x008D9079, 0x00000000, 0x00000000, 0x008D8EC0, 0x0074085C, 0x008D7A5E, 0x008D8422,
-	0x008D6DAE, 0x008D6DE6, 0x008D6DF0, 0x008D6E7A, 0x008D6DC6,
-	LNG_ENGLISH, IDD_HELP_ABOUT_ENGLISH_3_0_WOW, IDS_HOMM_4_WOW, // Heroes IV - 3.0WoW
+	0x008D6DAE, 0x008D6DE6, 0x008D6DF0, 0x008D6E7A, 0x008D6DC6, 0x0073FE7D,
+	LNG_ENGLISH, IDD_HELP_ABOUT_ENGLISH_3_0_WOW, IDS_HOMM_4_WOW, // Heroes IV - 3.0WoW PL/CZ
 
 	0x008D1651, 0x008D1739, 0x00000000, 0x00000000, 0x008D1580, 0x0073B0A0, 0x008D012E, 0x008D0AF2,
-	0x008CF499, 0x008CF4D0, 0x008CF4DA, 0x008CF563, 0x008CF4B2,
-	LNG_ENGLISH, IDD_HELP_ABOUT_ENGLISH_3_0_WOW, IDS_HOMM_4_WOW // Heroes IV - 3.0WoW
+	0x008CF499, 0x008CF4D0, 0x008CF4DA, 0x008CF563, 0x008CF4B2, 0x0073A6DD,
+	LNG_ENGLISH, IDD_HELP_ABOUT_ENGLISH_3_0_WOW, IDS_HOMM_4_WOW // Heroes IV - 3.0WoW Zlota Edycja
 #pragma endregion
 };
 
@@ -220,6 +221,43 @@ namespace Hooks
 						}
 
 						Window::CheckMenu(hMenu);
+
+						mData.childId = IDM_MODS;
+						if (Window::GetMenuByChildID(hMenu, &mData) && DeleteMenu(hMenu, IDM_MODS, MF_BYCOMMAND))
+						{
+							BOOL added = FALSE;
+							Mod* mod = mods;
+							while (mod)
+							{
+								if (InsertMenu(mData.hMenu, 0, MF_BYPOSITION | MF_POPUP, (UINT_PTR)mod->GetMenu(), mod->GetName()))
+									added = TRUE;
+
+								mod = mod->last;
+							}
+
+							// Equilibris
+							MenuItemData eqData;
+							eqData.childId = 36864;
+							if (Window::GetMenuByChildID(hMenu, &eqData))
+							{
+								INT count = GetMenuItemCount(hMenu);
+								for (INT i = 0; i < count; ++i)
+								{
+									if (GetSubMenu(hMenu, i) == eqData.hParent)
+									{
+										GetMenuString(hMenu, i, buffer, sizeof(buffer), MF_BYPOSITION);
+										if (AppendMenu(mData.hMenu, MF_POPUP, (UINT_PTR)eqData.hParent, buffer))
+										{
+											added = TRUE;
+											RemoveMenu(hMenu, i, MF_BYPOSITION);
+										}
+									}
+								}
+							}
+
+							if (!added)
+								DeleteMenu(hMenu, mData.index, MF_BYPOSITION);
+						}
 					}
 
 					return;
@@ -238,6 +276,7 @@ namespace Hooks
 		{
 			LoadNewMenu(GetMenu(hWndMain));
 			Window::SetCaptureWindow(hWndMain);
+			Mods::SetHWND(hWndMain);
 			SetTimer(hWndMain, NULL, 10, NULL);
 		}
 
@@ -380,14 +419,13 @@ namespace Hooks
 		return FALSE;
 	}
 
-	#pragma region GDI hooks
+#pragma region GDI hooks
 	HBITMAP __stdcall CreateDIBSectionHook(HDC hdc, const BITMAPINFO* lpbmi, UINT usage, VOID** ppvBits, HANDLE hSection, DWORD offset)
 	{
 		RenderBuffer* buffer = (RenderBuffer*)MemoryAlloc(sizeof(RenderBuffer));
 		{
 			buffer->width = (DWORD)lpbmi->bmiHeader.biWidth;
 			buffer->height = (DWORD)-lpbmi->bmiHeader.biHeight;
-
 
 			DWORD pitch = buffer->width * sizeof(WORD);
 			if (pitch & 3)
@@ -434,27 +472,30 @@ namespace Hooks
 	{
 		OpenDrawSurface* surface = (OpenDrawSurface*)hdc;
 		RenderBuffer* buffer = ((RenderDC*)hdcSrc)->buffer;
-		
-		DWORD sWidth = buffer->width;
-		DWORD dWidth = surface->width;
+
+		DWORD sPitch = buffer->width * sizeof(WORD);
+		if (sPitch & 3)
+			sPitch = (sPitch & 0xFFFFFFFC) + 4;
+		sPitch /= sizeof(WORD);
+		DWORD dPitch = surface->pitch / sizeof(WORD);
 
 		INT width = cx;
 		INT height = cy;
 
-		WORD* source = buffer->data + y1 * sWidth + x1;
-		WORD* destination = surface->indexBuffer + y * dWidth + x;
+		WORD* source = buffer->data + y1 * sPitch + x1;
+		WORD* destination = surface->indexBuffer + y * dPitch + x;
 
 		DWORD copyHeight = height;
 		do
 		{
 			MemoryCopy(destination, source, width << 1);
-			source += sWidth;
-			destination += dWidth;
+			source += sPitch;
+			destination += dPitch;
 		} while (--copyHeight);
 
 		return TRUE;
 	}
-	#pragma endregion
+#pragma endregion
 
 #pragma region Registry
 	struct {
@@ -560,8 +601,41 @@ namespace Hooks
 	}
 #pragma endregion
 
+#pragma region Mods
+	DWORD sub_LoadDataPackage;
+	VOID __cdecl LoadDataPackage_1(const CHAR* name)
+	{
+		Mods::LoadPackages((LOADPACKAGE)sub_LoadDataPackage);
+		((LOADPACKAGE)sub_LoadDataPackage)(name);
+	}
+
+	VOID __cdecl LoadDataPackageCdecl(const CHAR* name)
+	{
+		((VOID(__thiscall*)(const CHAR*))sub_LoadDataPackage)(name);
+	}
+
+	VOID __stdcall LoadDataPackage_0(const CHAR* name)
+	{
+		Mods::LoadPackages(LoadDataPackageCdecl);
+		((VOID(__thiscall*)(const CHAR*))sub_LoadDataPackage)(name);
+	}
+
+	VOID __declspec(naked) hook_006D5363()
+	{
+		_asm {
+			pop eax
+			push ecx
+			push eax
+			jmp LoadDataPackage_0
+		}
+	}
+#pragma endregion
+
+#pragma optimize("s", on)
 	BOOL Load()
 	{
+		BOOL res = FALSE;
+
 		const AddressSpace* defaultSpace = NULL;
 		const AddressSpace* equalSpace = NULL;
 
@@ -608,7 +682,7 @@ namespace Hooks
 					PatchImportByName(hooker, "LoadMenuA", LoadMenuHook);
 					PatchImportByName(hooker, "SetMenu", SetMenuHook);
 					PatchImportByName(hooker, "EnableMenuItem", EnableMenuItemHook);
-					
+
 					PatchImportByName(hooker, "RegCreateKeyExA", RegCreateKeyExHook);
 					PatchImportByName(hooker, "RegOpenKeyExA", RegOpenKeyExHook);
 					PatchImportByName(hooker, "RegCloseKey", RegCloseKeyHook);
@@ -635,7 +709,6 @@ namespace Hooks
 						PatchImportByName(hooker, "SelectObject", SelectObjectHook);
 						PatchImportByName(hooker, "DeleteObject", DeleteObjectHook);
 						PatchImportByName(hooker, "BitBlt", BitBltHook);
-						config.isGDIHooked = TRUE;
 					}
 				}
 
@@ -660,16 +733,26 @@ namespace Hooks
 						while (--count);
 
 						PatchNop(hooker, hookSpace->updateWindowReg_nop, 5);
+
+						// Load Package Hook
+						sub_LoadDataPackage = RedirectCall(hooker, hookSpace->load_package, LoadDataPackage_1);
+
+						HMODULE h4mod = GetModuleHandle("H4.dll");
+						if (h4mod)
+						{
+							HOOKER h4hooker = CreateHooker(h4mod);
+							{
+								DWORD addr = 0x69C42C23 + 1;
+								DWORD check;
+								if (ReadDWord(h4hooker, addr, &check) && check == sub_LoadDataPackage)
+									PatchDWord(h4hooker, addr, (DWORD)LoadDataPackage_1);
+							}
+							ReleaseHooker(h4hooker);
+						}
 					}
 					else
 					{
-						const BYTE addEsp8[5] = {
-							0x83,
-							0xC4,
-							0x08,
-							0x90,
-							0x90,
-						};
+						const BYTE addEsp8[5] = { 0x83, 0xC4, 0x08, 0x90, 0x90 };
 
 						--count;
 						++lpNop;
@@ -677,21 +760,19 @@ namespace Hooks
 							PatchBlock(hooker, *lpNop++, (VOID*)addEsp8, sizeof(addEsp8));
 						while (--count);
 
-						const BYTE addEsp4[5] = {
-							0x83,
-							0xC4,
-							0x04,
-							0x90,
-							0x90,
-						};
+						const BYTE addEsp4[5] = { 0x83, 0xC4, 0x04, 0x90, 0x90 };
 						PatchBlock(hooker, hookSpace->updateWindowReg_nop, (VOID*)addEsp4, sizeof(addEsp4));
+
+						// Load Package Hook
+						sub_LoadDataPackage = RedirectCall(hooker, hookSpace->load_package, hook_006D5363);
 					}
 				}
 
-				return TRUE;
+				res = TRUE;
 			}
 		}
 		ReleaseHooker(hooker);
-		return FALSE;
+		return res;
 	}
+#pragma optimize("", on)
 }

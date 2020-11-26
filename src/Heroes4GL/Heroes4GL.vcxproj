@@ -100,7 +100,7 @@
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <FixedBaseAddress>true</FixedBaseAddress>
-      <OutputFile>D:\Games\Heroes 4\DDRAW$(TargetExt)</OutputFile>
+      <OutputFile>D:\Games\HoMM 4 Complete\DDRAW$(TargetExt)</OutputFile>
       <StackReserveSize>
       </StackReserveSize>
       <EntryPointSymbol>DllMain</EntryPointSymbol>
@@ -152,7 +152,7 @@
       <SectionAlignment>4096</SectionAlignment>
       <ModuleDefinitionFile>$(ProjectDir)\module.def</ModuleDefinitionFile>
       <EntryPointSymbol>DllMain</EntryPointSymbol>
-      <OutputFile>D:\Games\Heroes 4\DDRAW$(TargetExt)</OutputFile>
+      <OutputFile>D:\Games\HoMM 4 Complete\DDRAW$(TargetExt)</OutputFile>
       <ProgramDatabaseFile />
       <IgnoreEmbeddedIDL>true</IgnoreEmbeddedIDL>
       <TurnOffAssemblyGeneration>true</TurnOffAssemblyGeneration>
@@ -173,6 +173,7 @@
     <ClCompile Include="IDraw7.cpp" />
     <ClCompile Include="IDrawClipper.cpp" />
     <ClCompile Include="IDrawSurface7.cpp" />
+    <ClCompile Include="Mods.cpp" />
     <ClCompile Include="OpenDraw.cpp" />
     <ClCompile Include="OpenDrawClipper.cpp" />
     <ClCompile Include="OpenDrawSurface.cpp" />
@@ -196,6 +197,7 @@
     <ClInclude Include="IDraw7.h" />
     <ClInclude Include="IDrawClipper.h" />
     <ClInclude Include="IDrawSurface7.h" />
+    <ClInclude Include="Mods.h" />
     <ClInclude Include="OpenDraw.h" />
     <ClInclude Include="OpenDrawClipper.h" />
     <ClInclude Include="OpenDrawSurface.h" />

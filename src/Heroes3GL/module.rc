@@ -136,8 +136,8 @@ BEGIN
 	BEGIN
 		MENUITEM "&Руководство",					IDM_HELP_MANUAL
 		MENUITEM SEPARATOR
-		MENUITEM "О &враппере...",					IDM_HELP_WRAPPER
 		MENUITEM "О &программе...",					IDM_HELP_ABOUT
+		MENUITEM "О &враппере...",					IDM_HELP_WRAPPER
 	END
 END
 
@@ -354,8 +354,8 @@ BEGIN
 	BEGIN
 		MENUITEM "&Посібник",						IDM_HELP_MANUAL
 		MENUITEM SEPARATOR
-		MENUITEM "Про &враппер...",					IDM_HELP_WRAPPER
 		MENUITEM "Про &програму...",				IDM_HELP_ABOUT
+		MENUITEM "Про &врапер...",					IDM_HELP_WRAPPER
 	END
 END
 
@@ -368,7 +368,7 @@ IDD_ABOUT DIALOGEX DISCARDABLE 29,23,216,190
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP
 FONT 8, "MS Sans Serif"
 BEGIN
-	CTEXT			"Герої Меча та Магії III\nOpenGL враппер",IDC_STATIC,0,8,216,24
+	CTEXT			"Герої Меча та Магії III\nOpenGL врапер",IDC_STATIC,0,8,216,24
 	CTEXT			"Версія %d.%d%d   Збірка %d",IDC_VERSION,0,40,216,11
 	CTEXT			"Перевірити нові версії",IDC_STATIC,0,64,216,11
 	CONTROL			"",IDC_LNK_WEB,"SysLink",WS_TABSTOP,48,76,216,11
@@ -384,7 +384,7 @@ IDD_ABOUT_OLD DIALOGEX DISCARDABLE 29,23,216,190
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP
 FONT 8, "MS Sans Serif"
 BEGIN
-	CTEXT			"Герої Меча та Магії III\nOpenGL враппер",IDC_STATIC,0,8,216,24
+	CTEXT			"Герої Меча та Магії III\nOpenGL врапер",IDC_STATIC,0,8,216,24
 	CTEXT			"Версія %d.%d%d   Збірка %d",IDC_VERSION,0,40,216,11
 	CTEXT			"Перевірити нові версії",IDC_STATIC,0,64,216,11
 	CTEXT			"",IDC_LNK_WEB,0,76,216,11
@@ -579,8 +579,8 @@ BEGIN
 	BEGIN
 		MENUITEM "&Manual",							IDM_HELP_MANUAL
 		MENUITEM SEPARATOR
-		MENUITEM "About &Wrapper...",				IDM_HELP_WRAPPER
 		MENUITEM "About &Application...",			IDM_HELP_ABOUT
+		MENUITEM "About &Wrapper...",				IDM_HELP_WRAPPER
 	END
 END
 
@@ -694,8 +694,8 @@ IDR_SCALENX_FRAGMENT_3X		RCDATA		DISCARDABLE		"..\\glsl\\scalenx\\fragment_3x.gl
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2020,11,11,520
- PRODUCTVERSION 1,5,5,0
+ FILEVERSION 2020,11,26,522
+ PRODUCTVERSION 1,5,6,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS VS_FF_DEBUG
@@ -711,10 +711,10 @@ BEGIN
 		BLOCK "040904b0"
 		BEGIN
 			VALUE "FileDescription", "HoMM III - OpenGL wrapper"
-			VALUE "FileVersion", "2020.11.11.520"
+			VALUE "FileVersion", "2020.11.26.522"
 			VALUE "LegalCopyright", "© 2020 Verok (verokster@gmail.com)"
 			VALUE "OriginalFilename", "ddraw.dll"
-			VALUE "ProductVersion", "1.5.5"
+			VALUE "ProductVersion", "1.5.6"
 			VALUE "ProductName", "Heroes3GL"
 		END
 	END

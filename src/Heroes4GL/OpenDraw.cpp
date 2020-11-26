@@ -217,8 +217,8 @@ VOID OpenDraw::RenderOld()
 		DWORD clear = 0;
 
 		BOOL isDirectUpdate = config.gl.version.value > GL_VER_1_1;
-		FpsCounter* fpsCounter = new FpsCounter(isDirectUpdate ? FpsRgba : FpsRgb, this->mode->width);
-		PixelBuffer* pixelBuffer = new PixelBuffer(this->mode->width, this->mode->height, isDirectUpdate, isDirectUpdate ? GL_RGBA : GL_RGB, config.updateMode);
+		FpsCounter* fpsCounter = new FpsCounter(isDirectUpdate ? FpsRgba : FpsRgb, this->textureWidth);
+		PixelBuffer* pixelBuffer = new PixelBuffer(this->textureWidth, this->mode->height, isDirectUpdate, isDirectUpdate ? GL_RGBA : GL_RGB, config.updateMode);
 		{
 			do
 			{
@@ -268,14 +268,21 @@ VOID OpenDraw::RenderOld()
 
 				if (isDirectUpdate)
 				{
-					WORD* src = surface->indexBuffer;
+					BYTE* source = (BYTE*)surface->indexBuffer;
 					DWORD* dst = (DWORD*)pixelBuffer->GetBuffer();
-					DWORD count = this->mode->width * this->mode->height;
+					DWORD copyHeight = this->mode->height;
 					do
 					{
-						WORD px = *src++;
-						*dst++ = ((px & 0xF800) >> 8) | ((px & 0x07E0) << 5) | ((px & 0x001F) << 19);
-					} while (--count);
+						WORD* src = (WORD*)source;
+						source += this->pitch;
+
+						DWORD count = this->mode->width;
+						do
+						{
+							WORD px = *src++;
+							*dst++ = ((px & 0xF800) >> 8) | ((px & 0x07E0) << 5) | ((px & 0x001F) << 19);
+						} while (--count);
+					} while (--copyHeight);
 				}
 				else
 					pixelBuffer->Copy(surface->indexBuffer);
@@ -442,8 +449,8 @@ VOID OpenDraw::RenderMid()
 
 					DWORD clear = 0;
 
-					FpsCounter* fpsCounter = new FpsCounter(FpsRgb, this->mode->width);
-					PixelBuffer* pixelBuffer = new PixelBuffer(this->mode->width, this->mode->height, FALSE, GL_RGB, config.updateMode);
+					FpsCounter* fpsCounter = new FpsCounter(FpsRgb, this->textureWidth);
+					PixelBuffer* pixelBuffer = new PixelBuffer(this->textureWidth, this->mode->height, FALSE, GL_RGB, config.updateMode);
 					{
 						do
 						{
@@ -680,8 +687,8 @@ VOID OpenDraw::RenderNew()
 
 							DWORD clear = 0;
 
-							FpsCounter* fpsCounter = new FpsCounter(FpsRgb, this->mode->width);
-							PixelBuffer* firstBuffer = new PixelBuffer(this->mode->width, this->mode->height, FALSE, GL_RGB, config.updateMode);
+							FpsCounter* fpsCounter = new FpsCounter(FpsRgb, this->textureWidth);
+							PixelBuffer* firstBuffer = new PixelBuffer(this->textureWidth, this->mode->height, FALSE, GL_RGB, config.updateMode);
 							{
 								GLuint fboId = 0;
 								DWORD viewSize;
@@ -793,9 +800,9 @@ VOID OpenDraw::RenderNew()
 												viewSize = MAKELONG(this->mode->width * state.value, this->mode->height * state.value);
 												activeIndex = TRUE;
 												firstBuffer->Reset();
-												secondBuffer = new PixelBuffer(this->mode->width, this->mode->height, FALSE, GL_RGB, config.updateMode);
+												secondBuffer = new PixelBuffer(this->textureWidth, this->mode->height, FALSE, GL_RGB, config.updateMode);
 
-												DWORD size = this->mode->width * this->mode->height * sizeof(WORD);
+												DWORD size = this->pitch * this->mode->height;
 												emptyBuffer = AlignedAlloc(size);
 												MemoryZero(emptyBuffer, size);
 
@@ -1105,6 +1112,11 @@ VOID OpenDraw::ResetDisplayMode(DWORD width, DWORD height)
 			if (mode->width == width && mode->height == height)
 			{
 				this->mode = mode;
+				this->pitch = this->mode->width * this->mode->bpp >> 3;
+				if (this->pitch & 15)
+					this->pitch = (this->pitch & 0xFFFFFFF0) + 16;
+				this->textureWidth = this->pitch / (this->mode->bpp >> 3);
+
 				OpenDrawSurface* surface = this->attachedSurface;
 				if (surface)
 					surface->CreateBuffer(mode->width, mode->height);
@@ -1296,6 +1308,9 @@ OpenDraw::OpenDraw(IDraw7** last)
 	this->hDc = NULL;
 
 	this->mode = NULL;
+	this->pitch = 0;
+	this->textureWidth = 0;
+
 	this->isTakeSnapshot = FALSE;
 	this->isFinish = TRUE;
 
@@ -1363,6 +1378,7 @@ HRESULT __stdcall OpenDraw::EnumDisplayModes(DWORD dwFlags, LPDDSURFACEDESC2 lpD
 HRESULT __stdcall OpenDraw::SetDisplayMode(DWORD dwWidth, DWORD dwHeight, DWORD dwBPP, DWORD dwRefreshRate, DWORD dwFlags)
 {
 	this->mode = NULL;
+	this->pitch = 0;
 
 	const DisplayMode* mode = modesList;
 	DWORD count = sizeof(modesList) / sizeof(DisplayMode);
@@ -1371,6 +1387,10 @@ HRESULT __stdcall OpenDraw::SetDisplayMode(DWORD dwWidth, DWORD dwHeight, DWORD 
 		if (mode->width == dwWidth && mode->height == dwHeight && mode->bpp == dwBPP)
 		{
 			this->mode = mode;
+			this->pitch = this->mode->width * this->mode->bpp >> 3;
+			if (this->pitch & 15)
+				this->pitch = (this->pitch & 0xFFFFFFF0) + 16;
+			this->textureWidth = this->pitch / (this->mode->bpp >> 3);
 			break;
 		}
 

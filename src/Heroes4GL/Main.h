@@ -29,7 +29,7 @@
 #include "ExtraTypes.h"
 
 extern IDraw7* drawList;
-extern const DisplayMode modesList[3];
+extern const DisplayMode modesList[20];
 
 namespace Main
 {
