@@ -212,6 +212,8 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="module.rc" />
+    <ResourceCompile Include="module.ru.rc" />
+    <ResourceCompile Include="module.ua.rc" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".clang-format" />

@@ -402,9 +402,6 @@ namespace CPP
 
 	BOOL __fastcall BlockBackwardCompare(LONG width, LONG height, DWORD pitch, DWORD slice, DWORD* ptr1, DWORD* ptr2, POINT* p)
 	{
-		DWORD* p1 = ptr1;
-		DWORD* p2 = ptr2;
-
 		ptr1 += slice;
 		ptr2 += slice;
 

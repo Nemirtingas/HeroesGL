@@ -153,7 +153,6 @@ namespace Config
 			config.updateMode = UpdateSSE;
 			Config::Set(CONFIG_WRAPPER, "UpdateMode", *(INT*)&config.updateMode);
 
-			config.coldCPU = TRUE;
 			Config::Set(CONFIG_WRAPPER, "ColdCPU", config.coldCPU);
 
 			Config::Set(CONFIG_WRAPPER, "SingleCPU", config.singleCore.enabled);
@@ -253,7 +252,7 @@ namespace Config
 			if (!StrLength(config.title))
 				LoadString(hDllModule, hookSpace->windowName, config.title, sizeof(config.title));
 			
-			config.coldCPU = (BOOL)Config::Get(CONFIG_WRAPPER, "ColdCPU", TRUE);
+			config.coldCPU = (BOOL)Config::Get(CONFIG_WRAPPER, "ColdCPU", FALSE);
 
 			config.singleCore.enabled = (BOOL)Config::Get(CONFIG_WRAPPER, "SingleCPU", FALSE);
 		}

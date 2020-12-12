@@ -213,7 +213,10 @@
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>
+    <ResourceCompile Include="module.pl.rc" />
     <ResourceCompile Include="module.rc" />
+    <ResourceCompile Include="module.ru.rc" />
+    <ResourceCompile Include="module.ua.rc" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".clang-format" />

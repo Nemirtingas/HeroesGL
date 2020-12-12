@@ -737,17 +737,23 @@ namespace Hooks
 						// Load Package Hook
 						sub_LoadDataPackage = RedirectCall(hooker, hookSpace->load_package, LoadDataPackage_1);
 
-						HMODULE h4mod = GetModuleHandle("H4.dll");
-						if (h4mod)
+						CHAR libName[8];
+						StrCopy(libName, "H4.dll");
+						for (CHAR c = 'A'; c <= 'Z'; ++c)
 						{
-							HOOKER h4hooker = CreateHooker(h4mod);
+							*libName = c;
+							HMODULE h4mod = GetModuleHandle(libName);
+							if (h4mod)
 							{
-								DWORD addr = 0x69C42C23 + 1;
-								DWORD check;
-								if (ReadDWord(h4hooker, addr, &check) && check == sub_LoadDataPackage)
-									PatchDWord(h4hooker, addr, (DWORD)LoadDataPackage_1);
+								HOOKER h4hooker = CreateHooker(h4mod);
+								{
+									DWORD addr = 0x69C42C23 + 1;
+									DWORD check;
+									if (ReadDWord(h4hooker, addr, &check) && check == sub_LoadDataPackage)
+										PatchDWord(h4hooker, addr, (DWORD)LoadDataPackage_1);
+								}
+								ReleaseHooker(h4hooker);
 							}
-							ReleaseHooker(h4hooker);
 						}
 					}
 					else

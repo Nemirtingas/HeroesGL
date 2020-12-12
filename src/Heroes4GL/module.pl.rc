@@ -1,0 +1,214 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+// English (United States) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_PLK)
+LANGUAGE LANG_POLISH, SUBLANG_DEFAULT
+#pragma code_page(1250)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE DISCARDABLE
+BEGIN
+	IDS_ERROR						"B³¹d"
+	IDS_INFO						"Informacja"
+	IDS_ERROR_CHOOSE_PF				"B³¹d ChoosePixelFormat"
+	IDS_ERROR_SET_PF				"B³¹d SetPixelFormat"
+	IDS_ERROR_DESCRIBE_PF			"B³¹d DescribePixelFormat"
+	IDS_ERROR_NEED_PALETTE			"Potrzebuje palety"
+	IDS_ERROR_BAD_PF				"Niew³aœciwy format pikseli"
+	IDS_ERROR_ARB_VERSION			"Nieprawid³owa ARB wersja"
+	IDS_ERROR_ARB_PROFILE			"Niew³aœciwy ARB profil"
+	IDS_ERROR_LOAD_RESOURCE			"B³¹d ³adowania zasobów"
+	IDS_ERROR_COMPILE_SHADER		"B³¹d kompilacji modu³u cieniuj¹cego"
+	IDS_INFO_RESTART				"Aby zmiany odnios³y skutek, zrestartuj grê"
+	IDS_HOMM_4						"Heroes of Might and Magic IV"
+	IDS_HOMM_4_GS					"Heroes of Might and Magic IV: The Gathering Storm"
+	IDS_HOMM_4_WOW					"Heroes of Might and Magic IV: Winds of War"
+END
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDM_MENU MENU DISCARDABLE
+BEGIN
+	POPUP "&Plik"
+	BEGIN
+		MENUITEM "&Nowa gra",						IDM_FILE_NEW_GAME
+		MENUITEM "&Wczytaj grê",					IDM_FILE_LOAD_GAME
+		MENUITEM "&Zapisz grê",						IDM_FILE_SAVE_GAME
+		MENUITEM SEPARATOR
+		MENUITEM "&Wyjœcie",						IDM_FILE_EXIT
+	END
+	POPUP "&Ekran"
+	BEGIN
+		POPUP "&Renderer"
+		BEGIN
+			MENUITEM "Auto",						IDM_REND_AUTO
+			MENUITEM SEPARATOR
+			MENUITEM "OpenGL 1",					IDM_REND_GL1
+			MENUITEM "OpenGL 2",					IDM_REND_GL2
+			MENUITEM "OpenGL 3",					IDM_REND_GL3
+		END
+		MENUITEM SEPARATOR
+		MENUITEM "Pe³ny &ekran\a",					IDM_RES_FULL_SCREEN
+		MENUITEM "W³¹cz &VSync\a",					IDM_VSYNC
+	END
+	POPUP "&Obrazek"
+	BEGIN
+		POPUP "&Interpolacja\a"
+		BEGIN
+			MENUITEM "&¯aden",						IDM_FILT_OFF
+			MENUITEM SEPARATOR
+			MENUITEM "&Liniowa",					IDM_FILT_LINEAR
+			MENUITEM "&Hermite",					IDM_FILT_HERMITE
+			MENUITEM "&Szeœcienna",					IDM_FILT_CUBIC
+			MENUITEM "&Lanczosa",					IDM_FILT_LANCZOS
+		END
+		POPUP "&Skalowanie"
+		BEGIN
+			MENUITEM "&¯aden",						IDM_FILT_NONE
+			MENUITEM SEPARATOR
+			POPUP "&ScaleNx"
+			BEGIN
+				MENUITEM "x2",						IDM_FILT_SCALENX_2X
+				MENUITEM "x3",						IDM_FILT_SCALENX_3X
+			END
+			POPUP "Super &Eagle"
+			BEGIN
+				MENUITEM "x2",						IDM_FILT_EAGLE_2X
+			END
+			POPUP "x&SaI"
+			BEGIN
+				MENUITEM "x2",						IDM_FILT_XSAL_2X
+			END
+			POPUP "Scale&HQ"
+			BEGIN
+				MENUITEM "x2",						IDM_FILT_SCALEHQ_2X
+				MENUITEM "x4",						IDM_FILT_SCALEHQ_4X
+			END
+			POPUP "x&BRz"
+			BEGIN
+				MENUITEM "x2",						IDM_FILT_XRBZ_2X
+				MENUITEM "x3",						IDM_FILT_XRBZ_3X
+				MENUITEM "x4",						IDM_FILT_XRBZ_4X
+				MENUITEM "x5",						IDM_FILT_XRBZ_5X
+				MENUITEM "x6",						IDM_FILT_XRBZ_6X
+			END
+		END
+		MENUITEM SEPARATOR
+		MENUITEM "Regulacja &koloru...",			IDM_COLOR_ADJUST
+		MENUITEM SEPARATOR
+		MENUITEM "Zachowaæ &proporcje\a",			IDM_ASPECT_RATIO
+	END
+	POPUP "&Opcje"
+	BEGIN
+		MENUITEM "&Zimny CPU",						IDM_PATCH_CPU
+		MENUITEM "&Pojedynczy rdzeñ",				IDM_SINGLE_CORE
+		MENUITEM SEPARATOR
+		POPUP "&Jêzyk menu"
+		BEGIN
+			MENUITEM "&Angielski",					IDM_LANG_ENGLISH
+			MENUITEM "&Polski",						IDM_LANG_POLISH
+			MENUITEM "&Rosyjski",					IDM_LANG_RUSSIAN
+			MENUITEM "&Ukraiñski",					IDM_LANG_UKRAINIAN
+		END
+	END
+	POPUP "&Mody"
+	BEGIN
+		MENUITEM "",								IDM_MODS
+	END
+	POPUP "&Pomoc"
+	BEGIN
+		MENUITEM "O &programie...",					IDM_HELP_ABOUT
+		MENUITEM "O &wrapper...",					IDM_HELP_WRAPPER
+	END
+END
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_ABOUT DIALOGEX DISCARDABLE 29,23,216,190
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP
+FONT 8, "MS Sans Serif"
+BEGIN
+	CTEXT			"Heroes of Might and Magic IV\nOpenGL Wrapper",IDC_STATIC,0,8,216,24
+	CTEXT			"Wersja %d.%d%d   Build %d",IDC_VERSION,0,40,216,11
+	CTEXT			"SprawdŸ, czy jest nowa wersja",IDC_STATIC,0,64,216,11
+	CONTROL			"",IDC_LNK_WEB,"SysLink",WS_TABSTOP,48,76,216,11
+	CTEXT			"Zostañ Patronem",IDC_STATIC,0,96,216,11
+	CONTROL			"",IDC_LNK_PATRON,"SysLink",WS_TABSTOP,40,108,216,16
+	CTEXT			"Copyright © %d %s",IDC_COPYRIGHT,0,128,216,11
+	CONTROL			"",IDC_LNK_EMAIL,"SysLink",WS_TABSTOP,64,140,216,11
+	ICON			"",IDC_STATIC,11,23,27,27
+	DEFPUSHBUTTON	"OK",IDC_BTN_OK,85,164,50,16,WS_GROUP
+END
+
+IDD_ABOUT_OLD DIALOGEX DISCARDABLE 29,23,216,190
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP
+FONT 8, "MS Sans Serif"
+BEGIN
+	CTEXT			"Heroes of Might and Magic IV\nOpenGL Wrapper",IDC_STATIC,0,8,216,24
+	CTEXT			"Wersja %d.%d%d   Build %d",IDC_VERSION,0,40,216,11
+	CTEXT			"SprawdŸ, czy jest nowa wersja",IDC_STATIC,0,64,216,11
+	CTEXT			"",IDC_LNK_WEB,0,76,216,11
+	CTEXT			"Zostañ Patronem",IDC_STATIC,0,96,216,11
+	CTEXT			"",IDC_LNK_PATRON,0,108,216,16
+	CTEXT			"Copyright © %d %s",IDC_COPYRIGHT,0,128,216,11
+	CTEXT			"",IDC_LNK_EMAIL,0,140,216,11
+	ICON			"",IDC_STATIC,11,23,27,27
+	DEFPUSHBUTTON	"OK",IDC_BTN_OK,85,164,50,16,WS_GROUP
+END
+
+IDD_COLOR_ADJUSTMENT DIALOGEX DISCARDABLE 29,23,287,280
+STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Regulacja koloru"
+FONT 8, "MS Sans Serif"
+BEGIN
+    GROUPBOX        "",IDC_STATIC,8,8,271,123
+    CONTROL         "",IDC_CANVAS,"Static",SS_OWNERDRAW,18,21,251,62
+    RTEXT           "Ton",IDC_STATIC,9,94,45,8
+    LTEXT           "",IDC_LBL_HUE,233,94,45,8
+    CONTROL         "",IDC_TRK_HUE,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,58,92,171,15
+    RTEXT           "Nasycenie",IDC_STATIC,9,110,45,8
+    LTEXT           "",IDC_LBL_SAT,233,110,45,8
+    CONTROL         "",IDC_TRK_SAT,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,58,108,171,15
+    GROUPBOX        "",IDC_STATIC,8,135,271,117
+    CONTROL         "RGB",IDC_RAD_RGB,"Button",BS_AUTORADIOBUTTON,65,148,39,10
+    CONTROL         "Czerwony",IDC_RAD_RED,"Button",BS_AUTORADIOBUTTON,105,148,54,10
+    CONTROL         "Zielony",IDC_RAD_GREEN,"Button",BS_AUTORADIOBUTTON,160,148,44,10
+    CONTROL         "Niebieski",IDC_RAD_BLUE,"Button",BS_AUTORADIOBUTTON,205,148,49,10
+    RTEXT           "Wejscie L",IDC_STATIC,9,167,45,8
+    LTEXT           "",IDC_LBL_IN_LEFT,233,167,45,8
+    CONTROL         "",IDC_TRK_IN_LEFT,"msctls_trackbar32",TBS_NOTICKS | WS_TABSTOP,58,165,171,15
+	RTEXT           "Wejscie R",IDC_STATIC,9,183,45,8
+    LTEXT           "",IDC_LBL_IN_RIGHT,233,183,45,8
+	CONTROL         "",IDC_TRK_IN_RIGHT,"msctls_trackbar32",TBS_TOP | TBS_NOTICKS | WS_TABSTOP,58,181,171,15
+    RTEXT           "Gamma",IDC_STATIC,9,199,45,8
+    LTEXT           "",IDC_LBL_GAMMA,233,199,45,8
+    CONTROL         "",IDC_TRK_GAMMA,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,58,197,171,15
+    RTEXT           "Wyjscie L",IDC_STATIC,9,215,45,8
+    LTEXT           "",IDC_LBL_OUT_LEFT,233,215,45,8
+    CONTROL         "",IDC_TRK_OUT_LEFT,"msctls_trackbar32",TBS_NOTICKS | WS_TABSTOP,58,213,171,15
+	RTEXT           "Wyjscie R",IDC_STATIC,9,231,45,8
+    LTEXT           "",IDC_LBL_OUT_RIGHT,233,231,45,8
+    CONTROL         "",IDC_TRK_OUT_RIGHT,"msctls_trackbar32",TBS_TOP | TBS_NOTICKS | WS_TABSTOP,58,229,171,15
+    PUSHBUTTON      "Resetowanie",IDC_BTN_RESET,10,257,70,16
+	PUSHBUTTON      "Auto",IDC_BTN_AUTO,85,257,50,16
+    PUSHBUTTON      "Anulowaæ",IDC_BTN_CANCEL,225,257,50,16
+    DEFPUSHBUTTON   "OK",IDC_BTN_OK,170,257,50,16
+END
+
+#endif    // English (United States) resources
+/////////////////////////////////////////////////////////////////////////////

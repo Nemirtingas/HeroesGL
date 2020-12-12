@@ -207,6 +207,8 @@ struct AddressSpace
 	DWORD fadein_update_2;
 	DWORD fadeout_tick;
 	DWORD fadeout_update;
+	DWORD nt_check_nop;
+	DWORD sample_end_check;
 	DWORD windowName;
 };
 
