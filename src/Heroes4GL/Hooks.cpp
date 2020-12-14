@@ -364,7 +364,7 @@ namespace Hooks
 		return FALSE;
 	}
 
-	HWND __stdcall WindowFromPointHook(POINT Point)
+	HWND __stdcall GetActiveWindowHook()
 	{
 		return hWndMain;
 	}
@@ -631,6 +631,12 @@ namespace Hooks
 	}
 #pragma endregion
 
+#pragma region Remove mouse capture
+	HWND __stdcall WindowFromPointHook(POINT) { return NULL; }
+	HWND __stdcall SetCaptureHook(HWND) { return NULL; }
+	BOOL __stdcall ReleaseCaptureHook() { return FALSE; }
+#pragma end region
+
 #pragma optimize("s", on)
 	BOOL Load()
 	{
@@ -683,6 +689,10 @@ namespace Hooks
 					PatchImportByName(hooker, "SetMenu", SetMenuHook);
 					PatchImportByName(hooker, "EnableMenuItem", EnableMenuItemHook);
 
+					PatchImportByName(hooker, "WindowFromPoint", WindowFromPointHook);
+					PatchImportByName(hooker, "SetCapture", SetCaptureHook);
+					PatchImportByName(hooker, "ReleaseCapture", ReleaseCaptureHook);
+
 					PatchImportByName(hooker, "RegCreateKeyExA", RegCreateKeyExHook);
 					PatchImportByName(hooker, "RegOpenKeyExA", RegOpenKeyExHook);
 					PatchImportByName(hooker, "RegCloseKey", RegCloseKeyHook);
@@ -697,6 +707,7 @@ namespace Hooks
 						PatchImportByName(hooker, "AdjustWindowRectEx", AdjustWindowRectExHook);
 						PatchImportByName(hooker, "MoveWindow", MoveWindowHook);
 
+						PatchImportByName(hooker, "GetActiveWindow", GetActiveWindowHook);
 						PatchImportByName(hooker, "GetWindowRect", GetWindowRectHook);
 						PatchImportByName(hooker, "GetClientRect", GetClientRectHook);
 						PatchImportByName(hooker, "GetCursorPos", GetCursorPosHook);
