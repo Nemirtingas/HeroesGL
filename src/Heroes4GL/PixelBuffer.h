@@ -41,10 +41,12 @@ private:
 	BOOL isTrue;
 	GLenum format;
 	GLenum type;
-	DWORD block;
+	struct {
+		DWORD width;
+		DWORD height;
+	} block;
 	DWORD size;
 	BOOL reset;
-	LONG alignment;
 	DWORD* primaryBuffer;
 	DWORD* secondaryBuffer;
 	DWORD* white;
@@ -56,10 +58,10 @@ private:
 	SIDECOMPARE SideForwardCompare;
 	SIDECOMPARE SideBackwardCompare;
 
-	VOID UpdateBlock(RECT*, POINT*);
+	VOID UpdateBlock(RECT*, const POINT*);
 
 public:
-	PixelBuffer(DWORD, DWORD, BOOL, GLenum, UpdateMode, LONG);
+	PixelBuffer(DWORD, DWORD, BOOL, GLenum, UpdateMode);
 	~PixelBuffer();
 
 	VOID Reset();

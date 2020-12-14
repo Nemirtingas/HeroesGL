@@ -164,13 +164,22 @@ VOID OpenDraw::RenderOld()
 				if (width > maxTexSize)
 					width = maxTexSize;
 
-				frame->point.x = x;
-				frame->point.y = y;
-
 				frame->rect.x = x;
 				frame->rect.y = y;
 				frame->rect.width = width;
 				frame->rect.height = height;
+
+				frame->align = frame->rect;
+				if (this->mode.bpp != 16 || config.gl.version.value <= GL_VER_1_1)
+				{
+					if (frame->align.width & 3)
+						frame->align.width = (frame->align.width & 0xFFFFFFFC) + 4;
+				}
+				else
+				{
+					if (frame->align.width & 7)
+						frame->align.width = (frame->align.width & 0xFFFFFFF8) + 8;
+				}
 
 				frame->vSize.width = x + width;
 				frame->vSize.height = y + height;
@@ -268,18 +277,21 @@ VOID OpenDraw::RenderOld()
 
 				if (isDirectUpdate)
 				{
-					BYTE* source = surface->indexBuffer;
-					DWORD* dst = (DWORD*)pixelBuffer->GetBuffer();
-					DWORD copyWidth = this->mode.width;
+					BYTE* srcData = surface->indexBuffer;
+					DWORD* dstData = (DWORD*)pixelBuffer->GetBuffer();
+
 					DWORD copyHeight = this->mode.height;
 					if (this->mode.bpp == 32)
 					{
 						do
 						{
-							DWORD* src = (DWORD*)source;
-							source += this->pitch;
+							DWORD* src = (DWORD*)srcData;
+							srcData += this->pitch;
 
-							DWORD count = copyWidth;
+							DWORD* dst = dstData;
+							dstData += textureWidth;
+
+							DWORD count = this->mode.width;
 							do
 								*dst++ = _byteswap_ulong(_rotl(*src++, 8));
 							while (--count);
@@ -289,10 +301,13 @@ VOID OpenDraw::RenderOld()
 					{
 						do
 						{
-							WORD* src = (WORD*)source;
-							source += this->pitch;
+							WORD* src = (WORD*)srcData;
+							srcData += this->pitch;
 
-							DWORD count = copyWidth;
+							DWORD* dst = dstData;
+							dstData += textureWidth;
+
+							DWORD count = this->mode.width;
 							do
 							{
 								WORD px = *src++;
@@ -330,7 +345,7 @@ VOID OpenDraw::RenderOld()
 							GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, glFilter);
 						}
 
-						pixelBuffer->Update(&frame->rect);
+						pixelBuffer->Update(&frame->align);
 					}
 
 					GLBegin(GL_TRIANGLE_FAN);
@@ -339,16 +354,16 @@ VOID OpenDraw::RenderOld()
 						FLOAT texY = frame->tSize.height * currScale;
 
 						GLTexCoord2f(0.0f, 0.0f);
-						GLVertex2s((SHORT)frame->point.x, (SHORT)frame->point.y);
+						GLVertex2s(frame->rect.x, frame->rect.y);
 
 						GLTexCoord2f(texX, 0.0f);
-						GLVertex2s(frame->vSize.width, (SHORT)frame->point.y);
+						GLVertex2s(frame->vSize.width, frame->rect.y);
 
 						GLTexCoord2f(texX, texY);
 						GLVertex2s(frame->vSize.width, frame->vSize.height);
 
 						GLTexCoord2f(0.0f, texY);
-						GLVertex2s((SHORT)frame->point.x, frame->vSize.height);
+						GLVertex2s(frame->rect.x, frame->vSize.height);
 					}
 					GLEnd();
 					++frame;

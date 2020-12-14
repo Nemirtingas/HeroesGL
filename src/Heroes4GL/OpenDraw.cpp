@@ -176,6 +176,18 @@ VOID OpenDraw::RenderOld()
 				frame->rect.width = width;
 				frame->rect.height = height;
 
+				frame->align = frame->rect;
+				if (config.gl.version.value <= GL_VER_1_1)
+				{
+					if (frame->align.width & 3)
+						frame->align.width = (frame->align.width & 0xFFFFFFFC) + 4;
+				}
+				else
+				{
+					if (frame->align.width & 7)
+						frame->align.width = (frame->align.width & 0xFFFFFFF8) + 8;
+				}
+
 				frame->vSize.width = x + width;
 				frame->vSize.height = y + height;
 
@@ -216,9 +228,9 @@ VOID OpenDraw::RenderOld()
 
 		DWORD clear = 0;
 
-		BOOL isDirectUpdate = config.gl.version.value > GL_VER_1_1;
+		BOOL isDirectUpdate = config.gl.version.value <= GL_VER_1_1;
 		FpsCounter* fpsCounter = new FpsCounter(isDirectUpdate ? FpsRgba : FpsRgb, this->textureWidth);
-		PixelBuffer* pixelBuffer = new PixelBuffer(this->textureWidth, this->mode->height, isDirectUpdate, isDirectUpdate ? GL_RGBA : GL_RGB, config.update.mode, config.update.alignment);
+		PixelBuffer* pixelBuffer = new PixelBuffer(this->textureWidth, this->mode->height, isDirectUpdate, isDirectUpdate ? GL_RGBA : GL_RGB, config.updateMode);
 		{
 			do
 			{
@@ -268,13 +280,16 @@ VOID OpenDraw::RenderOld()
 
 				if (isDirectUpdate)
 				{
-					BYTE* source = (BYTE*)surface->indexBuffer;
-					DWORD* dst = (DWORD*)pixelBuffer->GetBuffer();
+					BYTE* srcData = (BYTE*)surface->indexBuffer;
+					DWORD* dstData = (DWORD*)pixelBuffer->GetBuffer();
 					DWORD copyHeight = this->mode->height;
 					do
 					{
-						WORD* src = (WORD*)source;
-						source += this->pitch;
+						WORD* src = (WORD*)srcData;
+						srcData += this->pitch;
+
+						DWORD* dst = dstData;
+						dstData += textureWidth;
 
 						DWORD count = this->mode->width;
 						do
@@ -313,7 +328,7 @@ VOID OpenDraw::RenderOld()
 							GLTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, glFilter);
 						}
 
-						pixelBuffer->Update(&frame->rect);
+						pixelBuffer->Update(&frame->align);
 					}
 
 					GLBegin(GL_TRIANGLE_FAN);
@@ -450,7 +465,7 @@ VOID OpenDraw::RenderMid()
 					DWORD clear = 0;
 
 					FpsCounter* fpsCounter = new FpsCounter(FpsRgb, this->textureWidth);
-					PixelBuffer* pixelBuffer = new PixelBuffer(this->textureWidth, this->mode->height, FALSE, GL_RGB, config.update.mode, config.update.alignment);
+					PixelBuffer* pixelBuffer = new PixelBuffer(this->textureWidth, this->mode->height, FALSE, GL_RGB, config.updateMode);
 					{
 						do
 						{
@@ -688,7 +703,7 @@ VOID OpenDraw::RenderNew()
 							DWORD clear = 0;
 
 							FpsCounter* fpsCounter = new FpsCounter(FpsRgb, this->textureWidth);
-							PixelBuffer* firstBuffer = new PixelBuffer(this->textureWidth, this->mode->height, FALSE, GL_RGB, config.update.mode, config.update.alignment);
+							PixelBuffer* firstBuffer = new PixelBuffer(this->textureWidth, this->mode->height, FALSE, GL_RGB, config.updateMode);
 							{
 								GLuint fboId = 0;
 								DWORD viewSize;
@@ -800,7 +815,7 @@ VOID OpenDraw::RenderNew()
 												viewSize = MAKELONG(this->mode->width * state.value, this->mode->height * state.value);
 												activeIndex = TRUE;
 												firstBuffer->Reset();
-												secondBuffer = new PixelBuffer(this->textureWidth, this->mode->height, FALSE, GL_RGB, config.update.mode, config.update.alignment);
+												secondBuffer = new PixelBuffer(this->textureWidth, this->mode->height, FALSE, GL_RGB, config.updateMode);
 
 												DWORD size = this->pitch * this->mode->height;
 												emptyBuffer = AlignedAlloc(size);

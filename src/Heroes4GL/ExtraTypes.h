@@ -50,6 +50,7 @@ struct Frame
 {
 	GLuint id;
 	Rect rect;
+	Rect align;
 	VecSize vSize;
 	TexSize tSize;
 };
@@ -231,11 +232,7 @@ struct ConfigItems
 	BOOL coldCPU;
 	BOOL isSSE2;
 	RendererType renderer;
-
-	struct {
-		UpdateMode mode;
-		LONG alignment;
-	} update;
+	UpdateMode updateMode;
 	
 	struct {
 		BOOL allowed;

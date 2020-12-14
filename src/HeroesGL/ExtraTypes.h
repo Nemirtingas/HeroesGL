@@ -50,6 +50,7 @@ struct Frame
 {
 	GLuint id;
 	Rect rect;
+	Rect align;
 	VecSize vSize;
 	TexSize tSize;
 };

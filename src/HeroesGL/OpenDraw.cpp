@@ -373,6 +373,10 @@ VOID OpenDraw::RenderOld()
 				frame->rect.width = width;
 				frame->rect.height = height;
 
+				frame->align = frame->rect;
+				if (frame->align.width & 3)
+					frame->align.width = (frame->align.width & 0xFFFFFFFC) + 4;
+
 				frame->vSize.width = x + width;
 				frame->vSize.height = y + height;
 

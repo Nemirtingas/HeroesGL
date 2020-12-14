@@ -677,21 +677,21 @@ namespace SSE
 	}
 }
 
-PixelBuffer::PixelBuffer(DWORD width, DWORD height, BOOL isTrue, GLenum format, UpdateMode mode, LONG alignment)
+PixelBuffer::PixelBuffer(DWORD width, DWORD height, BOOL isTrue, GLenum format, UpdateMode mode)
 {
 	this->width = width;
 	this->height = height;
 	this->pitch = width;
 	this->isTrue = isTrue;
 	this->format = format;
-	this->block = BLOCK_SIZE;
+	this->block.width = BLOCK_SIZE;
+	this->block.height = BLOCK_SIZE;
 	this->reset = TRUE;
-	this->alignment = alignment;
 
 	if (!this->isTrue)
 	{
 		this->pitch >>= 1;
-		this->block >>= 1;
+		this->block.width >>= 1;
 		this->type = GL_UNSIGNED_SHORT_5_6_5;
 	}
 	else
@@ -753,9 +753,6 @@ VOID PixelBuffer::Reset()
 
 VOID PixelBuffer::Update(Rect* rect)
 {
-	if (this->alignment != 4)
-		GLPixelStorei(GL_UNPACK_ALIGNMENT, this->alignment);
-
 	GLPixelStorei(GL_UNPACK_ROW_LENGTH, this->width);
 	if (!this->ForwardCompare || this->reset)
 	{
@@ -766,13 +763,33 @@ VOID PixelBuffer::Update(Rect* rect)
 	}
 	else if (rect)
 	{
-		RECT rc = { rect->x, rect->y, rect->x + rect->width, rect->y + rect->height };
+		DWORD left = rect->x;
+		DWORD top = rect->y;
+		DWORD right = rect->x + rect->width;
+		DWORD bottom = rect->y + rect->height;
+		
 		if (!this->isTrue)
 		{
-			rc.left >>= 1;
-			rc.right >>= 1;
+			left >>= 1;
+			right >>= 1;
 		}
-		this->UpdateBlock(&rc, (POINT*)rect);
+
+		for (DWORD y = top; y < bottom; y += this->block.height)
+		{
+			DWORD bt = y + this->block.height;
+			if (bt > bottom)
+				bt = bottom;
+
+			for (DWORD x = left; x < right; x += this->block.width)
+			{
+				DWORD rt = x + this->block.width;
+				if (rt > right)
+					rt = right;
+
+				RECT rc = { *(LONG*)&x, *(LONG*)&y, *(LONG*)&rt, *(LONG*)&bt };
+				this->UpdateBlock(&rc, (POINT*)rect);
+			}
+		}
 	}
 	else
 	{
@@ -787,16 +804,16 @@ VOID PixelBuffer::Update(Rect* rect)
 			if (!this->isTrue)
 				right >>= 1;
 
-			POINT offset = { 0, 0 };
-			for (DWORD y = top; y < bottom; y += this->block)
+			const POINT offset = { 0, 0 };
+			for (DWORD y = top; y < bottom; y += this->block.height)
 			{
-				DWORD bt = y + this->block;
+				DWORD bt = y + this->block.height;
 				if (bt > bottom)
 					bt = bottom;
 
-				for (DWORD x = 0; x < right; x += this->block)
+				for (DWORD x = 0; x < right; x += this->block.width)
 				{
-					DWORD rt = x + this->block;
+					DWORD rt = x + this->block.width;
 					if (rt > right)
 						rt = right;
 
@@ -807,12 +824,9 @@ VOID PixelBuffer::Update(Rect* rect)
 		}
 	}
 	GLPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-
-	if (this->alignment != 4)
-		GLPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 }
 
-VOID PixelBuffer::UpdateBlock(RECT* rect, POINT* offset)
+VOID PixelBuffer::UpdateBlock(RECT* rect, const POINT* offset)
 {
 	RECT rc;
 	LONG width = rect->right-- - rect->left;
