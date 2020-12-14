@@ -218,7 +218,7 @@ VOID OpenDraw::RenderOld()
 
 		BOOL isDirectUpdate = config.gl.version.value > GL_VER_1_1;
 		FpsCounter* fpsCounter = new FpsCounter(isDirectUpdate ? FpsRgba : FpsRgb, this->textureWidth);
-		PixelBuffer* pixelBuffer = new PixelBuffer(this->textureWidth, this->mode->height, isDirectUpdate, isDirectUpdate ? GL_RGBA : GL_RGB, config.updateMode);
+		PixelBuffer* pixelBuffer = new PixelBuffer(this->textureWidth, this->mode->height, isDirectUpdate, isDirectUpdate ? GL_RGBA : GL_RGB, config.update.mode, config.update.alignment);
 		{
 			do
 			{
@@ -450,7 +450,7 @@ VOID OpenDraw::RenderMid()
 					DWORD clear = 0;
 
 					FpsCounter* fpsCounter = new FpsCounter(FpsRgb, this->textureWidth);
-					PixelBuffer* pixelBuffer = new PixelBuffer(this->textureWidth, this->mode->height, FALSE, GL_RGB, config.updateMode);
+					PixelBuffer* pixelBuffer = new PixelBuffer(this->textureWidth, this->mode->height, FALSE, GL_RGB, config.update.mode, config.update.alignment);
 					{
 						do
 						{
@@ -688,7 +688,7 @@ VOID OpenDraw::RenderNew()
 							DWORD clear = 0;
 
 							FpsCounter* fpsCounter = new FpsCounter(FpsRgb, this->textureWidth);
-							PixelBuffer* firstBuffer = new PixelBuffer(this->textureWidth, this->mode->height, FALSE, GL_RGB, config.updateMode);
+							PixelBuffer* firstBuffer = new PixelBuffer(this->textureWidth, this->mode->height, FALSE, GL_RGB, config.update.mode, config.update.alignment);
 							{
 								GLuint fboId = 0;
 								DWORD viewSize;
@@ -800,7 +800,7 @@ VOID OpenDraw::RenderNew()
 												viewSize = MAKELONG(this->mode->width * state.value, this->mode->height * state.value);
 												activeIndex = TRUE;
 												firstBuffer->Reset();
-												secondBuffer = new PixelBuffer(this->textureWidth, this->mode->height, FALSE, GL_RGB, config.updateMode);
+												secondBuffer = new PixelBuffer(this->textureWidth, this->mode->height, FALSE, GL_RGB, config.update.mode, config.update.alignment);
 
 												DWORD size = this->pitch * this->mode->height;
 												emptyBuffer = AlignedAlloc(size);

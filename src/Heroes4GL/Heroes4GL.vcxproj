@@ -100,7 +100,7 @@
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <FixedBaseAddress>true</FixedBaseAddress>
-      <OutputFile>D:\Games\HoMM 4 Complete\DDRAW$(TargetExt)</OutputFile>
+      <OutputFile>D:\Games\Heroes 4\DDRAW$(TargetExt)</OutputFile>
       <StackReserveSize>
       </StackReserveSize>
       <EntryPointSymbol>DllMain</EntryPointSymbol>
@@ -152,7 +152,7 @@
       <SectionAlignment>4096</SectionAlignment>
       <ModuleDefinitionFile>$(ProjectDir)\module.def</ModuleDefinitionFile>
       <EntryPointSymbol>DllMain</EntryPointSymbol>
-      <OutputFile>D:\Games\HoMM 4 Complete\DDRAW$(TargetExt)</OutputFile>
+      <OutputFile>D:\Games\Heroes 4\DDRAW$(TargetExt)</OutputFile>
       <ProgramDatabaseFile />
       <IgnoreEmbeddedIDL>true</IgnoreEmbeddedIDL>
       <TurnOffAssemblyGeneration>true</TurnOffAssemblyGeneration>

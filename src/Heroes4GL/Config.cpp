@@ -150,8 +150,11 @@ namespace Config
 			config.renderer = RendererAuto;
 			Config::Set(CONFIG_WRAPPER, "Renderer", *(INT*)&config.renderer);
 
-			config.updateMode = UpdateSSE;
-			Config::Set(CONFIG_WRAPPER, "UpdateMode", *(INT*)&config.updateMode);
+			config.update.mode = UpdateSSE;
+			Config::Set(CONFIG_WRAPPER, "UpdateMode", *(INT*)&config.update.mode);
+
+			config.update.alignment = 4;
+			Config::Set(CONFIG_WRAPPER, "UpdateAlignment", config.update.alignment);
 
 			Config::Set(CONFIG_WRAPPER, "ColdCPU", config.coldCPU);
 
@@ -267,9 +270,22 @@ namespace Config
 					config.renderer = RendererAuto;
 
 				value = Config::Get(CONFIG_WRAPPER, "UpdateMode", UpdateSSE);
-				config.updateMode = *(UpdateMode*)&value;
-				if (config.updateMode < UpdateNone || config.updateMode > UpdateASM)
-					config.updateMode = UpdateSSE;
+				config.update.mode = *(UpdateMode*)&value;
+				if (config.update.mode < UpdateNone || config.update.mode > UpdateASM)
+					config.update.mode = UpdateSSE;
+
+				config.update.alignment = Config::Get(CONFIG_WRAPPER, "UpdateAlignment", 4);
+				switch (config.update.alignment)
+				{
+				case 1:
+				case 2:
+				case 4:
+				case 8:
+					break;
+				default:
+					config.update.alignment = 4;
+					break;
+				}
 
 				config.image.aspect = (BOOL)Config::Get(CONFIG_WRAPPER, "ImageAspect", TRUE);
 				config.image.vSync = (BOOL)Config::Get(CONFIG_WRAPPER, "ImageVSync", TRUE);
@@ -478,8 +494,8 @@ namespace Config
 		INT cpuinfo[4];
 		__cpuid(cpuinfo, 1);
 		config.isSSE2 = cpuinfo[3] & (1 << 26) || FALSE;
-		if (!config.isSSE2 && config.updateMode == UpdateSSE)
-			config.updateMode = UpdateCPP;
+		if (!config.isSSE2 && config.update.mode == UpdateSSE)
+			config.update.mode = UpdateCPP;
 
 		DWORD processMask;
 		HANDLE hProcess = GetCurrentProcess();

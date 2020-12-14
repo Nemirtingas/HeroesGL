@@ -43,94 +43,275 @@ IDM_MENU MENU DISCARDABLE
 BEGIN
 	POPUP "&Файл"
 	BEGIN
-		MENUITEM "&Нова гра",						IDM_FILE_NEW_GAME
-		MENUITEM "&Завантажити гру",				IDM_FILE_LOAD_GAME
-		MENUITEM "&Зберегти гру",					IDM_FILE_SAVE_GAME
+		MENUITEM "&Нова гра",								IDM_FILE_NEW_GAME
+		MENUITEM "&Завантажити гру",						IDM_FILE_LOAD_GAME
+		MENUITEM "&Зберегти гру",							IDM_FILE_SAVE_GAME
 		MENUITEM SEPARATOR
-		MENUITEM "&Выхід",							IDM_FILE_EXIT
+		MENUITEM "&Выхід",									IDM_FILE_EXIT
 	END
 	POPUP "&Екран"
 	BEGIN
 		POPUP "&Рендерер"
 		BEGIN
-			MENUITEM "Авто",						IDM_REND_AUTO
+			MENUITEM "Авто",								IDM_REND_AUTO
 			MENUITEM SEPARATOR
-			MENUITEM "OpenGL 1",					IDM_REND_GL1
-			MENUITEM "OpenGL 2",					IDM_REND_GL2
-			MENUITEM "OpenGL 3",					IDM_REND_GL3
+			MENUITEM "OpenGL 1",							IDM_REND_GL1
+			MENUITEM "OpenGL 2",							IDM_REND_GL2
+			MENUITEM "OpenGL 3",							IDM_REND_GL3
 		END
 		MENUITEM SEPARATOR
-		MENUITEM "&Повноекранний режим\a",			IDM_RES_FULL_SCREEN
-		MENUITEM "Верт. &синхронізація\a",			IDM_VSYNC
+		MENUITEM "&Повноекранний режим\a",					IDM_RES_FULL_SCREEN
+		MENUITEM "Верт. &синхронізація\a",					IDM_VSYNC
 	END
 	POPUP "&Зображення"
 	BEGIN
 		POPUP "&Інтерполяція\a"
 		BEGIN
-			MENUITEM "&Вимк.",						IDM_FILT_OFF
+			MENUITEM "&Вимк.",								IDM_FILT_OFF
 			MENUITEM SEPARATOR
-			MENUITEM "&Лінійна",					IDM_FILT_LINEAR
-			MENUITEM "&Ермітова",					IDM_FILT_HERMITE
-			MENUITEM "&Кубічна",					IDM_FILT_CUBIC
-			MENUITEM "&Ланцоша",					IDM_FILT_LANCZOS
+			MENUITEM "&Лінійна",							IDM_FILT_LINEAR
+			MENUITEM "&Ермітова",							IDM_FILT_HERMITE
+			MENUITEM "&Кубічна",							IDM_FILT_CUBIC
+			MENUITEM "&Ланцоша",							IDM_FILT_LANCZOS
 		END
 		POPUP "&Масштабування"
 		BEGIN
-			MENUITEM "&Вимк.",						IDM_FILT_NONE
+			MENUITEM "&Вимк.",								IDM_FILT_NONE
 			MENUITEM SEPARATOR
 			POPUP "&ScaleNx"
 			BEGIN
-				MENUITEM "x2",						IDM_FILT_SCALENX_2X
-				MENUITEM "x3",						IDM_FILT_SCALENX_3X
+				MENUITEM "x2",								IDM_FILT_SCALENX_2X
+				MENUITEM "x3",								IDM_FILT_SCALENX_3X
 			END
 			POPUP "Super &Eagle"
 			BEGIN
-				MENUITEM "x2",						IDM_FILT_EAGLE_2X
+				MENUITEM "x2",								IDM_FILT_EAGLE_2X
 			END
 			POPUP "x&SaI"
 			BEGIN
-				MENUITEM "x2",						IDM_FILT_XSAL_2X
+				MENUITEM "x2",								IDM_FILT_XSAL_2X
 			END
 			POPUP "Scale&HQ"
 			BEGIN
-				MENUITEM "x2",						IDM_FILT_SCALEHQ_2X
-				MENUITEM "x4",						IDM_FILT_SCALEHQ_4X
+				MENUITEM "x2",								IDM_FILT_SCALEHQ_2X
+				MENUITEM "x4",								IDM_FILT_SCALEHQ_4X
 			END
 			POPUP "x&BRz"
 			BEGIN
-				MENUITEM "x2",						IDM_FILT_XRBZ_2X
-				MENUITEM "x3",						IDM_FILT_XRBZ_3X
-				MENUITEM "x4",						IDM_FILT_XRBZ_4X
-				MENUITEM "x5",						IDM_FILT_XRBZ_5X
-				MENUITEM "x6",						IDM_FILT_XRBZ_6X
+				MENUITEM "x2",								IDM_FILT_XRBZ_2X
+				MENUITEM "x3",								IDM_FILT_XRBZ_3X
+				MENUITEM "x4",								IDM_FILT_XRBZ_4X
+				MENUITEM "x5",								IDM_FILT_XRBZ_5X
+				MENUITEM "x6",								IDM_FILT_XRBZ_6X
 			END
 		END
 		MENUITEM SEPARATOR
-		MENUITEM "Налаштування &кольору...",		IDM_COLOR_ADJUST
+		MENUITEM "Налаштування &кольору...",				IDM_COLOR_ADJUST
 		MENUITEM SEPARATOR
-		MENUITEM "Зберегти &пропорції\a",			IDM_ASPECT_RATIO
+		MENUITEM "Зберегти &пропорції\a",					IDM_ASPECT_RATIO
 	END
 	POPUP "&Опції"
 	BEGIN
-		MENUITEM "&Холодний ЦП",					IDM_PATCH_CPU
-		MENUITEM "&Одне ядро",						IDM_SINGLE_CORE
+		MENUITEM "&Холодний ЦП",							IDM_PATCH_CPU
+		MENUITEM "&Одне ядро",								IDM_SINGLE_CORE
 		MENUITEM SEPARATOR
 		POPUP "&Мова меню"
 		BEGIN
-			MENUITEM "&Англійскька",				IDM_LANG_ENGLISH
-			MENUITEM "&Польська",					IDM_LANG_POLISH
-			MENUITEM "&Російська",					IDM_LANG_RUSSIAN
-			MENUITEM "&Українська",					IDM_LANG_UKRAINIAN
+			MENUITEM "&Англійскька",						IDM_LANG_ENGLISH
+			MENUITEM "&Польська",							IDM_LANG_POLISH
+			MENUITEM "&Російська",							IDM_LANG_RUSSIAN
+			MENUITEM "&Українська",							IDM_LANG_UKRAINIAN
 		END
 	END
 	POPUP "&Моди"
 	BEGIN
-		MENUITEM "",								IDM_MODS
+		MENUITEM "",										IDM_MODS
 	END
+	/*POPUP "Cheat"
+	BEGIN
+		MENUITEM "Auto Play",								32896
+		MENUITEM SEPARATOR
+		MENUITEM "Free Materials",							32772
+		POPUP "Create Artifact"
+		BEGIN
+			POPUP "Armor"
+			BEGIN
+				MENUITEM "Leather Armor",					32775
+				MENUITEM "Chainmail",						32776
+				MENUITEM "Plate Mail",						32777
+			END
+			POPUP "Bow"
+			BEGIN
+				MENUITEM "Crossbow",						32779
+				MENUITEM "Longbow",							32780
+			END
+			POPUP "Item"
+			BEGIN
+				MENUITEM "Equestrian's Gloves",				32792
+				MENUITEM "Greater Ring of Vulnerability",	32791
+				MENUITEM "Leprechaun's Ring",				32788
+				MENUITEM "Lesser Ring of Vulnerability",	32790
+				MENUITEM "Poison Ring",						32789
+				MENUITEM "Telescope",						32785
+			END
+			POPUP "Potion"
+			BEGIN
+				MENUITEM "Acid",							32883
+				MENUITEM "Binding Liquid",					32867
+				MENUITEM "Cloud of Despair",				32868
+				MENUITEM "Choking Gas",						32884
+				MENUITEM "Cold",							32871
+				MENUITEM "Demon Fire",						32870
+				MENUITEM "Endurance",						32872
+				MENUITEM "Fire Resistance",					32873
+				MENUITEM "Holy Water",						32869
+				MENUITEM "Healing",							32874
+				MENUITEM "Health",							32875
+				MENUITEM "Luck",							32876
+				MENUITEM "Mana",							32877
+				MENUITEM "Mirth",							32878
+				MENUITEM "Poison",							32885
+				MENUITEM "Precognition",					32879
+				MENUITEM "Quickness",						32880
+				MENUITEM "Restoration",						32881
+				MENUITEM "Smoke",							32886
+				MENUITEM "Strength",						32882
+			END
+			POPUP "Shield"
+			BEGIN
+				MENUITEM "Shield",							32778
+				MENUITEM "Shield of Light",					32787
+			END
+			POPUP "Staff"
+			BEGIN
+				MENUITEM "Mage's Staff",					32781
+			END
+			POPUP "Weapon"
+			BEGIN
+				MENUITEM "Axe",								32782
+				MENUITEM "Longsword",						32783
+				MENUITEM SEPARATOR
+			END
+		END
+		POPUP "Create Creatures"
+		BEGIN
+			POPUP "Life"
+			BEGIN
+				MENUITEM "Peasants",						32795
+				MENUITEM "Crossbowmen",						32796
+				MENUITEM "Squires",							32797
+				MENUITEM "Ballistae",						32798
+				MENUITEM "Pikemen",							32799
+				MENUITEM "Crusaders",						32800
+				MENUITEM "Monks",							32801
+				MENUITEM "Champions",						32803
+				MENUITEM "Angels",							32802
+				MENUITEM "Catapults",						32909
+			END
+			POPUP "Order"
+			BEGIN
+				MENUITEM "Dwarves",							32804
+				MENUITEM "Halflings",						32805
+				MENUITEM "Golems",							32806
+				MENUITEM "Magi",							32807
+				MENUITEM "Nagas",							32809
+				MENUITEM "Genies",							32808
+				MENUITEM "Dragon Golems",					32810
+				MENUITEM "Titans",							32811
+				MENUITEM "Evil Sorceresses",				32910
+			END
+			POPUP "Death"
+			BEGIN
+				MENUITEM "Imps",							32812
+				MENUITEM "Skeletons",						32813
+				MENUITEM "Zombies",							32814
+				MENUITEM "Gargoyles",						32816
+				MENUITEM "Mummies",							32818
+				MENUITEM "Cerberi",							32815
+				MENUITEM "Ghosts",							32817
+				MENUITEM "Ice Demons",						32819
+				MENUITEM "Vampires",						32820
+				MENUITEM "Venom Spawn",						32821
+				MENUITEM "Devils",							32822
+				MENUITEM "Bone Dragons",					32823
+				MENUITEM "Dark Champions",					32911
+			END
+			POPUP "Chaos"
+			BEGIN
+				MENUITEM "Troglodytes",						32828
+				MENUITEM "Pirates",							32827
+				MENUITEM "Bandits",							32825
+				MENUITEM "Orcs",							32826
+				MENUITEM "Beholders",						32829
+				MENUITEM "Trolls",							32832
+				MENUITEM "Minotaurs",						32831
+				MENUITEM "Medusae",							32830
+				MENUITEM "Nightmares",						32834
+				MENUITEM "Efreeti",							32833
+				MENUITEM "Goblin Knights",					32912
+				MENUITEM "Hydras",							32836
+				MENUITEM "Black Dragons",					32835
+				MENUITEM "Mega Dragons",					32913
+			END
+			POPUP "Nature"
+			BEGIN
+				MENUITEM "Leprechauns",						32838
+				MENUITEM "Sprites",							32839
+				MENUITEM "Wolves",							32840
+				MENUITEM "Air Elementals",					32841
+				MENUITEM "Earth Elementals",				32842
+				MENUITEM "Fire Elementals",					32844
+				MENUITEM "Water Elementals",				32846
+				MENUITEM "Elves",							32843
+				MENUITEM "Satyrs",							32845
+				MENUITEM "White Tigers",					32847
+				MENUITEM "Griffins",						32848
+				MENUITEM "Unicorns",						32849
+				MENUITEM "Waspworts",						32908
+				MENUITEM "Faerie Dragons",					32850
+				MENUITEM "Mantises",						32851
+				MENUITEM "Phoenixes",						32852
+				MENUITEM "Gargantuans",						32914
+			END
+			POPUP "Might"
+			BEGIN
+				MENUITEM "Berserkers",						32853
+				MENUITEM "Centaurs",						32854
+				MENUITEM "Mermaids",						32856
+				MENUITEM "Nomads",							32857
+				MENUITEM "Harpies",							32855
+				MENUITEM "Ogre Magi",						32859
+				MENUITEM "Cyclopes",						32858
+				MENUITEM "Thunderbirds",					32862
+				MENUITEM "Behemoths",						32860
+				MENUITEM "Sea Monsters",					32861
+				MENUITEM "Frenzied Gnashers",				32915
+			END
+		END
+		MENUITEM SEPARATOR
+		MENUITEM "Gain Skill",								32866,  GRAYED
+		MENUITEM "Increase Level",							32793,  GRAYED
+		MENUITEM "Learn All Spells",						32794,  GRAYED
+		MENUITEM "Unlimited Movement",						32773,  GRAYED
+		MENUITEM SEPARATOR
+		POPUP "Combat"
+		BEGIN
+			MENUITEM "Win Combat",							32888
+			MENUITEM "Lose Combat",							32889
+		END
+		MENUITEM "Lose Scenario",							32895
+		MENUITEM "Win Scenario",							32894
+		MENUITEM SEPARATOR
+		MENUITEM "Dump Entire Map Image",					32899
+		MENUITEM "Verify External Strings",					32900
+		MENUITEM "Resume Animation",						32893
+		MENUITEM "Suspend Animation",						32892
+		MENUITEM "Display Shroud/FOW",						32887,  CHECKED
+	END*/
 	POPUP "&Довідка"
 	BEGIN
-		MENUITEM "Про &програму...",				IDM_HELP_ABOUT
-		MENUITEM "Про &врапер...",					IDM_HELP_WRAPPER
+		MENUITEM "Про &програму...",						IDM_HELP_ABOUT
+		MENUITEM "Про &врапер...",							IDM_HELP_WRAPPER
 	END
 END
 

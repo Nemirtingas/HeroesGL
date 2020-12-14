@@ -81,21 +81,21 @@ const AddressSpace addressArray[] = {
 
 	// ---------------------------------------------------------------------------------------------------------------------
 
-	0x008C5F51, 0x008C6039, 0x00401448, 0x00961278, 0x008C5E80, 0x007362D9, 0x008C4A2E, 0x008C53F2,
+	0x008C5F51, 0x008C6039, 0x00A62DFC, 0x00303038, 0x008C5E80, 0x007362D9, 0x008C4A2E, 0x008C53F2,
 	0x008C3D99, 0x008C3DD0, 0x008C3DDA, 0x008C3E63, 0x008C3DB2, 0x00735B80,
 	LNG_ENGLISH, IDD_HELP_ABOUT_ENGLISH_2_0_GS, IDS_HOMM_4_GS, // Heroes IV - 2.0GS
 
-	0x008C63F1, 0x008C64D9, 0x00401448, 0x00961278, 0x008C6320, 0x007369F9, 0x008C4ECE, 0x008C5892,
+	0x008C63F1, 0x008C64D9, 0x00A63034, 0x00303038, 0x008C6320, 0x007369F9, 0x008C4ECE, 0x008C5892,
 	0x008C4239, 0x008C4270, 0x008C427A, 0x008C4303, 0x008C4252, 0x007362A0,
 	LNG_ENGLISH, IDD_HELP_ABOUT_ENGLISH_2_2_GS, IDS_HOMM_4_GS, // Heroes IV - 2.2GS
 
-	0x008D3881, 0x008D3969, 0x00401448, 0x00970278, 0x008D37B0, 0x0073D9B0, 0x008D235E, 0x008D2D22,
+	0x008D3881, 0x008D3969, 0x00A758CC, 0x00303038, 0x008D37B0, 0x0073D9B0, 0x008D235E, 0x008D2D22,
 	0x008D16C9, 0x008D1700, 0x008D170A, 0x008D1793, 0x008D16E2, 0x0073CFED,
 	LNG_ENGLISH, IDD_HELP_ABOUT_ENGLISH_3_0_GS, IDS_HOMM_4_GS, // Heroes IV - 3.0GS
 
 	// ---------------------------------------------------------------------------------------------------------------------
 
-	0x008D3881, 0x008D3969, 0x00401448, 0x00970200, 0x008D37B0, 0x0073D9B0, 0x008D235E, 0x008D2D22,
+	0x008D3881, 0x008D3969, 0x00A7592C, 0x00303038, 0x008D37B0, 0x0073D9B0, 0x008D235E, 0x008D2D22,
 	0x008D16C9, 0x008D1700, 0x008D170A, 0x008D1793, 0x008D16E2, 0x0073CFED,
 	LNG_ENGLISH, IDD_HELP_ABOUT_ENGLISH_3_0_WOW, IDS_HOMM_4_WOW, // Heroes IV - 3.0WoW
 #pragma endregion
@@ -645,12 +645,12 @@ namespace Hooks
 			DWORD hookCount = sizeof(addressArray) / sizeof(AddressSpace);
 			do
 			{
-				DWORD check1, check2, equal;
-				if (ReadDWord(hooker, hookSpace->check_1 + 1, &check1) && check1 == STYLE_FULL_OLD && ReadDWord(hooker, hookSpace->check_2 + 1, &check2) && check2 == STYLE_FULL_OLD)
+				DWORD check[3];
+				if (ReadDWord(hooker, hookSpace->check[0] + 1, &check[0]) && check[0] == STYLE_FULL_OLD && ReadDWord(hooker, hookSpace->check[1] + 1, &check[1]) && check[1] == STYLE_FULL_OLD)
 				{
-					if (!hookSpace->equal_address)
+					if (!hookSpace->equal.address)
 						defaultSpace = hookSpace;
-					else if (ReadDWord(hooker, hookSpace->equal_address, &equal) && equal == hookSpace->equal_value)
+					else if (ReadDWord(hooker, hookSpace->equal.address, &check[2]) && check[2] == hookSpace->equal.value)
 					{
 						equalSpace = hookSpace;
 						break;

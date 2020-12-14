@@ -169,10 +169,11 @@ struct LevelsData {
 
 struct AddressSpace
 {
-	DWORD check_1;
-	DWORD check_2;
-	DWORD equal_address;
-	DWORD equal_value;
+	DWORD check[2];
+	struct {
+		DWORD address;
+		DWORD value;
+	} equal;
 	DWORD fullscr_nop[2];
 	DWORD clientrect_nop[2];
 	DWORD updateWindow_nop[4];
@@ -230,8 +231,12 @@ struct ConfigItems
 	BOOL coldCPU;
 	BOOL isSSE2;
 	RendererType renderer;
-	UpdateMode updateMode;
 
+	struct {
+		UpdateMode mode;
+		LONG alignment;
+	} update;
+	
 	struct {
 		BOOL allowed;
 		BOOL enabled;

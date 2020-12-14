@@ -677,7 +677,7 @@ namespace SSE
 	}
 }
 
-PixelBuffer::PixelBuffer(DWORD width, DWORD height, BOOL isTrue, GLenum format, UpdateMode mode)
+PixelBuffer::PixelBuffer(DWORD width, DWORD height, BOOL isTrue, GLenum format, UpdateMode mode, LONG alignment)
 {
 	this->width = width;
 	this->height = height;
@@ -686,6 +686,7 @@ PixelBuffer::PixelBuffer(DWORD width, DWORD height, BOOL isTrue, GLenum format, 
 	this->format = format;
 	this->block = BLOCK_SIZE;
 	this->reset = TRUE;
+	this->alignment = alignment;
 
 	if (!this->isTrue)
 	{
@@ -752,6 +753,9 @@ VOID PixelBuffer::Reset()
 
 VOID PixelBuffer::Update(Rect* rect)
 {
+	if (this->alignment != 4)
+		GLPixelStorei(GL_UNPACK_ALIGNMENT, this->alignment);
+
 	GLPixelStorei(GL_UNPACK_ROW_LENGTH, this->width);
 	if (!this->ForwardCompare || this->reset)
 	{
@@ -803,6 +807,9 @@ VOID PixelBuffer::Update(Rect* rect)
 		}
 	}
 	GLPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+
+	if (this->alignment != 4)
+		GLPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 }
 
 VOID PixelBuffer::UpdateBlock(RECT* rect, POINT* offset)

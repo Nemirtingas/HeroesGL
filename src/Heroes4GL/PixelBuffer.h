@@ -44,6 +44,7 @@ private:
 	DWORD block;
 	DWORD size;
 	BOOL reset;
+	LONG alignment;
 	DWORD* primaryBuffer;
 	DWORD* secondaryBuffer;
 	DWORD* white;
@@ -58,7 +59,7 @@ private:
 	VOID UpdateBlock(RECT*, POINT*);
 
 public:
-	PixelBuffer(DWORD, DWORD, BOOL, GLenum, UpdateMode);
+	PixelBuffer(DWORD, DWORD, BOOL, GLenum, UpdateMode, LONG);
 	~PixelBuffer();
 
 	VOID Reset();
