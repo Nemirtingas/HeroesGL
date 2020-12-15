@@ -180,6 +180,10 @@ struct AddressSpace
 	DWORD updateWindow_nop[4];
 	DWORD updateWindowReg_nop;
 	DWORD load_package;
+	struct {
+		DWORD time;
+		DWORD offset;
+	} scroll;
 	LCID resLanguage;
 	WORD resDialog;
 	DWORD windowName;
