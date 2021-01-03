@@ -565,7 +565,7 @@ namespace Window
 
 			if (GetDlgItemText(hDlg, IDC_COPYRIGHT, temp, sizeof(temp)))
 			{
-				StrPrint(path, temp, 2020, "Verok");
+				StrPrint(path, temp, 2021, "Verok");
 				SetDlgItemText(hDlg, IDC_COPYRIGHT, path);
 			}
 

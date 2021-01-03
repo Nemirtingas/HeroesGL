@@ -457,7 +457,7 @@ HRESULT __stdcall OpenDrawSurface::Blt(LPRECT lpDestRect, LPDIRECTDRAWSURFACE lp
 				width *= sizeof(DWORD);
 				do
 				{
-					MemoryCopy(src, dst, width);
+					MemoryCopy(dst, src, width);
 					src += sPitch;
 					dst += dPitch;
 				} while (--height);

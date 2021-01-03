@@ -54,6 +54,8 @@
     <GenerateManifest>false</GenerateManifest>
     <LibraryPath>$(SolutionDir)lib;$(LibraryPath)</LibraryPath>
     <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
+    <TargetName>DDRAW</TargetName>
+    <OutDir>D:\Games\Heroes 3</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IgnoreImportLibrary>true</IgnoreImportLibrary>
@@ -61,6 +63,8 @@
     <IncludePath>$(SolutionDir)include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)lib;$(LibraryPath)</LibraryPath>
     <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
+    <TargetName>DDRAW</TargetName>
+    <OutDir>D:\Games\Heroes 3</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Midl>
@@ -100,7 +104,6 @@
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <FixedBaseAddress>true</FixedBaseAddress>
-      <OutputFile>D:\Games\Heroes 3\DDRAW$(TargetExt)</OutputFile>
       <StackReserveSize>
       </StackReserveSize>
       <EntryPointSymbol>DllMain</EntryPointSymbol>
@@ -149,7 +152,6 @@
       </MergeSections>
       <SectionAlignment>4096</SectionAlignment>
       <ModuleDefinitionFile>$(ProjectDir)\module.def</ModuleDefinitionFile>
-      <OutputFile>D:\Games\Heroes 3\DDRAW$(TargetExt)</OutputFile>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <LinkErrorReporting>NoErrorReport</LinkErrorReporting>
       <CLRSupportLastError>Disabled</CLRSupportLastError>
@@ -164,6 +166,9 @@
       <SetChecksum>true</SetChecksum>
     </Link>
     <Bscmake />
+    <PostBuildEvent>
+      <Command>"$(SolutionDir)tools\PEUpdater.exe" "$(TargetPath)" linker 6 0 os 4 0 subs 4 0</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Allocation.cpp" />
