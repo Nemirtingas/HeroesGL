@@ -28,7 +28,7 @@ BEGIN
 	IDS_ERROR_ARB_PROFILE			"Неверный профиль ARB"
 	IDS_ERROR_LOAD_RESOURCE			"Ошибка загрузки ресурса"
 	IDS_ERROR_COMPILE_SHADER		"Ошибка компиляции шейдера"
-	IDS_INFO_RESTART				"Чтобы изменения вступили в силу, нужно перезапустите игру"
+	IDS_INFO_RESTART				"Чтобы изменения вступили в силу, нужно перезапустить игру"
 	IDS_HOMM_1						"Герои Меча и Магии"
 	IDS_HOMM_2_SW					"Герои Меча и Магии II: Войны за Престол"
 	IDS_HOMM_2_POL					"Герои Меча и Магии II: Цена Верности"
@@ -123,6 +123,10 @@ BEGIN
 			MENUITEM "&Украинский",					IDM_LANG_UKRAINIAN
 		END
 	END
+	POPUP "&Моды"
+	BEGIN
+		MENUITEM "",								IDM_MODS
+	END
 	POPUP "&Помощь"
 	BEGIN
 		MENUITEM "&Руководство",					IDM_HELP_MANUAL
@@ -141,7 +145,7 @@ IDD_ABOUT DIALOGEX DISCARDABLE 29,23,216,190
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP
 FONT 8, "MS Sans Serif"
 BEGIN
-	CTEXT			"Герои Меча и Магии I - II\nOpenGL враппер",IDC_STATIC,0,8,216,24
+	CTEXT			"Герои Меча и Магии I && II\nOpenGL враппер",IDC_STATIC,0,8,216,24
 	CTEXT			"Версия %d.%d%d   Сборка %d",IDC_VERSION,0,40,216,11
 	CTEXT			"Проверить новые версии",IDC_STATIC,0,64,216,11
 	CONTROL			"",IDC_LNK_WEB,"SysLink",WS_TABSTOP,48,76,216,11
@@ -157,7 +161,7 @@ IDD_ABOUT_OLD DIALOGEX DISCARDABLE 29,23,216,190
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP
 FONT 8, "MS Sans Serif"
 BEGIN
-	CTEXT			"Герои Меча и Магии I - II\nOpenGL враппер",IDC_STATIC,0,8,216,24
+	CTEXT			"Герои Меча и Магии I && II\nOpenGL враппер",IDC_STATIC,0,8,216,24
 	CTEXT			"Версия %d.%d%d   Сборка %d",IDC_VERSION,0,40,216,11
 	CTEXT			"Проверить новые версии",IDC_STATIC,0,64,216,11
 	CTEXT			"",IDC_LNK_WEB,0,76,216,11

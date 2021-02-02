@@ -33,14 +33,14 @@ namespace Main
 {
 	HRESULT __stdcall DirectDrawCreate(GUID*, LPDIRECTDRAW*, IUnknown*);
 
-	OpenDraw* __fastcall FindOpenDrawByWindow(HWND);
+	OpenDraw* FindOpenDrawByWindow(HWND);
 
-	VOID __fastcall ShowError(UINT, CHAR*, DWORD);
-	VOID __fastcall ShowError(CHAR*, CHAR*, DWORD);
-	VOID __fastcall ShowInfo(UINT);
-	VOID __fastcall ShowInfo(CHAR*);
+	VOID ShowError(UINT, CHAR*, DWORD);
+	VOID ShowError(CHAR*, CHAR*, DWORD);
+	VOID ShowInfo(UINT);
+	VOID ShowInfo(CHAR*);
 
 #ifdef _DEBUG
-	VOID __fastcall CheckError(CHAR*, DWORD);
+	VOID CheckError(CHAR*, DWORD);
 #endif
 }

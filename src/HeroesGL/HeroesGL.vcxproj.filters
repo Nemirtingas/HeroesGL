@@ -58,15 +58,6 @@
     <ClCompile Include="DirectDrawSurface.cpp">
       <Filter>Source Files\Draw\Direct</Filter>
     </ClCompile>
-    <ClCompile Include="AdrDevice.cpp">
-      <Filter>Source Files\Sound</Filter>
-    </ClCompile>
-    <ClCompile Include="AdrStream.cpp">
-      <Filter>Source Files\Sound</Filter>
-    </ClCompile>
-    <ClCompile Include="AdrSource.cpp">
-      <Filter>Source Files\Sound</Filter>
-    </ClCompile>
     <ClCompile Include="ShaderGroup.cpp">
       <Filter>Source Files\Shader</Filter>
     </ClCompile>
@@ -77,6 +68,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="FpsCounter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Mods.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -141,15 +135,6 @@
     <ClInclude Include="DirectDrawSurface.h">
       <Filter>Header Files\Draw\Direct</Filter>
     </ClInclude>
-    <ClInclude Include="AdrDevice.h">
-      <Filter>Header Files\Sound</Filter>
-    </ClInclude>
-    <ClInclude Include="AdrStream.h">
-      <Filter>Header Files\Sound</Filter>
-    </ClInclude>
-    <ClInclude Include="AdrSource.h">
-      <Filter>Header Files\Sound</Filter>
-    </ClInclude>
     <ClInclude Include="ShaderGroup.h">
       <Filter>Header Files\Shader</Filter>
     </ClInclude>
@@ -160,6 +145,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="FpsCounter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Mods.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -196,12 +184,6 @@
     </Filter>
     <Filter Include="Header Files\Draw\Base">
       <UniqueIdentifier>{bb864f69-d6ec-4137-8f45-ad0b3fa222f8}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Sound">
-      <UniqueIdentifier>{38dbdf77-f34b-4d8d-ae6b-bce2ec7ad0b3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Sound">
-      <UniqueIdentifier>{a5b26cd7-e3f7-4847-9f4b-3abe192a234e}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\Shader">
       <UniqueIdentifier>{4b424a74-8f73-467b-a61c-c193fa4f1167}</UniqueIdentifier>

@@ -100,6 +100,7 @@ extern "C"
 #define StrStr(str, substr) strstr(str, substr)
 #define StrDuplicate(str) _strdup(str)
 #define StrToAnsi(dst, src, size) wcstombs(dst, src, size)
+#define StrFromInt(val, str, radix) _itoa(val, str, radix)
 #define StrLength(str) strlen(str)
 #define StrToDouble(str) atof(str);
 #define FileOpen(filename, mode) fopen(filename, mode)
@@ -108,9 +109,9 @@ extern "C"
 #define SeedRandom(seed) srand(seed)
 #define Exit(code) exit(code)
 
-DOUBLE __fastcall MathRound(DOUBLE);
-VOID* __fastcall AlignedAlloc(size_t);
-VOID __fastcall AlignedFree(VOID*);
+DOUBLE MathRound(DOUBLE);
+VOID* AlignedAlloc(size_t);
+VOID AlignedFree(VOID*);
 
 extern HMODULE hDllModule;
 extern HANDLE hActCtx;

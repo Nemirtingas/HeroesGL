@@ -57,7 +57,7 @@ public:
 	~OpenDraw();
 
 	BOOL CheckView();
-	VOID __fastcall ScaleMouse(LPPOINT);
+	VOID ScaleMouse(LPPOINT);
 	VOID CopyPointer(VOID*);
 
 	VOID RenderStart();

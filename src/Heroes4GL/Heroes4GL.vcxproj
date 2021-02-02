@@ -15,6 +15,7 @@
     <ProjectGuid>{b513477c-2cde-4b0f-b807-1c45f426ff0d}</ProjectGuid>
     <RootNamespace>Heroes4GL</RootNamespace>
     <ProjectName>Heroes4GL</ProjectName>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -54,6 +55,8 @@
     <GenerateManifest>false</GenerateManifest>
     <LibraryPath>$(SolutionDir)lib;$(LibraryPath)</LibraryPath>
     <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
+    <TargetName>DDRAW</TargetName>
+    <OutDir>D:\Games\Heroes 4</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IgnoreImportLibrary>true</IgnoreImportLibrary>
@@ -61,6 +64,8 @@
     <IncludePath>$(SolutionDir)include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)lib;$(LibraryPath)</LibraryPath>
     <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
+    <TargetName>DDRAW</TargetName>
+    <OutDir>D:\Games\Heroes 4</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Midl>
@@ -89,18 +94,17 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <ModuleDefinitionFile>$(ProjectDir)\module.def</ModuleDefinitionFile>
+      <ModuleDefinitionFile>$(ProjectDir)module.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <MapExports>true</MapExports>
       <BaseAddress>0x60000000</BaseAddress>
       <SectionAlignment>
       </SectionAlignment>
       <AssemblyDebug>true</AssemblyDebug>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;opengl32.lib;advapi32.lib;shell32.lib;winmm.lib;version.lib;crt.lib;vcruntimed.lib;ucrtd.lib;msvcrtd.lib;hooker.lib</AdditionalDependencies>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;opengl32.lib;advapi32.lib;shell32.lib;winmm.lib;version.lib;_msvcrt.lib;vcruntimed.lib;ucrtd.lib;msvcrtd.lib;hooker.lib</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <FixedBaseAddress>true</FixedBaseAddress>
-      <OutputFile>D:\Games\Heroes IV\DDRAW$(TargetExt)</OutputFile>
       <StackReserveSize>
       </StackReserveSize>
       <EntryPointSymbol>DllMain</EntryPointSymbol>
@@ -122,8 +126,6 @@
       </HeaderFileName>
     </Midl>
     <ClCompile>
-      <Optimization>MaxSpeed</Optimization>
-      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <StringPooling>true</StringPooling>
@@ -142,7 +144,7 @@
     </ClCompile>
     <ResourceCompile />
     <Link>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;opengl32.lib;advapi32.lib;shell32.lib;winmm.lib;version.lib;crt.lib;msvcrt.lib;hooker.lib</AdditionalDependencies>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;opengl32.lib;advapi32.lib;shell32.lib;winmm.lib;version.lib;_msvcrt.lib;msvcrt.lib;hooker.lib</AdditionalDependencies>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <AssemblyDebug>false</AssemblyDebug>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
@@ -150,9 +152,8 @@
       <MergeSections>
       </MergeSections>
       <SectionAlignment>4096</SectionAlignment>
-      <ModuleDefinitionFile>$(ProjectDir)\module.def</ModuleDefinitionFile>
+      <ModuleDefinitionFile>$(ProjectDir)module.def</ModuleDefinitionFile>
       <EntryPointSymbol>DllMain</EntryPointSymbol>
-      <OutputFile>D:\Games\Heroes IV\DDRAW$(TargetExt)</OutputFile>
       <ProgramDatabaseFile />
       <IgnoreEmbeddedIDL>true</IgnoreEmbeddedIDL>
       <TurnOffAssemblyGeneration>true</TurnOffAssemblyGeneration>
@@ -162,8 +163,12 @@
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <AdditionalOptions>/DEBUG:NONE /EMITPOGOPHASEINFO %(AdditionalOptions)</AdditionalOptions>
       <SetChecksum>true</SetChecksum>
+      <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <Bscmake />
+    <PostBuildEvent>
+      <Command>"$(SolutionDir)tools\PEUpdater.exe" "$(TargetPath)" linker 6 0 os 4 0 subs 4 0</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Allocation.cpp" />

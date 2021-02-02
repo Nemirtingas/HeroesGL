@@ -94,7 +94,7 @@ CHAR keysBuffer[4096];
 
 namespace Config
 {
-	VOID __fastcall Load(HMODULE hModule, const AddressSpace* hookSpace)
+	VOID Load(HMODULE hModule, const AddressSpace* hookSpace)
 	{
 		GetModuleFileName(hModule, config.file, MAX_PATH - 1);
 		CHAR* p = StrLastChar(config.file, '\\');
@@ -142,7 +142,8 @@ namespace Config
 		{
 			config.language.current = config.language.futured = hookSpace->resLanguage;
 			Config::Set(CONFIG_WRAPPER, "Language", *(INT*)&config.language.current);
-			SetThreadLanguage(config.language.current);
+			if (SetThreadLanguage)
+				SetThreadLanguage(config.language.current);
 
 			LoadString(hDllModule, hookSpace->windowName, config.title, sizeof(config.title));
 			Config::Set(CONFIG_WRAPPER, "Title", "");
@@ -184,8 +185,8 @@ namespace Config
 			config.image.xBRz = 2;
 			Config::Set(CONFIG_WRAPPER, "XBRZ", config.image.xBRz);
 
-			config.colors.active.hueShift = 0.5f;
-			config.colors.active.saturation = 0.5f;
+			config.colors.active.satHue.hueShift = 0.5f;
+			config.colors.active.satHue.saturation = 0.5f;
 			Config::Set(CONFIG_COLORS, "HueSat", 0x01F401F4);
 
 			config.colors.active.input.left.rgb = 0.0f;
@@ -246,12 +247,13 @@ namespace Config
 		else
 		{
 			config.language.current = config.language.futured = (LCID)Config::Get(CONFIG_WRAPPER, "Language", hookSpace->resLanguage);
-			SetThreadLanguage(config.language.current);
+			if (SetThreadLanguage)
+				SetThreadLanguage(config.language.current);
 
 			Config::Get(CONFIG_WRAPPER, "Title", "", config.title, sizeof(config.title));
 			if (!StrLength(config.title))
 				LoadString(hDllModule, hookSpace->windowName, config.title, sizeof(config.title));
-			
+
 			config.coldCPU = (BOOL)Config::Get(CONFIG_WRAPPER, "ColdCPU", FALSE);
 
 			config.singleCore.enabled = (BOOL)Config::Get(CONFIG_WRAPPER, "SingleCPU", FALSE);
@@ -305,8 +307,8 @@ namespace Config
 					config.image.xBRz = 6;
 
 				value = Config::Get(CONFIG_COLORS, "HueSat", 0x01F401F4);
-				config.colors.active.hueShift = 0.001f * min(1000, max(0, LOWORD(value)));
-				config.colors.active.saturation = 0.001f * min(1000, max(0, HIWORD(value)));
+				config.colors.active.satHue.hueShift = 0.001f * min(1000, max(0, LOWORD(value)));
+				config.colors.active.satHue.saturation = 0.001f * min(1000, max(0, HIWORD(value)));
 
 				value = Config::Get(CONFIG_COLORS, "RgbInput", 0x03E80000);
 				if (LOWORD(value) < HIWORD(value))
@@ -491,7 +493,7 @@ namespace Config
 		}
 	}
 
-	BOOL __fastcall Check(const CHAR* app, const CHAR* key)
+	BOOL Check(const CHAR* app, const CHAR* key)
 	{
 		if (GetPrivateProfileString(app, NULL, NULL, keysBuffer, sizeof(keysBuffer), config.file))
 		{
@@ -512,29 +514,29 @@ namespace Config
 		return FALSE;
 	}
 
-	INT __fastcall Get(const CHAR* app, const CHAR* key, INT default)
+	INT Get(const CHAR* app, const CHAR* key, INT default)
 	{
-		return GetPrivateProfileInt(app, key, (INT)default, config.file);
+		return GetPrivateProfileInt(app, key, (INT) default, config.file);
 	}
 
-	DWORD __fastcall Get(const CHAR* app, const CHAR* key, const CHAR* default, CHAR* returnString, DWORD nSize)
+	DWORD Get(const CHAR* app, const CHAR* key, const CHAR* default, CHAR* returnString, DWORD nSize)
 	{
 		return GetPrivateProfileString(app, key, default, returnString, nSize, config.file);
 	}
 
-	BOOL __fastcall Set(const CHAR* app, const CHAR* key, INT value)
+	BOOL Set(const CHAR* app, const CHAR* key, INT value)
 	{
 		CHAR res[20];
-		StrPrint(res, "%d", value);
+		StrFromInt(value, res, 10);
 		return WritePrivateProfileString(app, key, res, config.file);
 	}
 
-	BOOL __fastcall Set(const CHAR* app, const CHAR* key, CHAR* value)
+	BOOL Set(const CHAR* app, const CHAR* key, CHAR* value)
 	{
 		return WritePrivateProfileString(app, key, value, config.file);
 	}
 
-	VOID __fastcall SetProcessMask()
+	VOID SetProcessMask()
 	{
 		DWORD mask = config.singleCore.systemMask;
 

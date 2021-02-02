@@ -30,6 +30,7 @@
 #include "Config.h"
 #include "Window.h"
 #include "Resource.h"
+#include "Mods.h"
 
 VOID LoadModule(const CHAR* pattern)
 {
@@ -81,6 +82,8 @@ BOOL __stdcall DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 		{
 			if (!config.isDDraw)
 			{
+				Mods::Load();
+
 				Window::SetCaptureKeys(TRUE);
 
 				{

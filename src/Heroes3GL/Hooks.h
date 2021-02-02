@@ -30,6 +30,6 @@ namespace Hooks
 	INT __stdcall MessageBoxHook(HWND, LPCSTR, LPCSTR, UINT);
 
 	BOOL __stdcall EnumChildProc(HWND, LPARAM);
-	VOID __fastcall CheckRefreshRate();
+	VOID CheckRefreshRate();
 	BOOL Load();
 }

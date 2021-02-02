@@ -541,7 +541,7 @@ namespace Hooks
 		return AIL_waveOutOpen(driver, a1, a2, pcmFormat);
 	}
 
-	LPVOID __fastcall OpenTrack(LPVOID driver, CHAR* group, CHAR* path, DWORD unknown)
+	LPVOID OpenTrack(LPVOID driver, CHAR* group, CHAR* path, DWORD unknown)
 	{
 		trackInfo = tracksList;
 		while (trackInfo)
@@ -732,7 +732,7 @@ namespace Hooks
 
 #pragma region Move Hero
 	DWORD moveCounter;
-	VOID __stdcall CalcRunPos(DWORD* obj, DWORD idx)
+	VOID __fastcall CalcRunPos(DWORD* obj, DWORD idx)
 	{
 		if (config.smooth.move)
 		{
@@ -777,22 +777,22 @@ namespace Hooks
 	{
 		__asm
 		{
-			PUSH ECX
-			PUSH EAX
+			push ecx
+			push eax
 
-			PUSH EDI
-			PUSH ESI
-			CALL CalcRunPos
+			mov edx, edi
+			mov ecx, esi
+			call CalcRunPos
 
-			POP EAX
-			POP ECX
-			JMP sub_DrawSizedRect_1
+			pop eax
+			pop ecx
+			jmp sub_DrawSizedRect_1
 		}
 	}
 #pragma endregion
 
 	DWORD cursorTime = 16;
-	VOID __fastcall CheckRefreshRate()
+	VOID CheckRefreshRate()
 	{
 		DEVMODE devMode;
 		MemoryZero(&devMode, sizeof(DEVMODE));
@@ -847,13 +847,13 @@ namespace Hooks
 	{
 		__asm
 		{
-			MOV EAX, [ESI+0xE4]
-			MOV oldCenter, EAX
-			RETN
+			mov eax, [esi + 0xE4]
+			mov oldCenter, eax
+			retn
 		}
 	}
 
-	VOID __stdcall DrawMapRect(DWORD mapObject, DWORD object, RECT rc)
+	VOID __fastcall DrawMapRect(DWORD object, DWORD mapObject, RECT rc)
 	{
 		MapPosition* newCenter = (MapPosition*)(mapObject + 228);
 		POINT newc = { SHORT(newCenter->x << 6) >> 6, SHORT(newCenter->y << 6) >> 6 };
@@ -976,11 +976,8 @@ namespace Hooks
 	{
 		__asm
 		{
-			POP EAX
-			PUSH ECX
-			PUSH ESI
-			PUSH EAX
-			JMP DrawMapRect
+			mov edx, esi
+			jmp DrawMapRect
 		}
 	}
 
@@ -1110,13 +1107,16 @@ namespace Hooks
 	VOID __declspec(naked) hook_00457CC9()
 	{
 		__asm {
-			mov eax, [esp+0x4] // bones cell index
+			mov eax, [esp + 0x4] // bones cell index
 			test eax,eax
 			jge lbl_cont
+
 			xor eax,eax
-			lbl_cont: mov ecx, [ecx+0x8]
-			mov eax, [eax*0x8+ecx]
-			retn 4
+
+			lbl_cont:
+			mov ecx, [ecx + 0x8]
+			mov eax, [eax * 0x8 + ecx]
+			retn 0x4
 		}
 	}
 #pragma endregion
@@ -1182,7 +1182,7 @@ namespace Hooks
 
 				PatchImportByName(hooker, "GetDiskFreeSpaceA", GetDiskFreeSpaceHook);
 
-				PatchImportByName(hooker, "DirectDrawCreate", Main::DirectDrawCreate);
+				PatchImportByName(hooker, "DirectDrawCreate", Main::DirectDrawCreate, NULL, TRUE);
 
 				PatchImportByName(hooker, "_AIL_waveOutOpen@16", AIL_waveOutOpenHook, (DWORD*)&AIL_waveOutOpen);
 				PatchImportByName(hooker, "_AIL_stream_position@4", AIL_stream_positionHook, (DWORD*)&AIL_stream_position);

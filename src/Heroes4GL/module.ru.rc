@@ -28,7 +28,7 @@ BEGIN
 	IDS_ERROR_ARB_PROFILE			"Неверный профиль ARB"
 	IDS_ERROR_LOAD_RESOURCE			"Ошибка загрузки ресурса"
 	IDS_ERROR_COMPILE_SHADER		"Ошибка компиляции шейдера"
-	IDS_INFO_RESTART				"Чтобы изменения вступили в силу, нужно перезапустите игру"
+	IDS_INFO_RESTART				"Чтобы изменения вступили в силу, нужно перезапустить игру"
 	IDS_HOMM_4						"Герои Меча и Магии IV"
 	IDS_HOMM_4_GS					"Герои Меча и Магии IV: Грядущая Буря"
 	IDS_HOMM_4_WOW					"Герои Меча и Магии IV: Вихри Войны"

@@ -35,7 +35,7 @@ namespace Hooks
 	INT_PTR __stdcall DialogBoxParamHook(HINSTANCE, LPCSTR, HWND, DLGPROC, LPARAM);
 	INT __stdcall MessageBoxHook(HWND, LPCSTR, LPCSTR, UINT);
 
-	VOID __fastcall ScalePointer(FLOAT, FLOAT);
+	VOID ScalePointer(FLOAT, FLOAT);
 	BOOL __stdcall EnumChildProc(HWND, LPARAM);
 	BOOL Load();
 }

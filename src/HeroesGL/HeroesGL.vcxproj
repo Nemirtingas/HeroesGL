@@ -15,6 +15,7 @@
     <ProjectGuid>{5E8DD992-42B3-4645-9810-E4D7D7FB3096}</ProjectGuid>
     <RootNamespace>HeroesGL</RootNamespace>
     <ProjectName>HeroesGL</ProjectName>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -54,6 +55,8 @@
     <LibraryPath>$(SolutionDir)lib;$(LibraryPath)</LibraryPath>
     <IncludePath>$(SolutionDir)include;$(IncludePath)</IncludePath>
     <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
+    <TargetName>WING32</TargetName>
+    <OutDir>D:\Games\Heroes 2</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IgnoreImportLibrary>true</IgnoreImportLibrary>
@@ -61,6 +64,8 @@
     <IncludePath>$(SolutionDir)include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)lib;$(LibraryPath)</LibraryPath>
     <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
+    <TargetName>WING32</TargetName>
+    <OutDir>D:\Games\Heroes 2</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Midl>
@@ -89,18 +94,17 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <ModuleDefinitionFile>$(ProjectDir)\module.def</ModuleDefinitionFile>
+      <ModuleDefinitionFile>$(ProjectDir)module.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <MapExports>true</MapExports>
       <BaseAddress>0x60000000</BaseAddress>
       <SectionAlignment>
       </SectionAlignment>
       <AssemblyDebug>true</AssemblyDebug>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;opengl32.lib;advapi32.lib;shell32.lib;winmm.lib;version.lib;crt.lib;vcruntimed.lib;ucrtd.lib;msvcrtd.lib;hooker.lib</AdditionalDependencies>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;opengl32.lib;advapi32.lib;shell32.lib;winmm.lib;version.lib;_msvcrt.lib;vcruntimed.lib;ucrtd.lib;msvcrtd.lib;hooker.lib</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <FixedBaseAddress>true</FixedBaseAddress>
-      <OutputFile>D:\Games\Heroes 2\WING32$(TargetExt)</OutputFile>
       <StackReserveSize>
       </StackReserveSize>
       <EntryPointSymbol>DllMain</EntryPointSymbol>
@@ -122,8 +126,6 @@
       </HeaderFileName>
     </Midl>
     <ClCompile>
-      <Optimization>MaxSpeed</Optimization>
-      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <StringPooling>true</StringPooling>
@@ -142,16 +144,15 @@
     </ClCompile>
     <ResourceCompile />
     <Link>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;opengl32.lib;advapi32.lib;shell32.lib;winmm.lib;version.lib;crt.lib;msvcrt.lib;hooker.lib</AdditionalDependencies>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;opengl32.lib;advapi32.lib;shell32.lib;winmm.lib;version.lib;_msvcrt.lib;msvcrt.lib;hooker.lib</AdditionalDependencies>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <AssemblyDebug>false</AssemblyDebug>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <MergeSections>
       </MergeSections>
       <SectionAlignment>4096</SectionAlignment>
-      <ModuleDefinitionFile>$(ProjectDir)\module.def</ModuleDefinitionFile>
+      <ModuleDefinitionFile>$(ProjectDir)module.def</ModuleDefinitionFile>
       <EntryPointSymbol>DllMain</EntryPointSymbol>
-      <OutputFile>D:\Games\Heroes 2\WING32$(TargetExt)</OutputFile>
       <CLRSupportLastError>Disabled</CLRSupportLastError>
       <TurnOffAssemblyGeneration>true</TurnOffAssemblyGeneration>
       <IgnoreEmbeddedIDL>true</IgnoreEmbeddedIDL>
@@ -162,15 +163,16 @@
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <ProgramDatabaseFile />
       <SetChecksum>true</SetChecksum>
+      <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <Bscmake />
+    <PostBuildEvent>
+      <Command>"$(SolutionDir)tools\PEUpdater.exe" "$(TargetPath)" linker 6 0 os 4 0 subs 4 0</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="AdrSource.cpp" />
-    <ClCompile Include="AdrStream.cpp" />
     <ClCompile Include="Allocation.cpp" />
     <ClCompile Include="Config.cpp" />
-    <ClCompile Include="AdrDevice.cpp" />
     <ClCompile Include="DirectDraw.cpp" />
     <ClCompile Include="DirectDrawPalette.cpp" />
     <ClCompile Include="DirectDrawSurface.cpp" />
@@ -179,6 +181,7 @@
     <ClCompile Include="IDraw.cpp" />
     <ClCompile Include="IDrawPalette.cpp" />
     <ClCompile Include="IDrawSurface.cpp" />
+    <ClCompile Include="Mods.cpp" />
     <ClCompile Include="OpenDraw.cpp" />
     <ClCompile Include="OpenDrawClipper.cpp" />
     <ClCompile Include="OpenDrawPalette.cpp" />
@@ -196,11 +199,8 @@
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AdrSource.h" />
-    <ClInclude Include="AdrStream.h" />
     <ClInclude Include="Allocation.h" />
     <ClInclude Include="Config.h" />
-    <ClInclude Include="AdrDevice.h" />
     <ClInclude Include="DirectDraw.h" />
     <ClInclude Include="DirectDrawPalette.h" />
     <ClInclude Include="DirectDrawSurface.h" />
@@ -209,6 +209,7 @@
     <ClInclude Include="IDraw.h" />
     <ClInclude Include="IDrawPalette.h" />
     <ClInclude Include="IDrawSurface.h" />
+    <ClInclude Include="Mods.h" />
     <ClInclude Include="OpenDraw.h" />
     <ClInclude Include="OpenDrawClipper.h" />
     <ClInclude Include="OpenDrawPalette.h" />

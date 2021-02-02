@@ -23,6 +23,7 @@
 */
 
 #include "stdafx.h"
+#include "shlobj.h"
 #include "Shellapi.h"
 #include "mmsystem.h"
 #include "Hooks.h"
@@ -30,9 +31,8 @@
 #include "Config.h"
 #include "Resource.h"
 #include "Window.h"
-#include "AdrDevice.h"
-#include "AdrSource.h"
 #include "Hooker.h"
+#include "Mods.h"
 
 #define STYLE_FULL_OLD (WS_VISIBLE | WS_CLIPSIBLINGS)
 #define STYLE_FULL_NEW (WS_VISIBLE | WS_CLIPSIBLINGS | WS_SYSMENU | WS_POPUP)
@@ -176,7 +176,7 @@ namespace Hooks
 #pragma region Fix paint rectangle on VM
 	RECT rcPaint;
 
-	VOID __stdcall CopyInvalidRect(DWORD* src)
+	VOID __fastcall CopyInvalidRect(DWORD* src)
 	{
 		rcPaint = { (LONG)src[2], (LONG)src[3], LONG(src[2] + src[0]), LONG(src[3] + src[1]) };
 
@@ -188,12 +188,10 @@ namespace Hooks
 	VOID __declspec(naked) hook_InvalidateRect()
 	{
 		_asm {
-			MOV ECX, invalidEsp
-			LEA EAX, [ESP+ECX]
-			PUSH EAX
-			CALL CopyInvalidRect
-
-			RETN 0xC
+			mov ecx, invalidEsp
+			lea ecx, [esp + ecx]
+			call CopyInvalidRect
+			retn 0xC
 		}
 	}
 
@@ -223,7 +221,7 @@ namespace Hooks
 #pragma endregion
 
 #pragma region Set Full Screen
-	VOID __fastcall RepaintWindow()
+	VOID RepaintWindow()
 	{
 		rcPaint = { 0, 0, RES_WIDTH, RES_HEIGHT };
 
@@ -241,36 +239,11 @@ namespace Hooks
 	}
 
 	DWORD checkChangeCursor;
-	VOID __stdcall SwitchMode_v2(DWORD isFullscreen)
+	VOID __fastcall SwitchMode_v2(DWORD isFullscreen)
 	{
-		DWORD checkChangeCursor = hookSpace->checkChangeCursor;
-
-		__asm {
-			MOV ECX, isFullscreen
-			CALL ddSetFullScreenStatus
-
-			XOR ECX, ECX
-			XOR EDX, EDX
-			PUSH 1
-			CALL checkChangeCursor
-		}
-
+		((VOID(__fastcall*)(DWORD))ddSetFullScreenStatus)(isFullscreen);
+		((VOID(__fastcall*)(DWORD, DWORD, BOOL))checkChangeCursor)(0, 0, TRUE);
 		RepaintWindow();
-	}
-
-	VOID __declspec(naked) hook_mode_v1()
-	{
-		_asm { JMP SwitchMode_v1 }
-	}
-
-	VOID __declspec(naked) hook_mode_v2()
-	{
-		_asm
-		{
-			PUSH ECX
-			CALL SwitchMode_v2
-			RETN
-		}
 	}
 #pragma endregion
 
@@ -303,6 +276,8 @@ namespace Hooks
 				FillRect(hDc, &rc, (HBRUSH)GetStockObject(BLACK_BRUSH));
 				ReleaseDC(hWndMain, hDc);
 			}
+
+			Mods::SetHWND(hWndMain);
 		}
 
 		return hWndMain;
@@ -349,6 +324,18 @@ namespace Hooks
 		Window::BeginDialog(&params);
 		{
 			res = MessageBox(params.hWnd, lpText, lpCaption, uType);
+		}
+		Window::EndDialog(&params);
+		return res;
+	}
+
+	LPITEMIDLIST __stdcall SHBrowseForFolderHook(BROWSEINFO* info)
+	{
+		LPITEMIDLIST res;
+		DialogParams params = { hWndMain, TRUE, NULL };
+		Window::BeginDialog(&params);
+		{
+			res = SHBrowseForFolder(info);
 		}
 		Window::EndDialog(&params);
 		return res;
@@ -447,12 +434,29 @@ namespace Hooks
 					}
 				}
 
-				for (i = GetMenuItemCount(hNew); i; --i)
+				for (DWORD j = 0; hSub = GetSubMenu(hNew, j); ++j)
 				{
-					hSub = GetSubMenu(hNew, i - 1);
+					GetMenuString(hNew, j, buffer, sizeof(buffer), MF_BYPOSITION);
+					InsertMenu(hMenu, i + j, MF_BYPOSITION | MF_POPUP, (UINT_PTR)hSub, buffer);
+				}
 
-					GetMenuString(hNew, i - 1, buffer, sizeof(buffer), MF_BYPOSITION);
-					InsertMenu(hMenu, index, MF_BYPOSITION | MF_POPUP, (UINT_PTR)hSub, buffer);
+				Window::CheckMenu(hMenu);
+
+				mData.childId = IDM_MODS;
+				if (Window::GetMenuByChildID(hMenu, &mData) && DeleteMenu(hMenu, IDM_MODS, MF_BYCOMMAND))
+				{
+					BOOL added = FALSE;
+					Mod* mod = mods;
+					while (mod)
+					{
+						if (InsertMenu(mData.hMenu, 0, MF_BYPOSITION | MF_POPUP, (UINT_PTR)mod->GetMenu(), mod->GetName()))
+							added = TRUE;
+
+						mod = mod->last;
+					}
+
+					if (!added)
+						DeleteMenu(hMenu, mData.index, MF_BYPOSITION);
 				}
 			}
 		}
@@ -805,7 +809,7 @@ namespace Hooks
 		FLOAT cy;
 	} scale = { 1.0f, 1.0f };
 
-	VOID __fastcall ScalePointer(FLOAT cx, FLOAT cy)
+	VOID ScalePointer(FLOAT cx, FLOAT cy)
 	{
 		HICON* hIcon = (HICON*)hookSpace->icons_list;
 		if (!hIcon)
@@ -1186,188 +1190,18 @@ namespace Hooks
 	}
 #pragma endregion
 
-#pragma region More music formats
-	ADROPENDEVICE AudiereOpenDevice;
-	ADROPENSAMPLESOURCE AudiereOpenSampleSource;
-
-	AdrDevice* __stdcall AdrOpenDeviceHook(CHAR* name, CHAR* parameters)
+#pragma region Fix CD Audio detection with empty or non - cdda drive
+	DWORD AIL_redbook_open, AIL_redbook_status, AIL_redbook_close;
+	DWORD __stdcall AIL_redbook_openHook(DWORD drive)
 	{
-		audiere::AudioDevice* device = AudiereOpenDevice(name, parameters);
-		return device ? new AdrDevice(device) : NULL;
-	}
-
-	BOOL __fastcall FindTrack(CHAR* path)
-	{
-		if (StrLastChar(path, '.'))
+		DWORD res = ((DWORD(__stdcall*)(DWORD))AIL_redbook_open)(drive);
+		if (res && !((DWORD(__stdcall*)(DWORD))AIL_redbook_status)(res))
 		{
-			DWORD total = 0;
-			CHAR filePath[MAX_PATH];
-
-			const CHAR* audioExtList[] = { ".wav", ".flac", ".mp3", ".ogg", ".mod", ".s3m", ".xm", ".it" };
-
-			const CHAR** extension = audioExtList;
-			DWORD count = sizeof(audioExtList) / sizeof(CHAR*);
-			do
-			{
-				StrCopy(filePath, path);
-				CHAR* p = StrLastChar(filePath, '.');
-				*p = NULL;
-
-				StrCat(filePath, "*");
-				StrCat(filePath, *extension);
-
-				WIN32_FIND_DATA findData;
-				MemoryZero(&findData, sizeof(WIN32_FIND_DATA));
-
-				HANDLE hFind = FindFirstFile(filePath, &findData);
-				if (hFind != INVALID_HANDLE_VALUE)
-				{
-					do
-						++total;
-					while (FindNextFile(hFind, &findData));
-					FindClose(hFind);
-				}
-
-				++extension;
-			} while (--count);
-
-			if (total)
-			{
-				SeedRandom(timeGetTime());
-				DWORD random = total != 1 ? Random() % total : 0;
-
-				DWORD index = 0;
-				extension = audioExtList;
-				count = sizeof(audioExtList) / sizeof(CHAR*);
-				do
-				{
-					StrCopy(filePath, path);
-					CHAR* p = StrLastChar(filePath, '.');
-					*p = NULL;
-
-					StrCat(filePath, "*");
-					StrCat(filePath, *extension);
-
-					WIN32_FIND_DATA findData;
-					HANDLE hFind = FindFirstFile(filePath, &findData);
-					if (hFind != INVALID_HANDLE_VALUE)
-					{
-						do
-						{
-							if (index++ == random)
-							{
-								FindClose(hFind);
-
-								p = StrLastChar(filePath, '\\');
-								*(++p) = NULL;
-								StrCat(filePath, findData.cFileName);
-								StrCopy(path, filePath);
-
-								return TRUE;
-							}
-						} while (FindNextFile(hFind, &findData));
-						FindClose(hFind);
-					}
-
-					++extension;
-				} while (--count);
-			}
+			((DWORD(__stdcall*)(DWORD))AIL_redbook_close)(res);
+			res = NULL;
 		}
 
-		return FALSE;
-	}
-
-	AdrSource* __stdcall AdrOpenSampleSourceHook(CHAR* originalPath)
-	{
-		static TrackInfo *tracksList, *trackInfo;
-
-		if (trackInfo && !StrCompare(trackInfo->group, originalPath))
-		{
-			audiere::SampleSource* source = AudiereOpenSampleSource(trackInfo->path);
-			return source ? new AdrSource(source, trackInfo) : NULL;
-		}
-
-		BOOL found = FALSE;
-		CHAR path[MAX_PATH];
-		StrCopy(path, originalPath);
-		CHAR* p = StrChar(path, '\\');
-		if (p)
-			*p = NULL;
-		if (GetDriveType(path) == DRIVE_CDROM)
-		{
-			CHAR* o = StrChar(originalPath, '\\');
-			if (o)
-			{
-				GetModuleFileName(NULL, path, MAX_PATH - 1);
-				p = StrLastChar(path, '\\');
-				if (p)
-				{
-					*p = NULL;
-					StrCat(path, o);
-					found = FindTrack(path);
-				}
-			}
-		}
-
-		if (!found)
-		{
-			StrCopy(path, originalPath);
-			found = FindTrack(path);
-		}
-
-		if (found)
-		{
-			trackInfo = tracksList;
-			while (trackInfo)
-			{
-				if (!StrCompare(trackInfo->path, path))
-				{
-					audiere::SampleSource* source = AudiereOpenSampleSource(trackInfo->path);
-					return source ? new AdrSource(source, trackInfo) : NULL;
-				}
-
-				trackInfo = trackInfo->last;
-			}
-
-			trackInfo = (TrackInfo*)MemoryAlloc(sizeof(TrackInfo));
-			trackInfo->last = tracksList;
-			tracksList = trackInfo;
-
-			trackInfo->position = 0;
-			trackInfo->group = StrDuplicate(originalPath);
-			trackInfo->path = StrDuplicate(path);
-			trackInfo->isPositional = FALSE;
-
-			StrCopy(path, originalPath);
-			p = StrLastChar(path, '.');
-			*p = NULL;
-			p -= 2;
-			BYTE index = (BYTE)StrToInt(p);
-			DWORD type = hookSpace->game_version;
-			if (type == 1 && *(--p) != ' ')
-				type = 0;
-
-			const BYTE positionalList[3][10] = {
-				{ 0, 1, 2, 3, 4, 5, 6, 53, 54, 99 },
-				{ 2, 3, 4, 5, 6, 7, 8, 48, 49, 50 },
-				{ 11, 12, 13, 14, 15, 16, 17, 18, 28, 42 }
-			};
-
-			const BYTE* listItem = positionalList[type];
-			DWORD count = sizeof(positionalList) / 3;
-			do
-			{
-				if (*listItem == index)
-					trackInfo->isPositional = TRUE;
-
-				++listItem;
-			} while (--count);
-
-			audiere::SampleSource* source = AudiereOpenSampleSource(trackInfo->path);
-			return source ? new AdrSource(source, trackInfo) : NULL;
-		}
-		else
-			return NULL;
+		return res;
 	}
 #pragma endregion
 
@@ -1393,34 +1227,6 @@ namespace Hooks
 	{
 		hookSpace->appSettings->showMenu = !hookSpace->appSettings->fullScreen;
 		return RegisterClass(lpWndClass);
-	}
-#pragma endregion
-
-#pragma region Patch audio on GOG release
-	VOID __inline PatchWinMM()
-	{
-		CHAR filePath[MAX_PATH];
-		GetModuleFileName(NULL, filePath, sizeof(filePath) - 1);
-		CHAR* p = StrLastChar(filePath, '\\');
-		if (p)
-		{
-			*p = NULL;
-			StrCat(filePath, "\\WINMM.dll");
-
-			HMODULE hWinMM = LoadLibrary(filePath);
-			if (hWinMM)
-			{
-				HMODULE hMss32 = GetModuleHandle("MSS32.dll");
-				if (hMss32)
-				{
-					HOOKER hooker = CreateHooker(GetModuleHandle(NULL));
-					{
-						RedirectImports(hooker, "WINMM.dll", hWinMM);
-					}
-					ReleaseHooker(hooker);
-				}
-			}
-		}
 	}
 #pragma endregion
 
@@ -1496,7 +1302,8 @@ namespace Hooks
 	DWORD realEntry;
 	DWORD __stdcall MainThread(EntryParams* eParams)
 	{
-		SetThreadLanguage(config.language.current);
+		if (SetThreadLanguage)
+			SetThreadLanguage(config.language.current);
 		Window::SetCaptureKeys(TRUE);
 		DWORD res = ((DWORD(__stdcall*)(EntryParams))realEntry)(*eParams);
 		Window::SetCaptureKeys(FALSE);
@@ -1524,7 +1331,7 @@ namespace Hooks
 	VOID __declspec(naked) hook_004037BE()
 	{
 		__asm {
-			cmp [ebp-4], 0
+			cmp [ebp - 0x4], 0x0
 			jz lbl_exit
 			jmp back_004037C6
 			lbl_exit: jmp back_004037DF
@@ -1555,6 +1362,13 @@ namespace Hooks
 					}
 					ReleaseHooker(user);
 
+					HOOKER shell = CreateHooker(GetModuleHandle("SHELL32.dll"));
+					{
+						if (PatchExport(shell, "SHBrowseForFolderA", SHBrowseForFolderHook))
+							PatchExport(shell, "SHBrowseForFolderA", SHBrowseForFolderHook);
+					}
+					ReleaseHooker(shell);
+
 					DWORD baseOffset = GetBaseOffset(hooker);
 					{
 						PatchImportByName(hooker, "PeekMessageA", PeekMessageHook);
@@ -1582,8 +1396,11 @@ namespace Hooks
 						PatchImportByName(hooker, "RegQueryValueExA", RegQueryValueExHook);
 						PatchImportByName(hooker, "RegSetValueExA", RegSetValueExHook);
 
-						PatchImportByName(hooker, "_AdrOpenDevice@8", AdrOpenDeviceHook, (DWORD*)&AudiereOpenDevice);
-						PatchImportByName(hooker, "_AdrOpenSampleSource@4", AdrOpenSampleSourceHook, (DWORD*)&AudiereOpenSampleSource);
+						if (PatchImportByName(hooker, "_AIL_redbook_open@4", AIL_redbook_openHook, &AIL_redbook_open))
+						{
+							PatchImportByName(hooker, "_AIL_redbook_status@4", NULL, &AIL_redbook_status);
+							PatchImportByName(hooker, "_AIL_redbook_close@4", NULL, &AIL_redbook_close);
+						}
 
 						if (!config.isDDraw)
 						{
@@ -1647,8 +1464,8 @@ namespace Hooks
 							PatchWord(hooker, hookSpace->invalid_jmp, 0xE990);
 						}
 
-						PatchHook(hooker, hookSpace->setFullScreenStatus, hookSpace->game_version == 2 ? hook_mode_v2 : hook_mode_v1);
-						
+						PatchHook(hooker, hookSpace->setFullScreenStatus, hookSpace->game_version == 2 ? (VOID*)SwitchMode_v2 : (VOID*)SwitchMode_v1);
+
 						ddSetFullScreenStatus = hookSpace->ddSetFullScreenStatus + baseOffset;
 						checkChangeCursor = hookSpace->checkChangeCursor + baseOffset;
 
@@ -1662,8 +1479,6 @@ namespace Hooks
 						if (hookSpace->color_pointer_nop)
 							PatchNop(hooker, hookSpace->color_pointer_nop, 10);
 					}
-
-					//PatchWinMM();
 
 					if (hookSpace->pointer_fs_nop)
 						PatchNop(hooker, hookSpace->pointer_fs_nop, 2);

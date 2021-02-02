@@ -163,7 +163,6 @@ typedef VOID(__stdcall* GLBINDATTRIBLOCATION)(GLuint program, GLuint index, cons
 typedef GLuint(__stdcall *GLGETUNIFORMLOCATION)(GLuint program, const GLchar* name);
 
 typedef VOID(__stdcall* GLUNIFORM1I)(GLint location, GLint v0);
-typedef VOID(__stdcall* GLUNIFORM1F)(GLint location, GLfloat v0);
 typedef VOID(__stdcall* GLUNIFORM2F)(GLint location, GLfloat v0, GLfloat v1);
 typedef VOID(__stdcall* GLUNIFORM4F)(GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3);
 
@@ -237,7 +236,6 @@ extern GLBINDATTRIBLOCATION GLBindAttribLocation;
 extern GLGETUNIFORMLOCATION GLGetUniformLocation;
 
 extern GLUNIFORM1I GLUniform1i;
-extern GLUNIFORM1F GLUniform1f;
 extern GLUNIFORM2F GLUniform2f;
 extern GLUNIFORM4F GLUniform4f;
 
@@ -252,10 +250,10 @@ extern GLFRAMEBUFFERTEXTURE2D GLFramebufferTexture2D;
 
 namespace GL
 {
-	VOID __fastcall CreateContextAttribs(HDC, HGLRC*);
-	VOID __fastcall ResetPixelFormatDescription(PIXELFORMATDESCRIPTOR*);
-	VOID __fastcall PreparePixelFormatDescription(PIXELFORMATDESCRIPTOR*);
-	INT __fastcall PreparePixelFormat(PIXELFORMATDESCRIPTOR*);
-	VOID __fastcall ResetPixelFormat(HWND);
-	GLuint __fastcall CompileShaderSource(DWORD, CHAR*, GLenum);
+	VOID CreateContextAttribs(HDC, HGLRC*);
+	VOID ResetPixelFormatDescription(PIXELFORMATDESCRIPTOR*);
+	VOID PreparePixelFormatDescription(PIXELFORMATDESCRIPTOR*);
+	INT PreparePixelFormat(PIXELFORMATDESCRIPTOR*);
+	VOID ResetPixelFormat(HWND);
+	GLuint CompileShaderSource(DWORD, CHAR*, GLenum);
 }

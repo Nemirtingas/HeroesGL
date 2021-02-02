@@ -31,18 +31,18 @@
 
 namespace Window
 {
-	VOID __fastcall BeginDialog(DialogParams* params);
-	VOID __fastcall EndDialog(DialogParams* params);
+	VOID BeginDialog(DialogParams* params);
+	VOID EndDialog(DialogParams* params);
 
-	BOOL __fastcall GetMenuByChildID(HMENU, MenuItemData* mData);
+	BOOL GetMenuByChildID(HMENU, MenuItemData* mData);
 
-	VOID __fastcall CheckMenu(HMENU hMenu, MenuType type);
-	VOID __fastcall CheckMenu(HWND hWnd, MenuType type);
+	VOID CheckMenu(HMENU hMenu, MenuType type);
+	VOID CheckMenu(HWND hWnd, MenuType type);
 
-	VOID __fastcall CheckMenu(HMENU hMenu);
-	VOID __fastcall CheckMenu(HWND hWnd);
+	VOID CheckMenu(HMENU hMenu);
+	VOID CheckMenu(HWND hWnd);
 
-	VOID __fastcall SetCaptureKeys(BOOL state);
-	VOID __fastcall SetCaptureWindow(HWND hWnd);
-	VOID __fastcall SetCapturePanel(HWND hWnd);
+	VOID SetCaptureKeys(BOOL state);
+	VOID SetCaptureWindow(HWND hWnd);
+	VOID SetCapturePanel(HWND hWnd);
 }

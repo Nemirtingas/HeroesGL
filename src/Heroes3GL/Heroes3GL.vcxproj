@@ -93,14 +93,14 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <ModuleDefinitionFile>$(ProjectDir)\module.def</ModuleDefinitionFile>
+      <ModuleDefinitionFile>$(ProjectDir)module.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <MapExports>true</MapExports>
       <BaseAddress>0x60000000</BaseAddress>
       <SectionAlignment>
       </SectionAlignment>
       <AssemblyDebug>true</AssemblyDebug>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;opengl32.lib;advapi32.lib;shell32.lib;winmm.lib;version.lib;crt.lib;vcruntimed.lib;ucrtd.lib;msvcrtd.lib;hooker.lib</AdditionalDependencies>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;opengl32.lib;advapi32.lib;shell32.lib;winmm.lib;version.lib;_msvcrt.lib;vcruntimed.lib;ucrtd.lib;msvcrtd.lib;hooker.lib</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <FixedBaseAddress>true</FixedBaseAddress>
@@ -125,8 +125,6 @@
       </HeaderFileName>
     </Midl>
     <ClCompile>
-      <Optimization>MaxSpeed</Optimization>
-      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <StringPooling>true</StringPooling>
@@ -145,13 +143,13 @@
     </ClCompile>
     <ResourceCompile />
     <Link>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;opengl32.lib;advapi32.lib;shell32.lib;winmm.lib;version.lib;crt.lib;msvcrt.lib;hooker.lib</AdditionalDependencies>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;opengl32.lib;advapi32.lib;shell32.lib;winmm.lib;version.lib;_msvcrt.lib;msvcrt.lib;hooker.lib</AdditionalDependencies>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <AssemblyDebug>false</AssemblyDebug>
       <MergeSections>
       </MergeSections>
       <SectionAlignment>4096</SectionAlignment>
-      <ModuleDefinitionFile>$(ProjectDir)\module.def</ModuleDefinitionFile>
+      <ModuleDefinitionFile>$(ProjectDir)module.def</ModuleDefinitionFile>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <LinkErrorReporting>NoErrorReport</LinkErrorReporting>
       <CLRSupportLastError>Disabled</CLRSupportLastError>
@@ -164,6 +162,7 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <AdditionalOptions>/DEBUG:NONE /EMITPOGOPHASEINFO %(AdditionalOptions)</AdditionalOptions>
       <SetChecksum>true</SetChecksum>
+      <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <Bscmake />
     <PostBuildEvent>

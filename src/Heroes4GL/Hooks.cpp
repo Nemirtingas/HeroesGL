@@ -35,7 +35,7 @@
 #define STYLE_FULL_NEW (WS_VISIBLE | WS_POPUP | WS_SYSMENU | WS_CLIPSIBLINGS)
 
 #define STYLE_WIN_OLD (WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX)
-#define STYLE_WIN_NEW (WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SIZEBOX | WS_MAXIMIZEBOX)
+#define STYLE_WIN_NEW (WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SIZEBOX)
 
 const AddressSpace addressArray[] = {
 // === RUS ======================================================================================================================================
@@ -161,7 +161,7 @@ namespace Hooks
 		return MoveWindow(hWnd, X, Y, nWidth, nHeight, bRepaint);
 	}
 
-	VOID __fastcall LoadNewMenu(HMENU hMenu)
+	VOID LoadNewMenu(HMENU hMenu)
 	{
 		if (hMenu)
 		{
@@ -611,23 +611,13 @@ namespace Hooks
 
 	VOID __cdecl LoadDataPackageCdecl(const CHAR* name)
 	{
-		((VOID(__thiscall*)(const CHAR*))sub_LoadDataPackage)(name);
+		((VOID(__fastcall*)(const CHAR*))sub_LoadDataPackage)(name);
 	}
 
-	VOID __stdcall LoadDataPackage_0(const CHAR* name)
+	VOID __fastcall LoadDataPackage_0(const CHAR* name)
 	{
 		Mods::LoadPackages(LoadDataPackageCdecl);
-		((VOID(__thiscall*)(const CHAR*))sub_LoadDataPackage)(name);
-	}
-
-	VOID __declspec(naked) hook_006D5363()
-	{
-		_asm {
-			pop eax
-			push ecx
-			push eax
-			jmp LoadDataPackage_0
-		}
+		((VOID(__fastcall*)(const CHAR*))sub_LoadDataPackage)(name);
 	}
 #pragma endregion
 
@@ -699,7 +689,7 @@ namespace Hooks
 					PatchImportByName(hooker, "RegQueryValueExA", RegQueryValueExHook);
 					PatchImportByName(hooker, "RegSetValueExA", RegSetValueExHook);
 
-					PatchImportByName(hooker, "DirectDrawCreateEx", Main::DirectDrawCreateEx);
+					PatchImportByName(hooker, "DirectDrawCreateEx", Main::DirectDrawCreateEx, NULL, TRUE);
 
 					if (!config.isDDraw)
 					{
@@ -781,7 +771,7 @@ namespace Hooks
 						PatchBlock(hooker, hookSpace->updateWindowReg_nop, (VOID*)addEsp4, sizeof(addEsp4));
 
 						// Load Package Hook
-						sub_LoadDataPackage = RedirectCall(hooker, hookSpace->load_package, hook_006D5363);
+						sub_LoadDataPackage = RedirectCall(hooker, hookSpace->load_package, LoadDataPackage_0);
 					}
 				}
 

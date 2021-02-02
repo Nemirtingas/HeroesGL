@@ -64,7 +64,7 @@ LIBEXP(RegisterSpecialCase)
 LIBEXP(ReleaseDDThreadLock)
 LIBEXP(SetAppCompatData)
 
-DOUBLE __fastcall MathRound(DOUBLE number)
+DOUBLE MathRound(DOUBLE number)
 {
 	DOUBLE floorVal = MathFloor(number);
 	return floorVal + 0.5f > number ? floorVal : MathCeil(number);
@@ -76,7 +76,7 @@ struct Aligned {
 	VOID* block;
 } * alignedList;
 
-VOID* __fastcall AlignedAlloc(size_t size)
+VOID* AlignedAlloc(size_t size)
 {
 	Aligned* entry = (Aligned*)MemoryAlloc(sizeof(Aligned));
 	entry->last = alignedList;
@@ -88,7 +88,7 @@ VOID* __fastcall AlignedAlloc(size_t size)
 	return entry->block;
 }
 
-VOID __fastcall AlignedFree(VOID* block)
+VOID AlignedFree(VOID* block)
 {
 	Aligned* entry = alignedList;
 	if (entry)
@@ -127,10 +127,7 @@ VOID LoadKernel32()
 		ReleaseActCtxC = (RELEASEACTCTX)GetProcAddress(hLib, "ReleaseActCtx");
 		ActivateActCtxC = (ACTIVATEACTCTX)GetProcAddress(hLib, "ActivateActCtx");
 		DeactivateActCtxC = (DEACTIVATEACTCTX)GetProcAddress(hLib, "DeactivateActCtx");
-
 		SetThreadLanguage = (SETTHREADLANGUAGE)GetProcAddress(hLib, "SetThreadUILanguage");
-		if (!SetThreadLanguage)
-			SetThreadLanguage = (SETTHREADLANGUAGE)SetThreadLocale;
 	}
 }
 

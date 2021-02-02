@@ -28,7 +28,7 @@ BEGIN
 	IDS_ERROR_ARB_PROFILE			"Неверный профиль ARB"
 	IDS_ERROR_LOAD_RESOURCE			"Ошибка загрузки ресурса"
 	IDS_ERROR_COMPILE_SHADER		"Ошибка компиляции шейдера"
-	IDS_INFO_RESTART				"Чтобы изменения вступили в силу, нужно перезапустите игру"
+	IDS_INFO_RESTART				"Чтобы изменения вступили в силу, нужно перезапустить игру"
 	IDS_HOMM_3_ROE					"Герои Меча и Магии III: Возрождение Эрафии"
 	IDS_HOMM_3_AB					"Герои Меча и Магии III: Клинок Армагеддона"
 	IDS_HOMM_3_SOD					"Герои Меча и Магии III: Дыхание Cмерти"

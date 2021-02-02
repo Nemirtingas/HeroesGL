@@ -66,7 +66,7 @@ namespace Main
 		}
 	}
 
-	OpenDraw* __fastcall FindOpenDrawByWindow(HWND hWnd)
+	OpenDraw* FindOpenDrawByWindow(HWND hWnd)
 	{
 		IDraw7* ddraw = drawList;
 		while (ddraw)
@@ -80,14 +80,14 @@ namespace Main
 		return NULL;
 	}
 
-	VOID __fastcall ShowError(UINT id, CHAR* file, DWORD line)
+	VOID ShowError(UINT id, CHAR* file, DWORD line)
 	{
 		CHAR message[256];
 		LoadString(hDllModule, id, message, sizeof(message));
 		ShowError(message, file, line);
 	}
 
-	VOID __fastcall ShowError(CHAR* message, CHAR* file, DWORD line)
+	VOID ShowError(CHAR* message, CHAR* file, DWORD line)
 	{
 		CHAR title[64];
 		LoadString(hDllModule, IDS_ERROR, title, sizeof(title));
@@ -100,14 +100,14 @@ namespace Main
 		Exit(EXIT_FAILURE);
 	}
 
-	VOID __fastcall ShowInfo(UINT id)
+	VOID ShowInfo(UINT id)
 	{
 		CHAR message[256];
 		LoadString(hDllModule, id, message, sizeof(message));
 		ShowInfo(message);
 	}
 
-	VOID __fastcall ShowInfo(CHAR* message)
+	VOID ShowInfo(CHAR* message)
 	{
 		CHAR title[64];
 		LoadString(hDllModule, IDS_INFO, title, sizeof(title));
@@ -116,7 +116,7 @@ namespace Main
 	}
 
 #ifdef _DEBUG
-	VOID __fastcall CheckError(CHAR* file, DWORD line)
+	VOID CheckError(CHAR* file, DWORD line)
 	{
 		DWORD statusCode = GLGetError();
 
