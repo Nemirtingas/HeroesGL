@@ -117,20 +117,20 @@ union Levels
 	FLOAT chanel[4];
 };
 
+struct Range
+{
+	Levels left;
+	Levels right;
+};
+
 struct Adjustment {
 	struct {
 		FLOAT hueShift;
 		FLOAT saturation;
 	} satHue;
-	struct {
-		Levels left;
-		Levels right;
-	} input;
+	Range input;
 	Levels gamma;
-	struct {
-		Levels left;
-		Levels right;
-	} output;
+	Range output;
 };
 
 union LevelColors
@@ -190,9 +190,7 @@ struct AddressSpace
 	DWORD invalid_jmp;
 	DWORD invalid_esp;
 
-	AppSettings* appSettings;
-	DWORD dispelMagicSwitch;
-	DWORD dispelMagicFix;
+	DWORD appSettings;
 
 	DWORD color_pointer;
 	DWORD color_pointer_nop;
@@ -210,8 +208,11 @@ struct AddressSpace
 	DWORD fadein_update_2;
 	DWORD fadeout_tick;
 	DWORD fadeout_update;
-	DWORD nt_check_nop;
+
 	DWORD sample_end_check;
+	DWORD sample_end_all;
+	DWORD tavern_anim_time;
+	DWORD smack_goto_time;
 	DWORD windowName;
 };
 
@@ -293,9 +294,7 @@ struct ConfigItems
 		} caps;
 	} gl;
 
-	struct {
-		FpsState state;
-	} fps;
+	FpsState fps;
 
 	struct {
 		BOOL aspect;
@@ -337,6 +336,7 @@ enum MenuType
 {
 	MenuAspect,
 	MenuVSync,
+	MenuFps,
 	MenuInterpolate,
 	MenuUpscale,
 	MenuColors,

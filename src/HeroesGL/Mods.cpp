@@ -24,6 +24,8 @@
 
 #include "stdafx.h"
 #include "Mods.h"
+#include "Window.h"
+#include "Resource.h"
 
 Mod* mods;
 
@@ -33,55 +35,125 @@ namespace Mods
 	{
 		CHAR file[MAX_PATH];
 		GetModuleFileName(NULL, file, sizeof(file));
-		CHAR* p = StrLastChar(file, '\\');
-		if (!p)
-			return;
-		StrCopy(++p, "mods\\");
-		p += StrLength(p);
-		StrCopy(p, "*.mod");
+		CHAR* dir = StrLastChar(file, '\\') + 1;
 
 		WIN32_FIND_DATA fData;
-		HANDLE hFile = FindFirstFile(file, &fData);
-		if (hFile && hFile != INVALID_HANDLE_VALUE)
+
 		{
-			do
+			CHAR* p = dir;
+			StrCopy(p, "mods\\");
+			p += StrLength(p);
+			StrCopy(p, "*.mod");
+
+			HANDLE hFile = FindFirstFile(file, &fData);
+			if (hFile && hFile != INVALID_HANDLE_VALUE)
 			{
-				StrCopy(p, fData.cFileName);
-				HMODULE hMod = LoadLibrary(file);
-				if (hMod)
+				Mod* last;
+				do
 				{
-					ISSUPPORTED IsSupported = (ISSUPPORTED)GetProcAddress(hMod, "IsSupported");
-					if (IsSupported && IsSupported())
+					StrCopy(p, fData.cFileName);
+					HMODULE hModule = LoadLibrary(file);
+					if (hModule)
 					{
 						Mod* mod = (Mod*)MemoryAlloc(sizeof(Mod));
-						mod->last = mods;
-						mods = mod;
+						if (mod)
+						{
+							mod->GetName = (GETNAME)GetProcAddress(hModule, "GetName");
+							mod->GetMenu = (GETMENU)GetProcAddress(hModule, "GetMenu");
+							mod->SetHWND = (SETHWND)GetProcAddress(hModule, "SetHWND");
 
-						mod->hModule = hMod;
-						mod->IsSupported = IsSupported;
-						mod->GetName = (GETNAME)GetProcAddress(hMod, "GetName");
-						mod->GetMenu = (GETMENU)GetProcAddress(hMod, "GetMenu");
-						mod->SetHWND = (SETHWND)GetProcAddress(hMod, "SetHWND");
-						mod->Process = (PROCESS)GetProcAddress(hMod, "Process");
+							if (mod->GetName && mod->GetMenu && mod->SetHWND)
+							{
+								mod->hWnd = NULL;
+								StrCopy(mod->name, mod->GetName());
 
-						mod->Process();
+								mod->last = NULL;
+								if (!mods)
+									mods = mod;
+								else
+									last->last = mod;
+								last = mod;
+
+								continue;
+							}
+
+							FreeLibrary(hModule);
+							MemoryFree(mod);
+						}
 					}
-					else
-						FreeLibrary(hMod);
-				}
-			} while (FindNextFile(hFile, &fData));
+				} while (FindNextFile(hFile, &fData));
 
-			FindClose(hFile);
+				FindClose(hFile);
+			}
+		}
+
+		{
+			CHAR* p = dir;
+			StrCopy(p, "*.asi");
+
+			HANDLE hFile = FindFirstFile(file, &fData);
+			if (hFile && hFile != INVALID_HANDLE_VALUE)
+			{
+				do
+				{
+					StrCopy(p, fData.cFileName);
+					LoadLibrary(file);
+				} while (FindNextFile(hFile, &fData));
+
+				FindClose(hFile);
+			}
 		}
 	}
 
 	VOID SetHWND(HWND hWnd)
 	{
-		Mod* mod = mods;
-		while (mod)
+		for (Mod* mod = mods; mod; mod = mod->last)
 		{
+			mod->hWnd = hWnd;
 			mod->SetHWND(hWnd);
-			mod = mod->last;
+		}
+	}
+
+	VOID SetMenu(HMENU hMenu)
+	{
+		DWORD offset = MENU_OFFSET;
+
+		MenuItemData mData;
+		mData.childId = IDM_MODS;
+		if (Window::GetMenuByChildID(hMenu, &mData) && DeleteMenu(hMenu, IDM_MODS, MF_BYCOMMAND))
+		{
+			for (Mod* mod = mods; mod; mod = mod->last)
+			{
+				mod->added = FALSE;
+				if (mod->name)
+				{
+					HMENU hModMenu = mod->GetMenu(offset);
+					if (hModMenu)
+					{
+						DWORD idx = 0;
+						for (Mod* check = mods; check && check != mod; check = check->last)
+							if (check->added && !StrCompare(check->name, mod->name))
+								++idx;
+
+						CHAR name[256];
+						if (idx)
+							StrPrint(name, "%s\t#%d", mod->name, idx + 1);
+						else
+							StrPrint(name, "%s\t", mod->name);
+
+						if (AppendMenu(mData.hMenu, MF_POPUP, (UINT_PTR)hModMenu, name))
+						{
+							mod->added = TRUE;
+							offset += MENU_STEP;
+							if (offset == MENU_RESERVED) // game menu space
+								offset += MENU_STEP;
+						}
+					}
+				}
+			}
+
+			if (offset == MENU_OFFSET)
+				DeleteMenu(hMenu, mData.index, MF_BYPOSITION);
 		}
 	}
 }

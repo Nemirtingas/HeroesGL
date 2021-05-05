@@ -15,6 +15,7 @@
     <ProjectGuid>{62a3e190-3331-4f08-9a9f-24315d6a805e}</ProjectGuid>
     <RootNamespace>Heroes3GL</RootNamespace>
     <ProjectName>Heroes3GL</ProjectName>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -177,6 +178,7 @@
     <ClCompile Include="IDraw.cpp" />
     <ClCompile Include="IDrawClipper.cpp" />
     <ClCompile Include="IDrawSurface.cpp" />
+    <ClCompile Include="Mods.cpp" />
     <ClCompile Include="OpenDraw.cpp" />
     <ClCompile Include="OpenDrawClipper.cpp" />
     <ClCompile Include="OpenDrawSurface.cpp" />
@@ -200,6 +202,7 @@
     <ClInclude Include="IDraw.h" />
     <ClInclude Include="IDrawClipper.h" />
     <ClInclude Include="IDrawSurface.h" />
+    <ClInclude Include="Mods.h" />
     <ClInclude Include="OpenDraw.h" />
     <ClInclude Include="OpenDrawClipper.h" />
     <ClInclude Include="OpenDrawSurface.h" />

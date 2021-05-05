@@ -31,6 +31,7 @@
 #include "Resource.h"
 #include "Window.h"
 #include "hooker.h"
+#include "Mods.h"
 
 #define STYLE_FULL_OLD (WS_VISIBLE | WS_POPUP)
 #define STYLE_FULL_NEW (WS_VISIBLE | WS_POPUP | WS_SYSMENU | WS_CLIPSIBLINGS)
@@ -266,6 +267,8 @@ namespace Hooks
 				FillRect(hDc, &rc, (HBRUSH)GetStockObject(BLACK_BRUSH));
 				ReleaseDC(hWndMain, hDc);
 			}
+
+			Mods::SetHWND(hWndMain);
 		}
 
 		return hWndMain;
@@ -332,10 +335,8 @@ namespace Hooks
 	BOOL __stdcall WinHelpHook(HWND hWndMain, LPCSTR lpszHelp, UINT uCommand, ULONG_PTR dwData)
 	{
 		CHAR filePath[MAX_PATH];
-		GetModuleFileName(GetHookerModule(hooker), filePath, MAX_PATH - 1);
-		CHAR* p = StrLastChar(filePath, '\\');
-		*p = NULL;
-		StrCopy(p, "\\winhlp32.exe");
+		GetModuleFileName(GetHookerModule(hooker), filePath, MAX_PATH);
+		StrCopy(StrLastChar(filePath, '\\') + 1, "help\\winhlp32.exe");
 
 		FILE* file = FileOpen(filePath, "rb");
 		if (file)
@@ -354,7 +355,7 @@ namespace Hooks
 
 			return TRUE;
 		}
-		else
+
 			return WinHelp(hWndMain, lpszHelp, uCommand, dwData);
 	}
 
@@ -363,7 +364,7 @@ namespace Hooks
 		HMENU hMenu = LoadMenu(hInstance, lpMenuName);
 		if (hMenu)
 		{
-			HMENU hNew = LoadMenu(hDllModule, MAKEINTRESOURCE(IDM_MENU));
+			HMENU hNew = LoadMenu(hDllModule, MAKEINTRESOURCE(IDR_MENU));
 			if (hNew)
 			{
 				DWORD i, index = 0;
@@ -423,6 +424,16 @@ namespace Hooks
 					}
 				}
 
+				if (config.keys.fpsCounter)
+				{
+					mData.childId = IDM_FPS_OFF;
+					if (Window::GetMenuByChildID(hNew, &mData) && (info.cch = sizeof(buffer), GetMenuItemInfo(mData.hParent, mData.index, TRUE, &info)))
+					{
+						StrPrint(buffer, "%sF%d", buffer, config.keys.fpsCounter);
+						SetMenuItemInfo(mData.hParent, mData.index, TRUE, &info);
+					}
+				}
+
 				for (i = GetMenuItemCount(hNew); i; --i)
 				{
 					hSub = GetSubMenu(hNew, i - 1);
@@ -430,6 +441,9 @@ namespace Hooks
 					GetMenuString(hNew, i - 1, buffer, sizeof(buffer), MF_BYPOSITION);
 					InsertMenu(hMenu, index, MF_BYPOSITION | MF_POPUP, (UINT_PTR)hSub, buffer);
 				}
+
+				Window::CheckMenu(hMenu);
+				Mods::SetMenu(hMenu);
 			}
 		}
 
@@ -580,10 +594,8 @@ namespace Hooks
 			{
 				StrCopy(filePath, path);
 				CHAR* p = StrLastChar(filePath, '.');
-				*p = NULL;
-
-				StrCat(filePath, "*");
-				StrCat(filePath, *extension);
+				*++p = '*';
+				StrCopy(++p, *extension);
 
 				WIN32_FIND_DATA findData;
 				MemoryZero(&findData, sizeof(WIN32_FIND_DATA));
@@ -611,10 +623,8 @@ namespace Hooks
 				{
 					StrCopy(filePath, path);
 					CHAR* p = StrLastChar(filePath, '.');
-					*p = NULL;
-
-					StrCat(filePath, "*");
-					StrCat(filePath, *extension);
+					*++p = '*';
+					StrCopy(++p, *extension);
 
 					WIN32_FIND_DATA findData;
 					HANDLE hFind = FindFirstFile(filePath, &findData);
@@ -824,7 +834,7 @@ namespace Hooks
 		}
 		else
 		{
-			const MoveObject moveObject = {
+			static const MoveObject moveObject = {
 				2, 8, 10, 16, 32,
 				100, 50, 50, 50, 100,
 				-32, 0, 32
@@ -1154,13 +1164,15 @@ namespace Hooks
 			Config::Load(GetHookerModule(hooker), hookSpace);
 
 			HOOKER user = CreateHooker(GetModuleHandle("USER32.dll"));
+			if (user)
 			{
 				PatchExport(user, "PeekMessageA", PeekMessageHook);
 				PatchExport(user, "MessageBoxA", MessageBoxHook);
 				PatchExport(user, "DialogBoxParamA", DialogBoxParamHook);
-			}
-			ReleaseHooker(user);
 
+				ReleaseHooker(user);
+			}
+			
 			{
 				PatchImportByName(hooker, "PeekMessageA", PeekMessageHook);
 				PatchImportByName(hooker, "MessageBoxA", MessageBoxHook);

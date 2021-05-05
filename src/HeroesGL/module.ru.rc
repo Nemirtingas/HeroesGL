@@ -41,7 +41,7 @@ END
 // Menu
 //
 
-IDM_MENU MENU DISCARDABLE
+IDR_MENU MENU DISCARDABLE
 BEGIN
 	POPUP "&Экран"
 	BEGIN
@@ -64,6 +64,14 @@ BEGIN
 			MENUITEM "&Полноэкранный режим\a",		IDM_RES_FULL_SCREEN
 		END
 		MENUITEM "Верт. &синхронизация\a",			IDM_VSYNC
+		MENUITEM SEPARATOR
+		POPUP "&FPS счетчик\a"
+		BEGIN
+			MENUITEM "&Откл.",						IDM_FPS_OFF
+			MENUITEM SEPARATOR
+			MENUITEM "&Обычный",					IDM_FPS_NORMAL
+			MENUITEM "&Бенчмарк",					IDM_FPS_BENCHMARK
+		END
 	END
 	POPUP "&Изображение"
 	BEGIN
@@ -145,7 +153,7 @@ IDD_ABOUT DIALOGEX DISCARDABLE 29,23,216,190
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP
 FONT 8, "MS Sans Serif"
 BEGIN
-	CTEXT			"Герои Меча и Магии I && II\nOpenGL враппер",IDC_STATIC,0,8,216,24
+	CTEXT			"Герои Меча и Магии I и II\nOpenGL враппер",IDC_STATIC,0,8,216,24
 	CTEXT			"Версия %d.%d%d   Сборка %d",IDC_VERSION,0,40,216,11
 	CTEXT			"Проверить новые версии",IDC_STATIC,0,64,216,11
 	CONTROL			"",IDC_LNK_WEB,"SysLink",WS_TABSTOP,48,76,216,11
@@ -161,7 +169,7 @@ IDD_ABOUT_OLD DIALOGEX DISCARDABLE 29,23,216,190
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP
 FONT 8, "MS Sans Serif"
 BEGIN
-	CTEXT			"Герои Меча и Магии I && II\nOpenGL враппер",IDC_STATIC,0,8,216,24
+	CTEXT			"Герои Меча и Магии I и II\nOpenGL враппер",IDC_STATIC,0,8,216,24
 	CTEXT			"Версия %d.%d%d   Сборка %d",IDC_VERSION,0,40,216,11
 	CTEXT			"Проверить новые версии",IDC_STATIC,0,64,216,11
 	CTEXT			"",IDC_LNK_WEB,0,76,216,11

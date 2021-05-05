@@ -59,9 +59,8 @@ namespace Mods
 						mod->GetName = (GETNAME)GetProcAddress(hModule, "GetName");
 						mod->GetMenu = (GETMENU)GetProcAddress(hModule, "GetMenu");
 						mod->SetHWND = (SETHWND)GetProcAddress(hModule, "SetHWND");
-						mod->LoadPackages = (LOADPACKAGES)GetProcAddress(hModule, "LoadPackages");
 
-						if (mod->GetName && mod->GetMenu && mod->SetHWND && mod->LoadPackages)
+						if (mod->GetName && mod->GetMenu && mod->SetHWND)
 						{
 							mod->hWnd = NULL;
 							StrCopy(mod->name, mod->GetName());
@@ -126,34 +125,9 @@ namespace Mods
 						{
 							mod->added = TRUE;
 							offset += MENU_STEP;
-
-							if (offset == MENU_RESERVED || offset == MENU_EQULIBRIS) // game menu space
-								offset += MENU_STEP;
+							if (offset == MENU_RESERVED) // game menu space
+								offset += MENU_STEP * 10;
 						}
-					}
-				}
-			}
-
-			// Equilibris
-			MenuItemData eqData;
-			eqData.childId = 36864;
-			if (Window::GetMenuByChildID(hMenu, &eqData))
-			{
-				CHAR buffer[256];
-				INT count = GetMenuItemCount(hMenu);
-				for (INT i = 0; i < count; ++i)
-				{
-					if (GetSubMenu(hMenu, i) == eqData.hParent)
-					{
-						AppendMenu(mData.hMenu, MF_SEPARATOR, 0, NULL);
-						GetMenuString(hMenu, i, buffer, sizeof(buffer), MF_BYPOSITION);
-						if (AppendMenu(mData.hMenu, MF_POPUP, (UINT_PTR)eqData.hParent, buffer))
-						{
-							offset += MENU_STEP;
-							RemoveMenu(hMenu, i, MF_BYPOSITION);
-						}
-
-						break;
 					}
 				}
 			}
@@ -161,11 +135,5 @@ namespace Mods
 			if (offset == MENU_OFFSET)
 				DeleteMenu(hMenu, mData.index, MF_BYPOSITION);
 		}
-	}
-
-	VOID LoadPackages(LOADPACKAGE callback)
-	{
-		for (Mod* mod = mods; mod; mod = mod->last)
-			mod->LoadPackages(callback);
 	}
 }

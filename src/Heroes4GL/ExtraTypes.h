@@ -124,20 +124,19 @@ union Levels
 	FLOAT chanel[4];
 };
 
+struct Range {
+	Levels left;
+	Levels right;
+};
+
 struct Adjustment {
 	struct {
 		FLOAT hueShift;
 		FLOAT saturation;
 	} satHue;
-	struct {
-		Levels left;
-		Levels right;
-	} input;
+	Range input;
 	Levels gamma;
-	struct {
-		Levels left;
-		Levels right;
-	} output;
+	Range output;
 };
 
 union LevelColors
@@ -261,9 +260,7 @@ struct ConfigItems
 		} caps;
 	} gl;
 
-	struct {
-		FpsState state;
-	} fps;
+	FpsState fps;
 
 	struct {
 		BOOL aspect;
@@ -305,6 +302,7 @@ enum MenuType
 {
 	MenuAspect,
 	MenuVSync,
+	MenuFps,
 	MenuInterpolate,
 	MenuUpscale,
 	MenuColors,

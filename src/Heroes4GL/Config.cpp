@@ -94,12 +94,44 @@ CHAR keysBuffer[4096];
 
 namespace Config
 {
+	BYTE LoadKey(const CHAR* name)
+	{
+		CHAR buffer[20];
+		if (Config::Get(CONFIG_KEYS, name, "", buffer, sizeof(buffer)))
+		{
+			INT value = Config::Get(CONFIG_KEYS, name, 0);
+			BYTE res = LOBYTE(value);
+			if (res <= 24)
+				return res;
+		}
+
+		return 0;
+	}
+
+	VOID LoadRange(const CHAR* name, Range* range, DWORD chanel)
+	{
+		INT value = Config::Get(CONFIG_COLORS, name, 0x03E80000);
+		if (LOWORD(value) < HIWORD(value))
+		{
+			range->left.chanel[chanel] = 0.001f * min(1000, max(0, LOWORD(value)));
+			range->right.chanel[chanel] = 0.001f * min(1000, max(0, HIWORD(value)));
+		}
+		else
+		{
+			range->left.chanel[chanel] = 0.0f;
+			range->right.chanel[chanel] = 1.0f;
+		}
+	}
+
+	FLOAT LoadGamma(const CHAR* name)
+	{
+		return 0.001f * min(1000, max(0, Config::Get(CONFIG_COLORS, name, 500)));
+	}
+
 	VOID Load(HMODULE hModule, const AddressSpace* hookSpace)
 	{
-		GetModuleFileName(hModule, config.file, MAX_PATH - 1);
-		CHAR* p = StrLastChar(config.file, '\\');
-		*p = NULL;
-		StrCopy(p, "\\config.ini");
+		GetModuleFileName(hModule, config.file, MAX_PATH);
+		StrCopy(StrLastChar(config.file, '\\') + 1, "config.ini");
 
 		FILE* file = FileOpen(config.file, "rb");
 		if (file)
@@ -163,6 +195,8 @@ namespace Config
 
 			config.image.vSync = TRUE;
 			Config::Set(CONFIG_WRAPPER, "ImageVSync", config.image.vSync);
+
+			Config::Set(CONFIG_WRAPPER, "FpsCounter", *(INT*)&config.fps);
 
 			config.image.interpolation = InterpolateHermite;
 			Config::Set(CONFIG_WRAPPER, "Interpolation", *(INT*)&config.image.interpolation);
@@ -276,6 +310,11 @@ namespace Config
 				config.image.aspect = (BOOL)Config::Get(CONFIG_WRAPPER, "ImageAspect", TRUE);
 				config.image.vSync = (BOOL)Config::Get(CONFIG_WRAPPER, "ImageVSync", TRUE);
 
+				value = Config::Get(CONFIG_WRAPPER, "FpsCounter", FpsDisabled);
+				config.fps = *(FpsState*)&value;
+				if (config.fps < FpsDisabled || config.fps > FpsBenchmark)
+					config.fps = FpsDisabled;
+
 				value = Config::Get(CONFIG_WRAPPER, "Interpolation", InterpolateHermite);
 				config.image.interpolation = *(InterpolationFilter*)&value;
 				if (config.image.interpolation < InterpolateNearest || config.image.interpolation > InterpolateLanczos)
@@ -310,147 +349,26 @@ namespace Config
 				config.colors.active.satHue.hueShift = 0.001f * min(1000, max(0, LOWORD(value)));
 				config.colors.active.satHue.saturation = 0.001f * min(1000, max(0, HIWORD(value)));
 
-				value = Config::Get(CONFIG_COLORS, "RgbInput", 0x03E80000);
-				if (LOWORD(value) < HIWORD(value))
-				{
-					config.colors.active.input.left.rgb = 0.001f * min(1000, max(0, LOWORD(value)));
-					config.colors.active.input.right.rgb = 0.001f * min(1000, max(0, HIWORD(value)));
-				}
-				else
-				{
-					config.colors.active.input.left.rgb = 0.0f;
-					config.colors.active.input.right.rgb = 1.0f;
-				}
+				LoadRange("RgbInput", &config.colors.active.input, 0);
+				LoadRange("RedInput", &config.colors.active.input, 1);
+				LoadRange("GreenInput", &config.colors.active.input, 2);
+				LoadRange("BlueInput", &config.colors.active.input, 3);
 
-				value = Config::Get(CONFIG_COLORS, "RedInput", 0x03E80000);
-				if (LOWORD(value) < HIWORD(value))
-				{
-					config.colors.active.input.left.red = 0.001f * min(1000, max(0, LOWORD(value)));
-					config.colors.active.input.right.red = 0.001f * min(1000, max(0, HIWORD(value)));
-				}
-				else
-				{
-					config.colors.active.input.left.red = 0.0f;
-					config.colors.active.input.right.red = 1.0f;
-				}
+				LoadRange("RgbOutput", &config.colors.active.output, 0);
+				LoadRange("RedOutput", &config.colors.active.output, 1);
+				LoadRange("GreenOutput", &config.colors.active.output, 2);
+				LoadRange("BlueOutput", &config.colors.active.output, 3);
 
-				value = Config::Get(CONFIG_COLORS, "GreenInput", 0x03E80000);
-				if (LOWORD(value) < HIWORD(value))
-				{
-					config.colors.active.input.left.green = 0.001f * min(1000, max(0, LOWORD(value)));
-					config.colors.active.input.right.green = 0.001f * min(1000, max(0, HIWORD(value)));
-				}
-				else
-				{
-					config.colors.active.input.left.green = 0.0f;
-					config.colors.active.input.right.green = 1.0f;
-				}
+				config.colors.active.gamma.rgb = LoadGamma("RgbGamma");
+				config.colors.active.gamma.red = LoadGamma("RedGamma");
+				config.colors.active.gamma.green = LoadGamma("GreenGamma");
+				config.colors.active.gamma.blue = LoadGamma("BlueGamma");
 
-				value = Config::Get(CONFIG_COLORS, "BlueInput", 0x03E80000);
-				if (LOWORD(value) < HIWORD(value))
-				{
-					config.colors.active.input.left.blue = 0.001f * min(1000, max(0, LOWORD(value)));
-					config.colors.active.input.right.blue = 0.001f * min(1000, max(0, HIWORD(value)));
-				}
-				else
-				{
-					config.colors.active.input.left.blue = 0.0f;
-					config.colors.active.input.right.blue = 1.0f;
-				}
-
-				config.colors.active.gamma.rgb = 0.001f * min(1000, max(0, Config::Get(CONFIG_COLORS, "RgbGamma", 500)));
-				config.colors.active.gamma.red = 0.001f * min(1000, max(0, Config::Get(CONFIG_COLORS, "RedGamma", 500)));
-				config.colors.active.gamma.green = 0.001f * min(1000, max(0, Config::Get(CONFIG_COLORS, "GreenGamma", 500)));
-				config.colors.active.gamma.blue = 0.001f * min(1000, max(0, Config::Get(CONFIG_COLORS, "BlueGamma", 500)));
-
-				value = Config::Get(CONFIG_COLORS, "RgbOutput", 0x03E80000);
-				if (LOWORD(value) < HIWORD(value))
-				{
-					config.colors.active.output.left.rgb = 0.001f * min(1000, max(0, LOWORD(value)));
-					config.colors.active.output.right.rgb = 0.001f * min(1000, max(0, HIWORD(value)));
-				}
-				else
-				{
-					config.colors.active.output.left.rgb = 0.0f;
-					config.colors.active.output.right.rgb = 1.0f;
-				}
-
-				value = Config::Get(CONFIG_COLORS, "RedOutput", 0x03E80000);
-				if (LOWORD(value) < HIWORD(value))
-				{
-					config.colors.active.output.left.red = 0.001f * min(1000, max(0, LOWORD(value)));
-					config.colors.active.output.right.red = 0.001f * min(1000, max(0, HIWORD(value)));
-				}
-				else
-				{
-					config.colors.active.output.left.red = 0.0f;
-					config.colors.active.output.right.red = 1.0f;
-				}
-
-				value = Config::Get(CONFIG_COLORS, "GreenOutput", 0x03E80000);
-				if (LOWORD(value) < HIWORD(value))
-				{
-					config.colors.active.output.left.green = 0.001f * min(1000, max(0, LOWORD(value)));
-					config.colors.active.output.right.green = 0.001f * min(1000, max(0, HIWORD(value)));
-				}
-				else
-				{
-					config.colors.active.output.left.green = 0.0f;
-					config.colors.active.output.right.green = 1.0f;
-				}
-
-				value = Config::Get(CONFIG_COLORS, "BlueOutput", 0x03E80000);
-				if (LOWORD(value) < HIWORD(value))
-				{
-					config.colors.active.output.left.blue = 0.001f * min(1000, max(0, LOWORD(value)));
-					config.colors.active.output.right.blue = 0.001f * min(1000, max(0, HIWORD(value)));
-				}
-				else
-				{
-					config.colors.active.output.left.blue = 0.0f;
-					config.colors.active.output.right.blue = 1.0f;
-				}
-
-				CHAR buffer[20];
-				if (Config::Get(CONFIG_KEYS, "FpsCounter", "", buffer, sizeof(buffer)))
-				{
-					value = Config::Get(CONFIG_KEYS, "FpsCounter", 0);
-					config.keys.fpsCounter = LOBYTE(value);
-					if (config.keys.fpsCounter > 24)
-						config.keys.fpsCounter = 0;
-				}
-
-				if (Config::Get(CONFIG_KEYS, "ImageFilter", "", buffer, sizeof(buffer)))
-				{
-					value = Config::Get(CONFIG_KEYS, "ImageFilter", 0);
-					config.keys.imageFilter = LOBYTE(value);
-					if (config.keys.imageFilter > 24)
-						config.keys.imageFilter = 0;
-				}
-
-				if (Config::Get(CONFIG_KEYS, "WindowedMode", "", buffer, sizeof(buffer)))
-				{
-					value = Config::Get(CONFIG_KEYS, "WindowedMode", 0);
-					config.keys.windowedMode = LOBYTE(value);
-					if (config.keys.windowedMode > 24)
-						config.keys.windowedMode = 0;
-				}
-
-				if (Config::Get(CONFIG_KEYS, "AspectRatio", "", buffer, sizeof(buffer)))
-				{
-					value = Config::Get(CONFIG_KEYS, "AspectRatio", 0);
-					config.keys.aspectRatio = LOBYTE(value);
-					if (config.keys.aspectRatio > 24)
-						config.keys.aspectRatio = 0;
-				}
-
-				if (Config::Get(CONFIG_KEYS, "VSync", "", buffer, sizeof(buffer)))
-				{
-					value = Config::Get(CONFIG_KEYS, "VSync", 0);
-					config.keys.vSync = LOBYTE(value);
-					if (config.keys.vSync > 24)
-						config.keys.vSync = 0;
-				}
+				config.keys.fpsCounter = LoadKey("FpsCounter");
+				config.keys.imageFilter = LoadKey("ImageFilter");
+				config.keys.windowedMode = LoadKey("WindowedMode");
+				config.keys.aspectRatio = LoadKey("AspectRatio");
+				config.keys.vSync = LoadKey("VSync");
 			}
 		}
 		else

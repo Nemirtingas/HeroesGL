@@ -23,7 +23,7 @@
 */
 
 #include "stdafx.h"
-#include "timeapi.h"
+#include "mmsystem.h"
 #include "Hooks.h"
 #include "GLib.h"
 #include "Main.h"
@@ -80,14 +80,14 @@ BOOL __stdcall DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 			if (CreateActCtxC)
 			{
 				CHAR path[MAX_PATH];
-				GetModuleFileName(hModule, path, MAX_PATH - 1);
+				GetModuleFileName(hModule, path, MAX_PATH);
 
 				ACTCTX actCtx;
 				MemoryZero(&actCtx, sizeof(ACTCTX));
 				actCtx.cbSize = sizeof(ACTCTX);
 				actCtx.lpSource = path;
 				actCtx.hModule = hModule;
-				actCtx.lpResourceName = MAKEINTRESOURCE(IDM_MANIFEST);
+				actCtx.lpResourceName = MAKEINTRESOURCE(IDR_MANIFEST);
 				actCtx.dwFlags = ACTCTX_FLAG_HMODULE_VALID | ACTCTX_FLAG_RESOURCE_NAME_VALID;
 				hActCtx = CreateActCtxC(&actCtx);
 			}

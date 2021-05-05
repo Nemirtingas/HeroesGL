@@ -52,7 +52,7 @@ END
 // Menu
 //
 
-IDM_MENU MENU DISCARDABLE
+IDR_MENU MENU DISCARDABLE
 BEGIN
 	POPUP "&Файл"
 	BEGIN
@@ -71,6 +71,14 @@ BEGIN
 		MENUITEM SEPARATOR
 		MENUITEM "&Полноэкранный режим\a",			IDM_RES_FULL_SCREEN
 		MENUITEM "Верт. &синхронизация\a",			IDM_VSYNC
+		MENUITEM SEPARATOR
+		POPUP "&FPS счетчик\a"
+		BEGIN
+			MENUITEM "&Откл.",						IDM_FPS_OFF
+			MENUITEM SEPARATOR
+			MENUITEM "&Обычный",					IDM_FPS_NORMAL
+			MENUITEM "&Бенчмарк",					IDM_FPS_BENCHMARK
+		END
 	END
 	POPUP "&Изображение"
 	BEGIN
@@ -132,6 +140,10 @@ BEGIN
 			MENUITEM "&Русский",					IDM_LANG_RUSSIAN
 			MENUITEM "&Украинский",					IDM_LANG_UKRAINIAN
 		END
+	END
+	POPUP "&Моды"
+	BEGIN
+		MENUITEM "",								IDM_MODS
 	END
 	POPUP "&Помощь"
 	BEGIN

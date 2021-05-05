@@ -170,7 +170,7 @@ namespace Hooks
 			{
 				if (GetMenuItemID(hSub, 0) == IDM_FILE_NEW_GAME && DeleteMenu(hMenu, i, MF_BYPOSITION))
 				{
-					HMENU hNew = LoadMenu(hDllModule, MAKEINTRESOURCE(IDM_MENU));
+					HMENU hNew = LoadMenu(hDllModule, MAKEINTRESOURCE(IDR_MENU));
 					if (hNew)
 					{
 						CHAR buffer[256];
@@ -214,6 +214,16 @@ namespace Hooks
 							}
 						}
 
+						if (config.keys.fpsCounter)
+						{
+							mData.childId = IDM_FPS_OFF;
+							if (Window::GetMenuByChildID(hNew, &mData) && (info.cch = sizeof(buffer), GetMenuItemInfo(mData.hParent, mData.index, TRUE, &info)))
+							{
+								StrPrint(buffer, "%sF%d", buffer, config.keys.fpsCounter);
+								SetMenuItemInfo(mData.hParent, mData.index, TRUE, &info);
+							}
+						}
+
 						for (DWORD j = 0; hSub = GetSubMenu(hNew, j); ++j)
 						{
 							GetMenuString(hNew, j, buffer, sizeof(buffer), MF_BYPOSITION);
@@ -221,43 +231,7 @@ namespace Hooks
 						}
 
 						Window::CheckMenu(hMenu);
-
-						mData.childId = IDM_MODS;
-						if (Window::GetMenuByChildID(hMenu, &mData) && DeleteMenu(hMenu, IDM_MODS, MF_BYCOMMAND))
-						{
-							BOOL added = FALSE;
-							Mod* mod = mods;
-							while (mod)
-							{
-								if (InsertMenu(mData.hMenu, 0, MF_BYPOSITION | MF_POPUP, (UINT_PTR)mod->GetMenu(), mod->GetName()))
-									added = TRUE;
-
-								mod = mod->last;
-							}
-
-							// Equilibris
-							MenuItemData eqData;
-							eqData.childId = 36864;
-							if (Window::GetMenuByChildID(hMenu, &eqData))
-							{
-								INT count = GetMenuItemCount(hMenu);
-								for (INT i = 0; i < count; ++i)
-								{
-									if (GetSubMenu(hMenu, i) == eqData.hParent)
-									{
-										GetMenuString(hMenu, i, buffer, sizeof(buffer), MF_BYPOSITION);
-										if (AppendMenu(mData.hMenu, MF_POPUP, (UINT_PTR)eqData.hParent, buffer))
-										{
-											added = TRUE;
-											RemoveMenu(hMenu, i, MF_BYPOSITION);
-										}
-									}
-								}
-							}
-
-							if (!added)
-								DeleteMenu(hMenu, mData.index, MF_BYPOSITION);
-						}
+						Mods::SetMenu(hMenu);
 					}
 
 					return;
@@ -274,9 +248,9 @@ namespace Hooks
 		hWndMain = CreateWindow(lpClassName, config.title, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
 		if (hWndMain)
 		{
-			LoadNewMenu(GetMenu(hWndMain));
 			Window::SetCaptureWindow(hWndMain);
 			Mods::SetHWND(hWndMain);
+			LoadNewMenu(GetMenu(hWndMain));
 			SetTimer(hWndMain, NULL, 10, NULL);
 		}
 
@@ -636,6 +610,7 @@ namespace Hooks
 		const AddressSpace* equalSpace = NULL;
 
 		HOOKER hooker = CreateHooker(GetModuleHandle(NULL));
+		if (hooker)
 		{
 			hookSpace = addressArray;
 			DWORD hookCount = sizeof(addressArray) / sizeof(AddressSpace);
@@ -662,13 +637,15 @@ namespace Hooks
 				Config::Load(GetHookerModule(hooker), hookSpace);
 
 				HOOKER user = CreateHooker(GetModuleHandle("USER32.dll"));
+				if (user)
 				{
 					PatchExport(user, "PeekMessageA", PeekMessageHook);
 					PatchExport(user, "MessageBoxA", MessageBoxHook);
 					PatchExport(user, "DialogBoxParamA", DialogBoxParamHook);
-				}
-				ReleaseHooker(user);
 
+					ReleaseHooker(user);
+				}
+				
 				{
 					PatchImportByName(hooker, "PeekMessageA", PeekMessageHook);
 					PatchImportByName(hooker, "MessageBoxA", MessageBoxHook);
@@ -747,19 +724,21 @@ namespace Hooks
 							if (h4mod)
 							{
 								HOOKER h4hooker = CreateHooker(h4mod);
+								if (h4hooker)
 								{
 									DWORD addr = 0x69C42C23 + 1;
 									DWORD check;
 									if (ReadDWord(h4hooker, addr, &check) && check == sub_LoadDataPackage)
 										PatchDWord(h4hooker, addr, (DWORD)LoadDataPackage_1);
+
+									ReleaseHooker(h4hooker);
 								}
-								ReleaseHooker(h4hooker);
 							}
 						}
 					}
 					else
 					{
-						const BYTE addEsp8[5] = { 0x83, 0xC4, 0x08, 0x90, 0x90 };
+						static const BYTE addEsp8[5] = { 0x83, 0xC4, 0x08, 0x90, 0x90 };
 
 						--count;
 						++lpNop;
@@ -767,7 +746,7 @@ namespace Hooks
 							PatchBlock(hooker, *lpNop++, (VOID*)addEsp8, sizeof(addEsp8));
 						while (--count);
 
-						const BYTE addEsp4[5] = { 0x83, 0xC4, 0x04, 0x90, 0x90 };
+						static const BYTE addEsp4[5] = { 0x83, 0xC4, 0x04, 0x90, 0x90 };
 						PatchBlock(hooker, hookSpace->updateWindowReg_nop, (VOID*)addEsp4, sizeof(addEsp4));
 
 						// Load Package Hook
@@ -783,8 +762,10 @@ namespace Hooks
 
 				res = TRUE;
 			}
+
+			ReleaseHooker(hooker);
 		}
-		ReleaseHooker(hooker);
+
 		return res;
 	}
 #pragma optimize("", on)

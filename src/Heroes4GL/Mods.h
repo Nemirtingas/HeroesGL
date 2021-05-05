@@ -24,23 +24,28 @@
 
 #pragma once
 
+#define MENU_OFFSET 10000
+#define MENU_STEP 1000
+#define MENU_RESERVED 32000
+#define MENU_EQULIBRIS 36000
+
 typedef VOID(__cdecl* LOADPACKAGE)(const CHAR* name);
 
 typedef BOOL(__stdcall* ISSUPPORTED)();
 typedef const CHAR*(__stdcall* GETNAME)();
-typedef HMENU(__stdcall* GETMENU)();
+typedef HMENU(__stdcall* GETMENU)(DWORD);
 typedef VOID(__stdcall* SETHWND)(HWND);
-typedef VOID(__stdcall* PROCESS)();
 typedef VOID(__stdcall* LOADPACKAGES)(LOADPACKAGE callback);
 
 struct Mod {
 	Mod* last;
-	HMODULE hModule;
-	ISSUPPORTED IsSupported;
+	HWND hWnd;
+	BOOL added;
+	CHAR name[256];
+
 	GETNAME GetName;
 	GETMENU GetMenu;
 	SETHWND SetHWND;
-	PROCESS Process;
 	LOADPACKAGES LoadPackages;
 };
 
@@ -50,5 +55,6 @@ namespace Mods
 {
 	VOID Load();
 	VOID SetHWND(HWND);
+	VOID SetMenu(HMENU);
 	VOID LoadPackages(LOADPACKAGE);
 }

@@ -30,7 +30,7 @@
 #include "DirectDraw.h"
 
 IDraw7* drawList;
-const DisplayMode modesList[20] = {
+const DisplayMode modesList[11] = {
 	// 4x3
 	800, 600, 16, // (4x3)
 	1024, 768, 16, // (4x3)
@@ -45,6 +45,12 @@ const DisplayMode modesList[20] = {
 	1024, 600, 16, // (16x9)
 	1366, 768, 16, // (16x9)
 	1920, 1080, 16, // (16x9)
+
+	// 16x9
+	2560, 1080, 16, // (16x9)
+
+	// 16x9
+	3840, 1080, 16, // (16x9)
 };
 
 namespace Main

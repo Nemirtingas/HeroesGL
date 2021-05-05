@@ -425,7 +425,7 @@ VOID OpenDraw::RenderOld()
 
 				BOOL isFps = this->isFpsChanged;
 				this->isFpsChanged = FALSE;
-				if (config.fps.state)
+				if (config.fps)
 				{
 					if (isFps)
 						fpsCounter->Reset();
@@ -465,7 +465,7 @@ VOID OpenDraw::RenderOld()
 
 				pixelBuffer->Copy(surface->pixelBuffer);
 				this->CopyPointer(pixelBuffer->GetBuffer());
-				fpsCounter->Draw(config.fps.state, pixelBuffer->GetBuffer());
+				fpsCounter->Draw(config.fps, pixelBuffer->GetBuffer());
 
 				DWORD count = frameCount;
 				frame = frames;
@@ -517,7 +517,7 @@ VOID OpenDraw::RenderOld()
 
 				pixelBuffer->SwapBuffers();
 				SwapBuffers(this->hDc);
-				if (clear > 1 && config.fps.state != FpsBenchmark)
+				if (clear > 1 && config.fps != FpsBenchmark)
 					WaitForSingleObject(this->hDrawEvent, INFINITE);
 				GLFinish();
 			} while (!this->isFinish);
@@ -638,7 +638,7 @@ VOID OpenDraw::RenderMid()
 
 							BOOL isFps = this->isFpsChanged;
 							this->isFpsChanged = FALSE;
-							if (config.fps.state)
+							if (config.fps)
 							{
 								if (isFps)
 									fpsCounter->Reset();
@@ -703,7 +703,7 @@ VOID OpenDraw::RenderMid()
 							{
 								pixelBuffer->Copy(surface->pixelBuffer);
 								this->CopyPointer(pixelBuffer->GetBuffer());
-								fpsCounter->Draw(config.fps.state, pixelBuffer->GetBuffer());
+								fpsCounter->Draw(config.fps, pixelBuffer->GetBuffer());
 								pixelBuffer->Update();
 								pixelBuffer->SwapBuffers();
 
@@ -715,7 +715,7 @@ VOID OpenDraw::RenderMid()
 
 							// Swap
 							SwapBuffers(this->hDc);
-							if (clear > 1 && config.fps.state != FpsBenchmark)
+							if (clear > 1 && config.fps != FpsBenchmark)
 								WaitForSingleObject(this->hDrawEvent, INFINITE);
 							GLFinish();
 						} while (!this->isFinish);
@@ -884,7 +884,7 @@ VOID OpenDraw::RenderNew()
 
 									BOOL isFps = this->isFpsChanged;
 									this->isFpsChanged = FALSE;
-									if (config.fps.state)
+									if (config.fps)
 									{
 										if (isFps)
 											fpsCounter->Reset();
@@ -1124,7 +1124,7 @@ VOID OpenDraw::RenderNew()
 									{
 										pixelBuffer->Copy(surface->pixelBuffer);
 										this->CopyPointer(pixelBuffer->GetBuffer());
-										fpsCounter->Draw(config.fps.state, pixelBuffer->GetBuffer());
+										fpsCounter->Draw(config.fps, pixelBuffer->GetBuffer());
 										pixelBuffer->Update();
 										pixelBuffer->SwapBuffers();
 
@@ -1209,7 +1209,7 @@ VOID OpenDraw::RenderNew()
 										surface->TakeSnapshot(this->width, this->height);
 
 									SwapBuffers(this->hDc);
-									if (clear > 1 && config.fps.state != FpsBenchmark)
+									if (clear > 1 && config.fps != FpsBenchmark)
 										WaitForSingleObject(this->hDrawEvent, INFINITE);
 									GLFinish();
 								} while (!this->isFinish);

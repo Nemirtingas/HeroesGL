@@ -23,7 +23,7 @@
 */
 
 #include "stdafx.h"
-#include "timeapi.h"
+#include "mmsystem.h"
 #include "Hooks.h"
 #include "GLib.h"
 #include "Main.h"
@@ -31,30 +31,6 @@
 #include "Window.h"
 #include "Resource.h"
 #include "Mods.h"
-
-VOID LoadModule(const CHAR* pattern)
-{
-	CHAR file[MAX_PATH];
-	GetModuleFileName(NULL, file, sizeof(file));
-	CHAR* p = StrLastChar(file, '\\');
-	if (!p)
-		return;
-
-	StrCopy(++p, pattern);
-
-	WIN32_FIND_DATA fData;
-	HANDLE hFile = FindFirstFile(file, &fData);
-	if (hFile && hFile != INVALID_HANDLE_VALUE)
-	{
-		do
-		{
-			StrCopy(p, fData.cFileName);
-			LoadLibrary(file);
-		} while (FindNextFile(hFile, &fData));
-
-		FindClose(hFile);
-	}
-}
 
 BOOL __stdcall DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 {
@@ -106,14 +82,14 @@ BOOL __stdcall DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 			if (CreateActCtxC)
 			{
 				CHAR path[MAX_PATH];
-				GetModuleFileName(hModule, path, MAX_PATH - 1);
+				GetModuleFileName(hModule, path, MAX_PATH);
 
 				ACTCTX actCtx;
 				MemoryZero(&actCtx, sizeof(ACTCTX));
 				actCtx.cbSize = sizeof(ACTCTX);
 				actCtx.lpSource = path;
 				actCtx.hModule = hModule;
-				actCtx.lpResourceName = MAKEINTRESOURCE(IDM_MANIFEST);
+				actCtx.lpResourceName = MAKEINTRESOURCE(IDR_MANIFEST);
 				actCtx.dwFlags = ACTCTX_FLAG_HMODULE_VALID | ACTCTX_FLAG_RESOURCE_NAME_VALID;
 				hActCtx = CreateActCtxC(&actCtx);
 			}
@@ -121,8 +97,6 @@ BOOL __stdcall DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 			LoadShcore();
 			if (SetProcessDpiAwarenessC)
 				SetProcessDpiAwarenessC(PROCESS_PER_MONITOR_DPI_AWARE);
-
-			LoadModule("*.asi");
 
 			timeBeginPeriod(1);
 		}

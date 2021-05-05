@@ -15,7 +15,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // Manifest
 //
 
-IDM_MANIFEST            RT_MANIFEST             "module.manifest"
+IDR_MANIFEST            RT_MANIFEST             "module.manifest"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -59,7 +59,7 @@ END
 // Menu
 //
 
-IDM_MENU MENU DISCARDABLE
+IDR_MENU MENU DISCARDABLE
 BEGIN
 	POPUP "&File"
 	BEGIN
@@ -78,6 +78,14 @@ BEGIN
 		MENUITEM SEPARATOR
 		MENUITEM "Full &Screen\a",					IDM_RES_FULL_SCREEN
 		MENUITEM "Enable &VSync\a",					IDM_VSYNC
+		MENUITEM SEPARATOR
+		POPUP "&FPS Counter\a"
+		BEGIN
+			MENUITEM "&Off",						IDM_FPS_OFF
+			MENUITEM SEPARATOR
+			MENUITEM "&Normal",						IDM_FPS_NORMAL
+			MENUITEM "&Benchmark",					IDM_FPS_BENCHMARK
+		END
 	END
 	POPUP "&Image"
 	BEGIN
@@ -139,6 +147,10 @@ BEGIN
 			MENUITEM "&Russian",					IDM_LANG_RUSSIAN
 			MENUITEM "&Ukrainian",					IDM_LANG_UKRAINIAN
 		END
+	END
+	POPUP "&Mods"
+	BEGIN
+		MENUITEM "",								IDM_MODS
 	END
 	POPUP "&Help"
 	BEGIN
@@ -259,8 +271,8 @@ IDR_SCALENX_FRAGMENT_3X		RCDATA		DISCARDABLE		"..\\glsl\\scalenx\\fragment_3x.gl
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2021,2,3,535
- PRODUCTVERSION 1,5,9,0
+ FILEVERSION 2021,5,6,539
+ PRODUCTVERSION 1,6,0,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS VS_FF_DEBUG
@@ -276,10 +288,10 @@ BEGIN
 		BLOCK "040904b0"
 		BEGIN
 			VALUE "FileDescription", "HoMM III - OpenGL wrapper"
-			VALUE "FileVersion", "2021.02.03.535"
+			VALUE "FileVersion", "2021.05.06.539"
 			VALUE "LegalCopyright", "© 2021 Verok (verokster@gmail.com)"
 			VALUE "OriginalFilename", "ddraw.dll"
-			VALUE "ProductVersion", "1.5.9"
+			VALUE "ProductVersion", "1.6.0"
 			VALUE "ProductName", "Heroes3GL"
 		END
 	END

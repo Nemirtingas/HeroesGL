@@ -804,7 +804,7 @@ VOID PixelBuffer::Update(Rect* rect)
 			if (!this->isTrue)
 				right >>= 1;
 
-			const POINT offset = { 0, 0 };
+			static const POINT offset = { 0, 0 };
 			for (DWORD y = top; y < bottom; y += this->block.height)
 			{
 				DWORD bt = y + this->block.height;
