@@ -327,6 +327,16 @@ namespace Window
 		}
 		break;
 
+		case MenuSmoothScroll: {
+			CheckMenuItem(hMenu, IDM_SMOOTH_SCROLL, MF_BYCOMMAND | (config.smooth.scroll ? MF_CHECKED : MF_UNCHECKED));
+		}
+		break;
+
+		case MenuSmoothMove: {
+			CheckMenuItem(hMenu, IDM_SMOOTH_MOVE, MF_BYCOMMAND | (config.smooth.move ? MF_CHECKED : MF_UNCHECKED));
+		}
+		break;
+
 		case MenuLanguage: {
 			MenuItemData mData;
 			mData.childId = IDM_LANG_ENGLISH;
@@ -392,6 +402,8 @@ namespace Window
 		CheckMenu(hMenu, MenuUpscale);
 		CheckMenu(hMenu, MenuColors);
 		CheckMenu(hMenu, MenuCpu);
+		CheckMenu(hMenu, MenuSmoothScroll);
+		CheckMenu(hMenu, MenuSmoothMove);
 		CheckMenu(hMenu, MenuLanguage);
 		CheckMenu(hMenu, MenuRenderer);
 	}
@@ -681,22 +693,36 @@ namespace Window
 				{
 					OpenDrawSurface* surface = ddraw->attachedSurface;
 
-					struct {
-						DWORD width;
-						DWORD height;
-					} size = { RES_WIDTH, RES_HEIGHT };
+					DisplayMode size = surface->mode;
 
 					LevelColors levels[256] = {};
 
-					DWORD* data = surface->pixelBuffer;
 					DWORD count = size.width * size.height;
-					do
+					if (size.bpp == 32)
 					{
-						BYTE* b = (BYTE*)data++;
-						++levels[*b++].red;
-						++levels[*b++].green;
-						++levels[*b].blue;
-					} while (--count);
+						DWORD* data = (DWORD*)surface->indexBuffer;
+						do
+						{
+							BYTE* b = (BYTE*)data++;
+							++levels[*b++].blue;
+							++levels[*b++].green;
+							++levels[*b].red;
+						} while (--count);
+					}
+					else
+					{
+						WORD* data = (WORD*)surface->indexBuffer;
+						do
+						{
+							WORD p = *data++;
+							DWORD px = ((p & 0xF800) >> 8) | ((p & 0x07E0) << 5) | ((p & 0x001F) << 19);
+
+							BYTE* b = (BYTE*)&px;
+							++levels[*b++].red;
+							++levels[*b++].green;
+							++levels[*b].blue;
+						} while (--count);
+					}
 
 					levelsData->hDc = CreateCompatibleDC(NULL);
 					if (levelsData->hDc)
@@ -1050,7 +1076,7 @@ namespace Window
 
 								dst += 2;
 							}
-
+						
 							HWND hImg = GetDlgItem(hDlg, IDC_CANVAS);
 
 							RECT rc;
@@ -1485,7 +1511,7 @@ namespace Window
 					if (levelsData->hBmp)
 						DeleteObject(levelsData->hBmp);
 				}
-
+					
 				config.colors.active = levelsData->values;
 				MemoryFree(levelsData);
 			}
@@ -1495,7 +1521,7 @@ namespace Window
 		default:
 			break;
 		}
-
+		
 		return DefWindowProc(hDlg, uMsg, wParam, lParam);
 	}
 
@@ -1520,28 +1546,23 @@ namespace Window
 			if (ddraw)
 				SetEvent(ddraw->hDrawEvent);
 
-			return CallWindowProc(Window::OldWindowProc, hWnd, uMsg, wParam, lParam);
+			return CallWindowProc(OldWindowProc, hWnd, uMsg, wParam, lParam);
 		}
 
 		case WM_SIZE: {
-			if (lParam)
+			OpenDraw* ddraw = Main::FindOpenDrawByWindow(hWnd);
+			if (ddraw)
 			{
-				Hooks::ScalePointer((FLOAT)LOWORD(lParam) / (FLOAT)RES_WIDTH, (FLOAT)HIWORD(lParam) / (FLOAT)RES_HEIGHT);
+				if (ddraw->hDraw && ddraw->hDraw != hWnd)
+					SetWindowPos(ddraw->hDraw, NULL, 0, 0, LOWORD(lParam), HIWORD(lParam), SWP_NOZORDER | SWP_NOMOVE | SWP_NOREDRAW | SWP_NOREPOSITION | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
 
-				OpenDraw* ddraw = Main::FindOpenDrawByWindow(hWnd);
-				if (ddraw)
-				{
-					if (ddraw->hDraw && ddraw->hDraw != hWnd)
-						SetWindowPos(ddraw->hDraw, NULL, 0, 0, LOWORD(lParam), HIWORD(lParam), SWP_NOZORDER | SWP_NOMOVE | SWP_NOREDRAW | SWP_NOREPOSITION | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
-
-					ddraw->viewport.width = LOWORD(lParam);
-					ddraw->viewport.height = HIWORD(lParam);
-					ddraw->viewport.refresh = TRUE;
-					SetEvent(ddraw->hDrawEvent);
-				}
+				ddraw->viewport.width = LOWORD(lParam);
+				ddraw->viewport.height = HIWORD(lParam);
+				ddraw->viewport.refresh = TRUE;
+				SetEvent(ddraw->hDrawEvent);
 			}
 
-			return CallWindowProc(Window::OldWindowProc, hWnd, uMsg, wParam, lParam);
+			return CallWindowProc(OldWindowProc, hWnd, uMsg, wParam, lParam);
 		}
 
 		case WM_GETMINMAXINFO: {
@@ -1554,6 +1575,10 @@ namespace Window
 				MINMAXINFO* mmi = (MINMAXINFO*)lParam;
 				mmi->ptMinTrackSize.x = rect.right - rect.left;
 				mmi->ptMinTrackSize.y = rect.bottom - rect.top;
+				mmi->ptMaxTrackSize.x = LONG_MAX >> 16;
+				mmi->ptMaxTrackSize.y = LONG_MAX >> 16;
+				mmi->ptMaxSize.x = LONG_MAX >> 16;
+				mmi->ptMaxSize.y = LONG_MAX >> 16;
 
 				return NULL;
 			}
@@ -1579,39 +1604,31 @@ namespace Window
 				}
 			}
 
-			return (BOOL)wParam ? CallWindowProc(Window::OldWindowProc, hWnd, uMsg, wParam, lParam) : DefWindowProc(hWnd, uMsg, wParam, lParam);
+			return CallWindowProc(OldWindowProc, hWnd, uMsg, wParam, lParam);
 		}
 
-		case WM_KEYDOWN:
-		case WM_KEYUP: {
-			if (wParam >= VK_NUMPAD0 && wParam <= VK_NUMPAD9)
-				lParam = lParam & 0xFF00FFFF | ((wParam == VK_NUMPAD0 ? 0x0B : 0x02 + (wParam - VK_NUMPAD1)) << 16);
-
-			if (uMsg == WM_KEYUP)
-				return CallWindowProc(Window::OldWindowProc, hWnd, uMsg, wParam, lParam);
-		}
-
-		case WM_SYSKEYDOWN: {
-			if (config.keys.fpsCounter && config.keys.fpsCounter + VK_F1 - 1 == wParam)
+		case WM_SYSKEYDOWN:
+		case WM_KEYDOWN: {
+			if (!(HIWORD(lParam) & KF_ALTDOWN))
 			{
-				switch (config.fps)
+				if (config.keys.fpsCounter && config.keys.fpsCounter + VK_F1 - 1 == wParam)
 				{
-				case FpsNormal:
-					FpsChanged(hWnd, FpsBenchmark);
-					break;
-				case FpsBenchmark:
-					FpsChanged(hWnd, FpsDisabled);
-					break;
-				default:
-					FpsChanged(hWnd, FpsNormal);
-					break;
-				}
+					switch (config.fps)
+					{
+					case FpsNormal:
+						FpsChanged(hWnd, FpsBenchmark);
+						break;
+					case FpsBenchmark:
+						FpsChanged(hWnd, FpsDisabled);
+						break;
+					default:
+						FpsChanged(hWnd, FpsNormal);
+						break;
+					}
 
-				return NULL;
-			}
-			else if (!(HIWORD(lParam) & KF_ALTDOWN))
-			{
-				if (config.keys.imageFilter && config.keys.imageFilter + VK_F1 - 1 == wParam)
+					return NULL;
+				}
+				else if (config.keys.imageFilter && config.keys.imageFilter + VK_F1 - 1 == wParam)
 				{
 					switch (config.image.interpolation)
 					{
@@ -1657,7 +1674,7 @@ namespace Window
 					return NULL;
 			}
 
-			return CallWindowProc(Window::OldWindowProc, hWnd, uMsg, wParam, lParam);
+			return CallWindowProc(OldWindowProc, hWnd, uMsg, wParam, lParam);
 		}
 
 		case WM_LBUTTONDOWN:
@@ -1681,17 +1698,12 @@ namespace Window
 			OpenDraw* ddraw = Main::FindOpenDrawByWindow(hWnd);
 			if (ddraw)
 			{
-				if (config.image.aspect)
-				{
-					POINT p = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
-					ddraw->ScaleMouse(&p);
-					lParam = MAKELONG(p.x, p.y);
-				}
-
-				SetEvent(ddraw->hDrawEvent);
+				POINT p = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+				ddraw->ScaleMouse(&p);
+				lParam = MAKELONG(p.x, p.y);
 			}
 
-			return CallWindowProc(Window::OldWindowProc, hWnd, uMsg, wParam, lParam);
+			return CallWindowProc(OldWindowProc, hWnd, uMsg, wParam, lParam);
 		}
 
 		case WM_COMMAND: {
@@ -1699,10 +1711,29 @@ namespace Window
 			{
 			case IDM_PATCH_CPU: {
 				config.coldCPU = !config.coldCPU;
-
 				Config::Set(CONFIG_WRAPPER, "ColdCPU", config.coldCPU);
 
-				CheckMenu(hWnd, MenuCpu);
+				Window::CheckMenu(hWnd, MenuCpu);
+				return NULL;
+			}
+
+			case IDM_SMOOTH_SCROLL: {
+				config.smooth.scroll = !config.smooth.scroll;
+				Config::Set(CONFIG_WRAPPER, "SmoothScroll", config.smooth.scroll);
+
+				Hooks::CheckRefreshRate();
+
+				CheckMenu(hWnd, MenuSmoothScroll);
+				return NULL;
+			}
+
+			case IDM_SMOOTH_MOVE: {
+				config.smooth.move = !config.smooth.move;
+				Config::Set(CONFIG_WRAPPER, "SmoothMove", config.smooth.move);
+
+				Hooks::CheckRefreshRate();
+
+				CheckMenu(hWnd, MenuSmoothMove);
 				return NULL;
 			}
 
@@ -1906,18 +1937,18 @@ namespace Window
 					}
 				}
 
-				return CallWindowProc(Window::OldWindowProc, hWnd, uMsg, wParam, lParam);
+				return CallWindowProc(OldWindowProc, hWnd, uMsg, wParam, lParam);
 			}
 		}
 
 		case WM_SETCURSOR: {
-			if (config.cursor.fix && LOWORD(lParam) == HTCLIENT)
+			if (LOWORD(lParam) == HTCLIENT)
 			{
 				OpenDraw* ddraw = Main::FindOpenDrawByWindow(hWnd);
 				if (ddraw)
 				{
 					if (ddraw->windowState != WinStateWindowed || !config.image.aspect)
-						SetCursor(config.cursor.game);
+						SetCursor(NULL);
 					else
 					{
 						POINT p;
@@ -1925,9 +1956,9 @@ namespace Window
 						ScreenToClient(hWnd, &p);
 
 						if (p.x >= ddraw->viewport.rectangle.x && p.x < ddraw->viewport.rectangle.x + ddraw->viewport.rectangle.width && p.y >= ddraw->viewport.rectangle.y && p.y < ddraw->viewport.rectangle.y + ddraw->viewport.rectangle.height)
-							SetCursor(config.cursor.game);
+							SetCursor(NULL);
 						else
-							SetCursor(config.cursor.default);
+							SetCursor(config.cursor);
 					}
 
 					return TRUE;
@@ -1944,7 +1975,7 @@ namespace Window
 				return NULL;
 			}
 
-			return CallWindowProc(Window::OldWindowProc, hWnd, uMsg, wParam, lParam);
+			return CallWindowProc(OldWindowProc, hWnd, uMsg, wParam, lParam);
 		}
 	}
 
@@ -1969,7 +2000,6 @@ namespace Window
 		case WM_KEYDOWN:
 		case WM_KEYUP:
 		case WM_CHAR:
-		case WM_GETMINMAXINFO:
 		case WM_SETCURSOR: {
 			HWND hParent = GetParent(hWnd);
 			WNDPROC proc = (WNDPROC)GetWindowLong(hParent, GWL_WNDPROC);
