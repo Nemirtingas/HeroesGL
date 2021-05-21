@@ -1367,8 +1367,7 @@ HRESULT __stdcall OpenDraw::SetCooperativeLevel(HWND hWnd, DWORD dwFlags)
 
 HRESULT __stdcall OpenDraw::EnumDisplayModes(DWORD dwFlags, LPDDSURFACEDESC2 lpDDSurfaceDesc, LPVOID lpContext, LPDDENUMMODESCALLBACK2 lpEnumModesCallback)
 {
-	DDSURFACEDESC2 ddSurfaceDesc;
-	MemoryZero(&ddSurfaceDesc, sizeof(DDSURFACEDESC2));
+	DDSURFACEDESC2 ddSurfaceDesc = {};
 
 	const DisplayMode* mode = modesList;
 	DWORD count = sizeof(modesList) / sizeof(DisplayMode);

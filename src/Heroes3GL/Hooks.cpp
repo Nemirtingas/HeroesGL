@@ -343,8 +343,7 @@ namespace Hooks
 		{
 			FileClose(file);
 
-			SHELLEXECUTEINFO shExecInfo;
-			MemoryZero(&shExecInfo, sizeof(SHELLEXECUTEINFO));
+			SHELLEXECUTEINFO shExecInfo = {};
 			shExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
 			shExecInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
 			shExecInfo.lpFile = filePath;
@@ -385,8 +384,7 @@ namespace Hooks
 
 				CHAR buffer[256];
 
-				MENUITEMINFO info;
-				MemoryZero(&info, sizeof(MENUITEMINFO));
+				MENUITEMINFO info = {};
 				info.cbSize = sizeof(MENUITEMINFO);
 				info.fMask = MIIM_TYPE;
 				info.fType = MFT_STRING;
@@ -597,9 +595,7 @@ namespace Hooks
 				*++p = '*';
 				StrCopy(++p, *extension);
 
-				WIN32_FIND_DATA findData;
-				MemoryZero(&findData, sizeof(WIN32_FIND_DATA));
-
+				WIN32_FIND_DATA findData = {};
 				HANDLE hFind = FindFirstFile(filePath, &findData);
 				if (hFind != INVALID_HANDLE_VALUE)
 				{
@@ -689,7 +685,7 @@ namespace Hooks
 			if (p && !StrCompareInsensitive(p, ".vid"))
 			{
 				DWORD countInFile, readed;
-				if (ReadFile(hFile, &countInFile, sizeof(DWORD), &readed, NULL) && readed)
+				if (ReadFile(hFile, &countInFile, sizeof(DWORD), &readed, NULL) && readed && countInFile)
 				{
 					VideoFile* infoList = (VideoFile*)MemoryAlloc(sizeof(VideoFile) * countInFile);
 					if (ReadFile(hFile, infoList, sizeof(VideoFile) * countInFile, &readed, NULL))
@@ -804,8 +800,7 @@ namespace Hooks
 	DWORD cursorTime = 16;
 	VOID CheckRefreshRate()
 	{
-		DEVMODE devMode;
-		MemoryZero(&devMode, sizeof(DEVMODE));
+		DEVMODE devMode = {};
 		devMode.dmSize = sizeof(DEVMODE);
 
 		if (EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &devMode) && devMode.dmDisplayFrequency)

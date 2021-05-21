@@ -24,6 +24,7 @@
 
 #include "stdafx.h"
 #include "Mods.h"
+#include "Config.h"
 #include "Window.h"
 #include "Resource.h"
 
@@ -75,9 +76,10 @@ namespace Mods
 							continue;
 						}
 
-						FreeLibrary(hModule);
 						MemoryFree(mod);
 					}
+
+					FreeLibrary(hModule);
 				}
 			} while (FindNextFile(hFile, &fData));
 

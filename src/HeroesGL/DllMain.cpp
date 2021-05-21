@@ -60,8 +60,6 @@ BOOL __stdcall DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 			{
 				Mods::Load();
 
-				Window::SetCaptureKeys(TRUE);
-
 				{
 					WNDCLASS wc = {
 						CS_HREDRAW | CS_VREDRAW | CS_OWNDC | CS_DBLCLKS,
@@ -84,8 +82,7 @@ BOOL __stdcall DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 				CHAR path[MAX_PATH];
 				GetModuleFileName(hModule, path, MAX_PATH);
 
-				ACTCTX actCtx;
-				MemoryZero(&actCtx, sizeof(ACTCTX));
+				ACTCTX actCtx = {};
 				actCtx.cbSize = sizeof(ACTCTX);
 				actCtx.lpSource = path;
 				actCtx.hModule = hModule;
@@ -118,7 +115,6 @@ BOOL __stdcall DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 			{
 				UnregisterClass(WC_DRAW, hDllModule);
 				ClipCursor(NULL);
-				Window::SetCaptureKeys(FALSE);
 			}
 		}
 

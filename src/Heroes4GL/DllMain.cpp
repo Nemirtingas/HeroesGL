@@ -82,8 +82,7 @@ BOOL __stdcall DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 				CHAR path[MAX_PATH];
 				GetModuleFileName(hModule, path, MAX_PATH);
 
-				ACTCTX actCtx;
-				MemoryZero(&actCtx, sizeof(ACTCTX));
+				ACTCTX actCtx = {};
 				actCtx.cbSize = sizeof(ACTCTX);
 				actCtx.lpSource = path;
 				actCtx.hModule = hModule;

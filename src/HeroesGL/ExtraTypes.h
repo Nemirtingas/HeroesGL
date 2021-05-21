@@ -213,6 +213,7 @@ struct AddressSpace
 	DWORD sample_end_all;
 	DWORD tavern_anim_time;
 	DWORD smack_goto_time;
+	DWORD height_1024;
 	DWORD windowName;
 };
 

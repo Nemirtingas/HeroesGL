@@ -124,7 +124,7 @@ namespace Window
 			if (GetMenuByChildID(hMenu, mData, i))
 				return TRUE;
 
-		MemoryZero(mData, sizeof(MenuItemData));
+		*mData = {};
 		return FALSE;
 	}
 
@@ -591,15 +591,15 @@ namespace Window
 				{
 				case IDC_LNK_EMAIL:
 				case IDC_LNK_WEB:
-				case IDC_LNK_PATRON:
-					SHELLEXECUTEINFOW shExecInfo;
-					MemoryZero(&shExecInfo, sizeof(SHELLEXECUTEINFOW));
+				case IDC_LNK_PATRON: {
+					SHELLEXECUTEINFOW shExecInfo = {};
 					shExecInfo.cbSize = sizeof(SHELLEXECUTEINFOW);
 					shExecInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
 					shExecInfo.lpFile = ((NMLINK*)lParam)->item.szUrl;
 					shExecInfo.nShow = SW_SHOW;
 					ShellExecuteExW(&shExecInfo);
 					break;
+				}
 
 				default:
 					break;
@@ -672,7 +672,7 @@ namespace Window
 			if (levelsData)
 			{
 				SetWindowLong(hDlg, GWLP_USERDATA, (LONG)levelsData);
-				MemoryZero(levelsData, sizeof(LevelsData));
+				*levelsData = {};
 				levelsData->delta = 0.7f;
 				levelsData->values = config.colors.active;
 
@@ -686,8 +686,7 @@ namespace Window
 						DWORD height;
 					} size = { RES_WIDTH, RES_HEIGHT };
 
-					LevelColors levels[256];
-					MemoryZero(levels, sizeof(levels));
+					LevelColors levels[256] = {};
 
 					DWORD* data = surface->pixelBuffer;
 					DWORD count = size.width * size.height;
@@ -706,8 +705,7 @@ namespace Window
 						RECT rc;
 						GetClientRect(hImg, &rc);
 
-						BITMAPINFO bmi;
-						MemoryZero(&bmi, sizeof(BITMAPINFO));
+						BITMAPINFO bmi = {};
 						bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
 						bmi.bmiHeader.biWidth = rc.right;
 						bmi.bmiHeader.biHeight = 100;
@@ -822,12 +820,10 @@ namespace Window
 				LevelsData* levelsData = (LevelsData*)GetWindowLong(hDlg, GWLP_USERDATA);
 				if (levelsData)
 				{
-					LevelColorsFloat prep[260];
+					LevelColorsFloat prep[260] = {};
 					{
 						FLOAT h = 2.0f * config.colors.active.satHue.hueShift - 1.0f;
 						FLOAT s = 4.0f * config.colors.active.satHue.saturation * config.colors.active.satHue.saturation;
-
-						MemoryZero(prep, sizeof(prep));
 
 						struct {
 							Levels input;
@@ -949,8 +945,7 @@ namespace Window
 
 					if (max > 0.0)
 					{
-						LevelColors levels[259];
-						MemoryZero(levels, sizeof(levels));
+						LevelColors levels[259] = {};
 
 						{
 							max /= FLOAT(256 / 4 * 3);

@@ -29,7 +29,6 @@
 namespace Hooks
 {
 	extern const AddressSpace* hookSpace;
-	extern const DWORD monoEntries[2];
 	extern const DWORD palEntries[256];
 
 	INT_PTR __stdcall DialogBoxParamHook(HINSTANCE, LPCSTR, HWND, DLGPROC, LPARAM);

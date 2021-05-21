@@ -33,8 +33,7 @@ OpenDrawClipper::OpenDrawClipper(IDraw7* lpDD)
 	this->last = lpDD->clipperEntries;
 	lpDD->clipperEntries = this;
 
-	MemoryZero(&this->rgnData, sizeof(RGNRECTDATA));
-
+	this->rgnData = {};
 	this->rgnData.rdh.dwSize = sizeof(RGNDATAHEADER);
 	this->rgnData.rdh.iType = RDH_RECTANGLES;
 	this->rgnData.rdh.nCount = 1;

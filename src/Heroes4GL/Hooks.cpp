@@ -175,8 +175,7 @@ namespace Hooks
 					{
 						CHAR buffer[256];
 
-						MENUITEMINFO info;
-						MemoryZero(&info, sizeof(MENUITEMINFO));
+						MENUITEMINFO info = {};
 						info.cbSize = sizeof(MENUITEMINFO);
 						info.fMask = MIIM_TYPE;
 						info.fType = MFT_STRING;
