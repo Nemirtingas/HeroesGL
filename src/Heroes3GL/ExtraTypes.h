@@ -181,7 +181,6 @@ struct AddressSpace
 	DWORD check_2;
 	DWORD equal_address;
 	DWORD equal_value;
-	DWORD renderNop;
 	DWORD cursor_time_1;
 	DWORD cursor_time_2;
 	DWORD move_object;

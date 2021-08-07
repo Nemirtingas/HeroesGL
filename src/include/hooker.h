@@ -29,7 +29,7 @@
 #pragma comment(linker, "/DLL /ENTRY:HookMain@12")
 #endif  // _HOOKER_LIB
 
-#include "window.h"
+#include "windows.h"
 
 typedef VOID* HOOKER;
 
@@ -199,6 +199,106 @@ extern "C"
 	/// <param name="start"></param>
 	/// <returns></returns>
 	DWORD __stdcall FindBlockByMask(HOOKER hooker, const VOID* block, const VOID* mask, DWORD size, DWORD flags = 0, DWORD start = 0);
+	
+	/// <summary>
+	/// Find pointer value
+	/// </summary>
+	/// <param name="hooker"></param>
+	/// <param name="value"></param>
+	/// <param name="flags"></param>
+	/// <param name="start"></param>
+	/// <returns></returns>
+	DWORD __stdcall FindPtr(HOOKER hooker, const VOID* value, DWORD flags = 0, DWORD start = 0);
+
+	/// <summary>
+	/// Find byte value
+	/// </summary>
+	/// <param name="hooker"></param>
+	/// <param name="value"></param>
+	/// <param name="flags"></param>
+	/// <param name="start"></param>
+	/// <returns></returns>
+	DWORD __stdcall FindByte(HOOKER hooker, BYTE value, DWORD flags = 0, DWORD start = 0);
+
+	/// <summary>
+	/// Find word value
+	/// </summary>
+	/// <param name="hooker"></param>
+	/// <param name="value"></param>
+	/// <param name="flags"></param>
+	/// <param name="start"></param>
+	/// <returns></returns>
+	DWORD __stdcall FindWord(HOOKER hooker, WORD value, DWORD flags = 0, DWORD start = 0);
+
+	/// <summary>
+	/// Find double word value
+	/// </summary>
+	/// <param name="hooker"></param>
+	/// <param name="value"></param>
+	/// <param name="flags"></param>
+	/// <param name="start"></param>
+	/// <returns></returns>
+	DWORD __stdcall FindDWord(HOOKER hooker, DWORD value, DWORD flags = 0, DWORD start = 0);
+
+	/// <summary>
+	/// Find quad word value
+	/// </summary>
+	/// <param name="hooker"></param>
+	/// <param name="value"></param>
+	/// <param name="flags"></param>
+	/// <param name="start"></param>
+	/// <returns></returns>
+	DWORD __stdcall FindQWord(HOOKER hooker, QWORD value, DWORD flags = 0, DWORD start = 0);
+
+	/// <summary>
+	/// Find short value
+	/// </summary>
+	/// <param name="hooker"></param>
+	/// <param name="value"></param>
+	/// <param name="flags"></param>
+	/// <param name="start"></param>
+	/// <returns></returns>
+	DWORD __stdcall FindShort(HOOKER hooker, SHORT value, DWORD flags = 0, DWORD start = 0);
+
+	/// <summary>
+	/// Find long value
+	/// </summary>
+	/// <param name="hooker"></param>
+	/// <param name="value"></param>
+	/// <param name="flags"></param>
+	/// <param name="start"></param>
+	/// <returns></returns>
+	DWORD __stdcall FindLong(HOOKER hooker, LONG value, DWORD flags = 0, DWORD start = 0);
+
+	/// <summary>
+	/// Find long long value
+	/// </summary>
+	/// <param name="hooker"></param>
+	/// <param name="value"></param>
+	/// <param name="flags"></param>
+	/// <param name="start"></param>
+	/// <returns></returns>
+	DWORD __stdcall FindLongLong(HOOKER hooker, LONGLONG value, DWORD flags = 0, DWORD start = 0);
+
+	/// <summary>
+	/// Find float value
+	/// </summary>
+	/// <param name="hooker"></param>
+	/// <param name="value"></param>
+	/// <param name="flags"></param>
+	/// <param name="start"></param>
+	/// <returns></returns>
+	DWORD __stdcall FindFloat(HOOKER hooker, FLOAT value, DWORD flags = 0, DWORD start = 0);
+
+	/// <summary>
+	/// Find double float value
+	/// </summary>
+	/// <param name="hooker"></param>
+	/// <param name="value"></param>
+	/// <param name="flags"></param>
+	/// <param name="start"></param>
+	/// <returns></returns>
+	DWORD __stdcall FindDouble(HOOKER hooker, DOUBLE value, DWORD flags = 0, DWORD start = 0);
 	
 	/// <summary>
 	/// Find relative function call
@@ -390,6 +490,140 @@ extern "C"
 	BOOL __stdcall PatchDouble(HOOKER hooker, DWORD address, DOUBLE value);
 
 	/// <summary>
+	/// Writes all new data blocks
+	/// </summary>
+	/// <param name="hooker"></param>
+	/// <param name="old_block"></param>
+	/// <param name="new_block"></param>
+	/// <param name="size"></param>
+	/// <param name="flags"></param>
+	/// <returns></returns>
+	DWORD __stdcall PatchAllBlocks(HOOKER hooker, const VOID* old_block, const VOID* new_block, DWORD size, DWORD flags = 0);
+
+	/// <summary>
+	/// Writes all new data blocks by bit mask
+	/// </summary>
+	/// <param name="hooker"></param>
+	/// <param name="old_block"></param>
+	/// <param name="old_mask"></param>
+	/// <param name="new_block"></param>
+	/// <param name="new_mask"></param>
+	/// <param name="size"></param>
+	/// <param name="flags"></param>
+	/// <returns></returns>
+	DWORD __stdcall PatchAllBlocksByMask(HOOKER hooker, const VOID* old_block, const VOID* old_mask, const VOID* new_block, const VOID* new_mask, DWORD size, DWORD flags = 0);
+	
+	/// <summary>
+	/// Writes all new pointer values
+	/// </summary>
+	/// <param name="hooker"></param>
+	/// <param name="old_value"></param>
+	/// <param name="new_value"></param>
+	/// <param name="flags"></param>
+	/// <returns></returns>
+	DWORD __stdcall PatchAllPtrs(HOOKER hooker, const VOID* old_value, const VOID* new_value, DWORD flags = 0);
+	
+	/// <summary>
+	/// Writes all new byte values
+	/// </summary>
+	/// <param name="hooker"></param>
+	/// <param name="old_value"></param>
+	/// <param name="new_value"></param>
+	/// <param name="flags"></param>
+	/// <returns></returns>
+	DWORD __stdcall PatchAllBytes(HOOKER hooker, BYTE old_value, BYTE new_value, DWORD flags = 0);
+	
+	/// <summary>
+	/// Writes all new word values
+	/// </summary>
+	/// <param name="hooker"></param>
+	/// <param name="old_value"></param>
+	/// <param name="new_value"></param>
+	/// <param name="flags"></param>
+	/// <returns></returns>
+	DWORD __stdcall PatchAllWords(HOOKER hooker, WORD old_value, WORD new_value, DWORD flags = 0);
+	
+	/// <summary>
+	/// Writes all new double word values
+	/// </summary>
+	/// <param name="hooker"></param>
+	/// <param name="old_value"></param>
+	/// <param name="new_value"></param>
+	/// <param name="flags"></param>
+	/// <returns></returns>
+	DWORD __stdcall PatchAllDWords(HOOKER hooker, DWORD old_value, DWORD new_value, DWORD flags = 0);
+	
+	/// <summary>
+	/// Writes all new quad word values
+	/// </summary>
+	/// <param name="hooker"></param>
+	/// <param name="old_value"></param>
+	/// <param name="new_value"></param>
+	/// <param name="flags"></param>
+	/// <returns></returns>
+	DWORD __stdcall PatchAllQWords(HOOKER hooker, QWORD old_value, QWORD new_value, DWORD flags = 0);
+	
+	/// <summary>
+	/// Writes all new short values
+	/// </summary>
+	/// <param name="hooker"></param>
+	/// <param name="old_value"></param>
+	/// <param name="new_value"></param>
+	/// <param name="flags"></param>
+	/// <returns></returns>
+	DWORD __stdcall PatchAllShorts(HOOKER hooker, SHORT old_value, SHORT new_value, DWORD flags = 0);
+	
+	/// <summary>
+	/// Writes all new long values
+	/// </summary>
+	/// <param name="hooker"></param>
+	/// <param name="old_value"></param>
+	/// <param name="new_value"></param>
+	/// <param name="flags"></param>
+	/// <returns></returns>
+	DWORD __stdcall PatchAllLongs(HOOKER hooker, LONG old_value, LONG new_value, DWORD flags = 0);
+	
+	/// <summary>
+	/// Writes all new long long values
+	/// </summary>
+	/// <param name="hooker"></param>
+	/// <param name="old_value"></param>
+	/// <param name="new_value"></param>
+	/// <param name="flags"></param>
+	/// <returns></returns>
+	DWORD __stdcall PatchAllLongLongs(HOOKER hooker, LONGLONG old_value, LONGLONG new_value, DWORD flags = 0);
+	
+	/// <summary>
+	/// Writes all new float values
+	/// </summary>
+	/// <param name="hooker"></param>
+	/// <param name="old_value"></param>
+	/// <param name="new_value"></param>
+	/// <param name="flags"></param>
+	/// <returns></returns>
+	DWORD __stdcall PatchAllFloats(HOOKER hooker, FLOAT old_value, FLOAT new_value, DWORD flags = 0);
+	
+	/// <summary>
+	/// Writes all new double float values
+	/// </summary>
+	/// <param name="hooker"></param>
+	/// <param name="old_value"></param>
+	/// <param name="new_value"></param>
+	/// <param name="flags"></param>
+	/// <returns></returns>
+	DWORD __stdcall PatchAllDoubles(HOOKER hooker, DOUBLE old_value, DOUBLE new_value, DWORD flags = 0);
+
+	/// <summary>
+	/// Patch virtual function of object by its index
+	/// </summary>
+	/// <param name="obj"></param>
+	/// <param name="index"></param>
+	/// <param name="funct"></param>
+	/// <param name="old_value"></param>
+	/// <returns></returns>
+	BOOL __stdcall PatchVirtual(const VOID* obj, DWORD index, const VOID* funct, VOID* old_value = NULL);
+
+	/// <summary>
 	/// Redirect relative function call to new address
 	/// </summary>
 	/// <param name="hooker"></param>
@@ -405,9 +639,8 @@ extern "C"
 	/// <param name="address"></param>
 	/// <param name="funcAddress"></param>
 	/// <param name="flags"></param>
-	/// <param name="count"></param>
 	/// <returns></returns>
-	DWORD __stdcall RedirectCalls(HOOKER hooker, DWORD address, const VOID* funcAddress, DWORD flags = 0, DWORD* count = NULL);
+	DWORD __stdcall RedirectAllCalls(HOOKER hooker, DWORD address, const VOID* funcAddress, DWORD flags = 0);
 
 	/// <summary>
 	/// Redirects module imported function and retrives old address

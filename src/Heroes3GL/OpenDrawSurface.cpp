@@ -292,11 +292,13 @@ HRESULT __stdcall OpenDrawSurface::Blt(LPRECT lpDestRect, LPDIRECTDRAWSURFACE lp
 		FLOAT currScale = (FLOAT)(lpSrcRect->right - lpSrcRect->left) / (lpDestRect->right - lpDestRect->left);
 
 		OpenDrawSurface* surface = (OpenDrawSurface*)lpDDSrcSurface;
+		
+		DWORD sPitch, dPitch;
+		RECT rcSrc, rcDst, rc = {};
 
-		DWORD sPitch;
 		if (surface->attachedClipper)
 		{
-			POINT offset = { 0, 0 };
+			POINT offset = {};
 			ClientToScreen(surface->attachedClipper->hWnd, &offset);
 			OffsetRect(lpSrcRect, -offset.x, -offset.y);
 
@@ -305,10 +307,12 @@ HRESULT __stdcall OpenDrawSurface::Blt(LPRECT lpDestRect, LPDIRECTDRAWSURFACE lp
 		else
 			sPitch = surface->pitch;
 
-		DWORD dPitch;
+		*(SIZE*)&rc.right = *(SIZE*)&surface->mode.width;
+		IntersectRect(&rcSrc, lpSrcRect, &rc);
+
 		if (this->attachedClipper)
 		{
-			POINT offset = { 0, 0 };
+			POINT offset = {};
 			ClientToScreen(this->attachedClipper->hWnd, &offset);
 			OffsetRect(lpDestRect, -offset.x, -offset.y);
 
@@ -317,16 +321,19 @@ HRESULT __stdcall OpenDrawSurface::Blt(LPRECT lpDestRect, LPDIRECTDRAWSURFACE lp
 		else
 			dPitch = this->pitch;
 
-		INT width = lpSrcRect->right - lpSrcRect->left;
-		INT height = lpSrcRect->bottom - lpSrcRect->top;
+		*(SIZE*)&rc.right = *(SIZE*)&this->mode.width;
+		IntersectRect(&rcDst, lpDestRect, &rc);
+
+		LONG width = rcSrc.right - rcSrc.left;
+		LONG height = rcSrc.bottom - rcSrc.top;
 
 		if (this->mode.bpp == 32)
 		{
 			sPitch /= sizeof(DWORD);
 			dPitch /= sizeof(DWORD);
 
-			DWORD* src = (DWORD*)surface->indexBuffer + lpSrcRect->top * sPitch + lpSrcRect->left;
-			DWORD* dst = (DWORD*)this->indexBuffer + lpDestRect->top * dPitch + lpDestRect->left;
+			DWORD* src = (DWORD*)surface->indexBuffer + rcSrc.top * sPitch + rcSrc.left;
+			DWORD* dst = (DWORD*)this->indexBuffer + rcDst.top * dPitch + rcDst.left;
 
 			if (surface->colorKey)
 			{
@@ -468,8 +475,8 @@ HRESULT __stdcall OpenDrawSurface::Blt(LPRECT lpDestRect, LPDIRECTDRAWSURFACE lp
 			sPitch /= sizeof(WORD);
 			dPitch /= sizeof(WORD);
 
-			WORD* src = (WORD*)surface->indexBuffer + lpSrcRect->top * sPitch + lpSrcRect->left;
-			WORD* dst = (WORD*)this->indexBuffer + lpDestRect->top * dPitch + lpDestRect->left;
+			WORD* src = (WORD*)surface->indexBuffer + rcSrc.top * sPitch + rcSrc.left;
+			WORD* dst = (WORD*)this->indexBuffer + rcDst.top * dPitch + rcDst.left;
 
 			if (LOWORD(surface->colorKey))
 			{
