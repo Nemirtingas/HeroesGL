@@ -271,7 +271,7 @@ IDR_SCALENX_FRAGMENT_3X		RCDATA		DISCARDABLE		"..\\glsl\\scalenx\\fragment_3x.gl
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2021,8,7,550
+ FILEVERSION 2021,8,7,551
  PRODUCTVERSION 1,6,3,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
@@ -288,7 +288,7 @@ BEGIN
 		BLOCK "040904b0"
 		BEGIN
 			VALUE "FileDescription", "HoMM III - OpenGL wrapper"
-			VALUE "FileVersion", "2021.08.07.550"
+			VALUE "FileVersion", "2021.08.07.551"
 			VALUE "LegalCopyright", "© 2021 Verok (verokster@gmail.com)"
 			VALUE "OriginalFilename", "ddraw.dll"
 			VALUE "ProductVersion", "1.6.3"

@@ -308,7 +308,8 @@ HRESULT __stdcall OpenDrawSurface::Blt(LPRECT lpDestRect, LPDIRECTDRAWSURFACE lp
 			sPitch = surface->pitch;
 
 		*(SIZE*)&rc.right = *(SIZE*)&surface->mode.width;
-		IntersectRect(&rcSrc, lpSrcRect, &rc);
+		if (!IntersectRect(&rcSrc, lpSrcRect, &rc))
+			return DD_OK;
 
 		if (this->attachedClipper)
 		{
@@ -322,7 +323,8 @@ HRESULT __stdcall OpenDrawSurface::Blt(LPRECT lpDestRect, LPDIRECTDRAWSURFACE lp
 			dPitch = this->pitch;
 
 		*(SIZE*)&rc.right = *(SIZE*)&this->mode.width;
-		IntersectRect(&rcDst, lpDestRect, &rc);
+		if (!IntersectRect(&rcDst, lpDestRect, &rc))
+			return DD_OK;
 
 		LONG width = rcSrc.right - rcSrc.left;
 		LONG height = rcSrc.bottom - rcSrc.top;
