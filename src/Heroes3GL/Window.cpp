@@ -148,28 +148,37 @@ namespace Window
 		break;
 
 		case MenuFps: {
-			DWORD menuId;
-			switch (config.fps)
+			if (!config.isDDraw)
 			{
-			case FpsNormal:
-				menuId = IDM_FPS_NORMAL;
-				break;
-			case FpsBenchmark:
-				menuId = IDM_FPS_BENCHMARK;
-				break;
-			default:
-				menuId = IDM_FPS_OFF;
-				break;
+				DWORD menuId;
+				switch (config.fps)
+				{
+				case FpsNormal:
+					menuId = IDM_FPS_NORMAL;
+					break;
+				case FpsBenchmark:
+					menuId = IDM_FPS_BENCHMARK;
+					break;
+				default:
+					menuId = IDM_FPS_OFF;
+					break;
+				}
+
+				CheckMenuItem(hMenu, IDM_FPS_OFF, MF_BYCOMMAND | (menuId == IDM_FPS_OFF ? MF_CHECKED : MF_UNCHECKED));
+				CheckMenuItem(hMenu, IDM_FPS_NORMAL, MF_BYCOMMAND | (menuId == IDM_FPS_NORMAL ? MF_CHECKED : MF_UNCHECKED));
+				CheckMenuItem(hMenu, IDM_FPS_BENCHMARK, MF_BYCOMMAND | (menuId == IDM_FPS_BENCHMARK ? MF_CHECKED : MF_UNCHECKED));
+
+				MenuItemData mData;
+				mData.childId = IDM_FPS_OFF;
+				if (GetMenuByChildID(hMenu, &mData))
+					CheckMenuItem(mData.hParent, mData.index, MF_BYPOSITION | (menuId != IDM_FPS_OFF ? MF_CHECKED : MF_UNCHECKED));
 			}
-
-			CheckMenuItem(hMenu, IDM_FPS_OFF, MF_BYCOMMAND | (menuId == IDM_FPS_OFF ? MF_CHECKED : MF_UNCHECKED));
-			CheckMenuItem(hMenu, IDM_FPS_NORMAL, MF_BYCOMMAND | (menuId == IDM_FPS_NORMAL ? MF_CHECKED : MF_UNCHECKED));
-			CheckMenuItem(hMenu, IDM_FPS_BENCHMARK, MF_BYCOMMAND | (menuId == IDM_FPS_BENCHMARK ? MF_CHECKED : MF_UNCHECKED));
-
-			MenuItemData mData;
-			mData.childId = IDM_FPS_OFF;
-			if (GetMenuByChildID(hMenu, &mData))
-				CheckMenuItem(mData.hParent, mData.index, MF_BYPOSITION | (menuId != IDM_FPS_OFF ? MF_CHECKED : MF_UNCHECKED));
+			else
+			{
+				CheckMenuItem(hMenu, IDM_FPS_OFF, MF_BYCOMMAND | MF_CHECKED);
+				EnableMenuItem(hMenu, IDM_FPS_NORMAL, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
+				EnableMenuItem(hMenu, IDM_FPS_BENCHMARK, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
+			}
 		}
 		break;
 
@@ -1695,7 +1704,7 @@ namespace Window
 
 		case WM_MOUSEWHEEL:
 		case WM_MOUSEMOVE: {
-			OpenDraw* ddraw = Main::FindOpenDrawByWindow(hWnd);
+			OpenDraw* ddraw = Main::FindOpenDrawByWindow(GetForegroundWindow());
 			if (ddraw)
 			{
 				POINT p = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
@@ -1994,17 +2003,17 @@ namespace Window
 		case WM_MBUTTONDOWN:
 		case WM_MBUTTONUP:
 		case WM_MBUTTONDBLCLK:
-		case WM_XBUTTONDOWN:
-		case WM_XBUTTONUP:
-		case WM_XBUTTONDBLCLK:
 		case WM_SYSCOMMAND:
 		case WM_SYSKEYDOWN:
 		case WM_SYSKEYUP:
 		case WM_KEYDOWN:
 		case WM_KEYUP:
 		case WM_CHAR:
-		case WM_SETCURSOR:
-			PostMessage(GetParent(hWnd), uMsg, wParam, lParam);
+		case WM_SETCURSOR: {
+			HWND hParent = GetParent(hWnd);
+			WNDPROC proc = (WNDPROC)GetWindowLong(hParent, GWL_WNDPROC);
+			return CallWindowProc(proc, hParent, uMsg, wParam, lParam);
+		}
 
 		default:
 			return DefWindowProc(hWnd, uMsg, wParam, lParam);

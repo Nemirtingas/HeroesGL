@@ -195,6 +195,7 @@ struct AddressSpace
 	DWORD move_oldCenter;
 	DWORD move_drawRect;
 	DWORD move_lifeCycle;
+	DWORD scroll_pos_hook;
 	DWORD windowName;
 };
 
